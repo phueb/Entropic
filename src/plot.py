@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 from src import config
 
 
-def plot_trajectories(xs, ys, labels, label_prefix, name, figsize=(6, 6)):
+def plot_trajectories(xs, ys, labels, label_prefix, name, figsize=(6, 6), title=''):
     fig, ax = plt.subplots(figsize=figsize)
+    plt.title(title, fontsize=config.Figs.axlabel_fs)
     ax.set_xlabel('epoch', fontsize=config.Figs.axlabel_fs)
     ax.set_ylabel(name + '\n+/- std dev', fontsize=config.Figs.axlabel_fs)
     ax.spines['right'].set_visible(False)

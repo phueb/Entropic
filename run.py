@@ -5,26 +5,26 @@ from sklearn.metrics.pairwise import cosine_similarity
 from src.net import NeuralNet
 from src.eval import calc_cluster_score
 from src.plot import plot_trajectories
+from src.utils import make_superordinate_w1, make_identical_w1
 
 VERBOSE = False
 
-NUM_REPS = 10
+NUM_REPS = 10  # TODO
 NUM_HIDDEN = 8
 NUM_EPOCHS = 50
 EVAL_INTERVAL = 10
 CLUSTER_METRIC = 'ba'
 
-ALL_SAME = False
-# TODO is ba better because weights for A members are the same or because of distance between cat A and B?
-
 eval_epochs = np.arange(0, NUM_EPOCHS, EVAL_INTERVAL)
 num_eval_epochs = len(eval_epochs)
 
 
-def experiment(smart_init):
+def experiment(init):
     print('------------------------------------------')
-    print('smart_init={}'.format(smart_init))
+    print('init={}'.format(init))
     print('------------------------------------------')
+
+    # TODO create x and y dynamically - use large (probabilistic) subcategory structure
 
     x = np.array(([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # 1
                   [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # 2
@@ -73,16 +73,21 @@ def experiment(smart_init):
     gold_mat_b = np.matmul(y[9:], y[9:].T) - 1
 
     # net
-    a = np.tile(np.random.standard_normal(size=(1, NUM_HIDDEN)), (9, 1))  # same weights for inputs in cat A
-    if ALL_SAME:
-        b = a
+    if init == 'random':
+        w1 = None
+    elif init == 'superordinate':
+        w1 = make_superordinate_w1(NUM_HIDDEN)
+        print(w1.round(2))
+    elif init == 'identical':
+        w1 = make_identical_w1(NUM_HIDDEN)
+        print(w1.round(2))
     else:
-        b = np.tile(np.random.standard_normal(size=(1, NUM_HIDDEN)), (9, 1))  # same weights for inputs in cat B
-    w1 = np.vstack((a, b))  # [18, NUM_HIDDEN]
+        raise AttributeError('Invalid arg to "init".')
     net = NeuralNet(num_in=18,
                     num_hidden=NUM_HIDDEN,
                     num_out=8,
-                    w1=w1 if smart_init else None)
+                    w1=w1)
+
     # train loop
     eval_score_a = True  # save time - don't evaluate ba after it has reached 1.0
     eval_score_b = True
@@ -122,19 +127,27 @@ def experiment(smart_init):
     return score_trajectory_a, score_trajectory_b
 
 
-# get experimental results
-results_1 = np.array([experiment(smart_init=True) for _ in range(NUM_REPS)])  # [NUM_REPS, 2, num_eval_epochs]
-results_2 = np.array([experiment(smart_init=False) for _ in range(NUM_REPS)])  # [NUM_REPS, 2, num_eval_epochs]
+# get experimental results returns tensor with shape = [NUM_REPS, 2, num_eval_epochs]
+init_conditions = ['identical', 'superordinate', 'random']
+results_1 = np.array([experiment(init=init_conditions[0]) for _ in range(NUM_REPS)])
+results_2 = np.array([experiment(init=init_conditions[1]) for _ in range(NUM_REPS)])
+results_3 = np.array([experiment(init=init_conditions[2]) for _ in range(NUM_REPS)])
 
 # plot results
 cat_names = ['A', 'B']
-xs = [eval_epochs] * 2
 for n, cat_name in enumerate(cat_names):
+    # aggregate data
+    xs = [eval_epochs] * len(init_conditions)
     ys = [results_1.mean(axis=0, keepdims=True)[:, n, :].squeeze(),
-          results_2.mean(axis=0, keepdims=True)[:, n, :].squeeze()]
+          results_2.mean(axis=0, keepdims=True)[:, n, :].squeeze(),
+          results_3.mean(axis=0, keepdims=True)[:, n, :].squeeze()]
+
+    # TODO add confidence-interval
+
     fig = plot_trajectories(xs=xs,
                             ys=ys,
-                            labels=[True, False],
-                            label_prefix='smart init = ',
+                            title='n={}'.format(NUM_REPS),
+                            labels=init_conditions,
+                            label_prefix='init = ',
                             name='category {} '.format(cat_name) + CLUSTER_METRIC)
     fig.show()
