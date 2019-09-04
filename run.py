@@ -9,15 +9,18 @@ from src.utils import make_superordinate_w1, make_identical_w1
 
 VERBOSE = False
 
-NUM_REPS = 10
+NUM_REPS = 20
 NUM_HIDDEN = 8
 NUM_EPOCHS = 50
-EVAL_INTERVAL = 10
+EVAL_INTERVAL = 5
 CLUSTER_METRIC = 'ba'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
 NUM_SUBORDINATE_CATS_IN_B = 3
 SUBORDINATE_SIZE = 3
+
+EVAL_SCORE_A = True
+EVAL_SCORE_B = False  # False to save time
 
 """
 structure of the data:
@@ -28,6 +31,9 @@ each subordinate category contains SUBORDINATE_SIZE items.
 
 eval_epochs = np.arange(0, NUM_EPOCHS, EVAL_INTERVAL)
 num_eval_epochs = len(eval_epochs)
+
+if not EVAL_SCORE_A and not EVAL_SCORE_B:
+    raise SystemExit('EVAL_SCORE_A and EVAL_SCORE_B are set to False')
 
 
 def experiment(init):
@@ -46,7 +52,7 @@ def experiment(init):
     b_sub = np.hstack((np.zeros((num_items_in_b, NUM_SUBORDINATE_CATS_IN_B)),
                        np.eye(NUM_SUBORDINATE_CATS_IN_B).repeat(SUBORDINATE_SIZE, axis=0)))
     a_sup = np.array([[1, 0]]).repeat(num_items_in_a, axis=0)
-    b_sup = np.array([[0, 1]]).repeat(num_items_in_a, axis=0)
+    b_sup = np.array([[0, 1]]).repeat(num_items_in_b, axis=0)
     sub_cols = np.vstack((a_sub, b_sub))
     sup_cols = np.vstack((a_sup, b_sup))
     y = np.hstack((sub_cols, sup_cols))
@@ -58,7 +64,7 @@ def experiment(init):
     torch_y = torch.from_numpy(y)
 
     gold_mat_a = np.matmul(y[:num_items_in_a], y[:num_items_in_a].T) - 1
-    gold_mat_b = np.matmul(y[num_items_in_a:], y[num_items_in_a:].T) - 1
+    gold_mat_b = np.matmul(y[-num_items_in_b:], y[-num_items_in_b:].T) - 1
 
     # net
     if init == 'random':
@@ -76,8 +82,8 @@ def experiment(init):
                     w1=w1)
 
     # train loop
-    eval_score_a = True  # save time - don't evaluate ba after it has reached 1.0
-    eval_score_b = True
+    eval_score_a = EVAL_SCORE_A  # save time - don't evaluate ba after it has reached 1.0
+    eval_score_b = EVAL_SCORE_B
     eval_epoch_idx = 0
     score_trajectory_a = np.ones(num_eval_epochs)
     score_trajectory_b = np.ones(num_eval_epochs)
@@ -87,7 +93,7 @@ def experiment(init):
             print('Evaluating at epoch {}'.format(i))
             prediction_mat = net(torch_x).numpy()
             sim_mat_a = cosine_similarity(prediction_mat[:num_items_in_a])
-            sim_mat_b = cosine_similarity(prediction_mat[num_items_in_a:])
+            sim_mat_b = cosine_similarity(prediction_mat[-num_items_in_b:])
             score_a = calc_cluster_score(sim_mat_a, gold_mat_a, CLUSTER_METRIC) if eval_score_a else 1.0
             score_b = calc_cluster_score(sim_mat_b, gold_mat_b, CLUSTER_METRIC) if eval_score_b else 1.0
             score_trajectory_a[eval_epoch_idx] = score_a
@@ -121,18 +127,27 @@ results_2 = np.array([experiment(init=init_conditions[1]) for _ in range(NUM_REP
 results_3 = np.array([experiment(init=init_conditions[2]) for _ in range(NUM_REPS)])
 
 # plot results
-cat_names = ['A', 'B']
+if EVAL_SCORE_A and EVAL_SCORE_B:
+    cat_names = ['A', 'B']
+elif not EVAL_SCORE_A:
+    cat_names = ['B']
+elif not EVAL_SCORE_B:
+    cat_names = ['A']
+else:
+    raise SystemExit('EVAL_SCORE_A and EVAL_SCORE_B are set to False')
+#
 for n, cat_name in enumerate(cat_names):
     # aggregate data
     xs = [eval_epochs] * len(init_conditions)
     ys = [results_1.mean(axis=0, keepdims=True)[:, n, :].squeeze(),
           results_2.mean(axis=0, keepdims=True)[:, n, :].squeeze(),
           results_3.mean(axis=0, keepdims=True)[:, n, :].squeeze()]
-
-    # TODO add confidence-interval
-
+    stds = [results_1.std(axis=0, keepdims=True)[:, n, :].squeeze(),
+            results_2.std(axis=0, keepdims=True)[:, n, :].squeeze(),
+            results_3.std(axis=0, keepdims=True)[:, n, :].squeeze()]
     fig = plot_trajectories(xs=xs,
                             ys=ys,
+                            stds=stds,
                             title='n={}'.format(NUM_REPS),
                             labels=init_conditions,
                             label_prefix='init = ',
