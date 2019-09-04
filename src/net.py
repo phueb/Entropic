@@ -2,17 +2,15 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
 class NeuralNet(nn.Module):
     def __init__(self, num_in, num_hidden, num_out, w1=None, w2=None):
         super(NeuralNet, self).__init__()
-        # parameters
+        # hyper-parameters
         self.num_in = num_in
         self.num_out = num_out
         self.num_hidden = num_hidden
-
         # weights
-        # TODO experiment with weight init
-
         if w1 is None:
             self.w1 = torch.randn(self.num_in, self.num_hidden)
         else:
@@ -43,6 +41,3 @@ class NeuralNet(nn.Module):
         self.z2_delta = self.z2_error * self.sigmoid_derivative(self.z2)
         self.w1 += torch.matmul(torch.t(x), self.z2_delta)
         self.w2 += torch.matmul(torch.t(self.z2), self.o_delta)
-
-    def predict(self, x):
-        return self.forward(torch.from_numpy(x)).numpy()
