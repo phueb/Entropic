@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from src import config
 
@@ -17,7 +18,7 @@ def plot_trajectories(xs, ys, margins_of_error, labels, label_prefix, name, ylim
     #
     colors = ['C0', 'C1', 'C2']
     for x, y, me, label, color in zip(xs, ys, margins_of_error, labels, colors):
-        ax.fill_between(x, min(y + me, ylim[1]), y - me, alpha=0.25, color=color)
+        ax.fill_between(x, np.clip(y + me, ylim[0], ylim[1]), y - me, alpha=0.25, color=color)
         ax.plot(x, y, label=label_prefix + str(label), color=color)
         ax.scatter(x, y, color=color)
     #
