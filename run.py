@@ -22,7 +22,7 @@ class Opt:
     hidden_size = 8
     num_epochs = 1000
 
-    separate_feedback = [False, 0.5]  # probability of sampling from y1 relative to y2
+    separate_feedback = [True, 0.5]  # probability of sampling from y1 relative to y2
     y2_flip_prob = 0.0  # probability of flipping superordinate feedback
     y2_shuffle_prob = 0.25  # probability of shuffling superordinate feedback (breaks symmetry)
 
@@ -211,11 +211,7 @@ for n, cat_name in enumerate(cat_names):
     margins_of_error = [sem * t.ppf(1 - 0.05 / 2, Opt.num_reps - 1) for sem in sems]  # margins are 1/2 the total CI
     options = '\n'.join(['{}={}'.format(k, v) for k, v in sorted(Opt.__dict__.items())
                          if not k.startswith('_')])
-
-    print(stds[0])
-    print(sems[0])
-    print(margins_of_error[0])  # TODO this gives nans
-
+    # fig
     fig = plot_trajectories(xs=xs,
                             ys=ys,
                             margins_of_error=margins_of_error,
