@@ -22,13 +22,12 @@ class Opt:
     hidden_size = 8
     num_epochs = 1000
 
-    separate_feedback = False
-    y1_prob = 0.5  # probability of sampling from y1 relative to y2
-    flip_y2_prob = 0.5  # probability of flipping superordinate feedback (if 0.0, use both)
-    permute_y2_prob = 0.0  # probability of shuffling superordinate feedback (if 0.0, use both)
+    separate_feedback = [False, 0.5]  # probability of sampling from y1 relative to y2
+    y2_flip_prob = 0.0  # probability of flipping superordinate feedback
+    y2_shuffle_prob = 0.25  # probability of shuffling superordinate feedback (breaks symmetry)
 
-    num_reps = 3
-    eval_interval = 200
+    num_reps = 5
+    eval_interval = 100
     representation = 'output'
 
     num_subordinate_cats_in_a = 3
@@ -150,20 +149,20 @@ def experiment(init):
                 eval_score_b = False
 
         # flip superordinate feedback (all items are affected symmetrically)
-        if bool(np.random.binomial(n=1, p=Opt.flip_y2_prob)):
+        if bool(np.random.binomial(n=1, p=Opt.y2_flip_prob)):
             y2 = np.flipud(y2)  # flip vertically
             y = y1 + y2
             torch_y = torch.from_numpy(y.astype(np.float32))
 
         # shuffle superordinate feedback (items are not affected symmetrically)
-        if bool(np.random.binomial(n=1, p=Opt.permute_y2_prob)):
+        if bool(np.random.binomial(n=1, p=Opt.y2_shuffle_prob)):  # TODO make this a function of epoch id
             y2 = np.random.permutation(y2)
             y = y1 + y2
             torch_y = torch.from_numpy(y.astype(np.float32))
 
         # give feedback from either y1 or y2 but never together
-        if Opt.separate_feedback:
-            row_ids = [idx1 if np.random.binomial(n=1, p=Opt.y1_prob) else idx2
+        if Opt.separate_feedback[0]:
+            row_ids = [idx1 if np.random.binomial(n=1, p=Opt.separate_feedback[1]) else idx2
                        for idx1, idx2 in zip(y1_ids, y2_ids)]
             y = np.vstack((y1, y2))[row_ids]  # select rows from y1 or y2
             torch_y = torch.from_numpy(y.astype(np.float32))
@@ -209,16 +208,21 @@ for n, cat_name in enumerate(cat_names):
             results_2.std(axis=0, keepdims=True)[:, n, :].squeeze(),
             results_3.std(axis=0, keepdims=True)[:, n, :].squeeze()]
     sems = [std / np.sqrt(Opt.num_reps) for std in stds]
-    cis = [sem * t.ppf(1 - 0.05/2, n-1) for sem in sems]
+    margins_of_error = [sem * t.ppf(1 - 0.05 / 2, Opt.num_reps - 1) for sem in sems]  # margins are 1/2 the total CI
     options = '\n'.join(['{}={}'.format(k, v) for k, v in sorted(Opt.__dict__.items())
                          if not k.startswith('_')])
+
+    print(stds[0])
+    print(sems[0])
+    print(margins_of_error[0])  # TODO this gives nans
+
     fig = plot_trajectories(xs=xs,
                             ys=ys,
-                            cis=stds,
+                            margins_of_error=margins_of_error,
                             options=options,
                             labels=init_conditions,
                             label_prefix='init = ',
                             name='category {} '.format(cat_name) + CLUSTER_METRIC,
-                            ylim=[0.5, 1.0] if CLUSTER_METRIC in ['ba', 'fs'] else [0.0, 1.0],
+                            ylim=[0.5, 1.05] if CLUSTER_METRIC in ['ba', 'fs'] else [0.0, 1.05],
                             figsize=(6, 6))
     fig.show()
