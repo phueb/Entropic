@@ -12,3 +12,9 @@ def make_identical_w1(num_cols, num_input_a, num_input_b):
     num_input = num_input_a + num_input_b
     res = np.tile(np.random.standard_normal(size=(1, num_cols)), (num_input, 1))  # same weights for all items
     return res
+
+
+def to_eval_epochs(opts):
+    res = [0] + list(np.logspace(0, np.log10(opts.num_epochs),
+                                 opts.num_evals - 1).astype(np.int))  # include 0 and last epoch
+    return res
