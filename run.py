@@ -11,12 +11,12 @@ import torch.optim as optim
 
 VERBOSE = False
 
-SCALE_WEIGHTS = 1  # TODO test
+SCALE_WEIGHTS = 1.0  # works with 1.0 but not with 0.01 or 0.1
 LEARNING_RATE = 1.0  # TODO test
-HIDDEN_SIZE = 8
+HIDDEN_SIZE = 4
 NUM_REPS = 3
-NUM_EPOCHS = 100
-EVAL_INTERVAL = 20
+NUM_EPOCHS = 1000
+EVAL_INTERVAL = 100
 CLUSTER_METRIC = 'ba'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
@@ -74,11 +74,11 @@ def experiment(init):
 
     output_size = y.shape[1]
     if init == 'random':
-        w1 = np.random.standard_normal(size=(input_size, output_size)) * SCALE_WEIGHTS
+        w1 = np.random.standard_normal(size=(input_size, HIDDEN_SIZE)) * SCALE_WEIGHTS
     elif init == 'superordinate':
-        w1 = make_superordinate_w1(output_size, input_size_a, input_size_b) * SCALE_WEIGHTS
+        w1 = make_superordinate_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
     elif init == 'identical':
-        w1 = make_identical_w1(output_size, input_size_a, input_size_b) * SCALE_WEIGHTS
+        w1 = make_identical_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
     else:
         raise AttributeError('Invalid arg to "init".')
     net = Net(input_size=input_size,
