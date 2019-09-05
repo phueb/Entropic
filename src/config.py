@@ -9,5 +9,6 @@ class Eval:
 
 
 class Figs:
-    axlabel_fs = 12
+    title_label_fs = 8
+    axis_fs = 12
     leg_fs = 12

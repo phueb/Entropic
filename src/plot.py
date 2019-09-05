@@ -4,11 +4,11 @@ from src import config
 
 
 def plot_trajectories(xs, ys, cis, labels, label_prefix, name,
-                      figsize=(6, 6), title='', ylim=None):
+                      figsize=(6, 6), options='', ylim=None):
     fig, ax = plt.subplots(figsize=figsize)
-    plt.title(title, fontsize=config.Figs.axlabel_fs)
-    ax.set_xlabel('epoch', fontsize=config.Figs.axlabel_fs)
-    ax.set_ylabel(name + ' +/- ci / 2', fontsize=config.Figs.axlabel_fs)
+    plt.title(options, fontsize=config.Figs.title_label_fs)
+    ax.set_xlabel('epoch', fontsize=config.Figs.axis_fs)
+    ax.set_ylabel(name + ' +/- ci / 2', fontsize=config.Figs.axis_fs)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.tick_params(axis='both', which='both', top=False, right=False)
