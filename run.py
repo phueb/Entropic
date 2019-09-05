@@ -1,18 +1,21 @@
 import torch
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from scipy.stats import t
 
-from src.net import NeuralNet
+from src.net import Net
 from src.eval import calc_cluster_score
 from src.plot import plot_trajectories
 from src.utils import make_superordinate_w1, make_identical_w1
+import torch.optim as optim
 
 VERBOSE = False
 
+SCALE_W1 = 0.1  # TODO
+LEARNING_RATE = 1.0  # TODO test
 NUM_REPS = 20
-NUM_HIDDEN = 8
-NUM_EPOCHS = 50
-EVAL_INTERVAL = 5
+NUM_EPOCHS = 1000
+EVAL_INTERVAL = 200
 CLUSTER_METRIC = 'ba'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
@@ -42,44 +45,50 @@ def experiment(init):
     print('------------------------------------------')
 
     # x
-    num_items_in_a = SUBORDINATE_SIZE * NUM_SUBORDINATE_CATS_IN_A
-    num_items_in_b = SUBORDINATE_SIZE * NUM_SUBORDINATE_CATS_IN_B
-    num_x = num_items_in_a + num_items_in_b
-    x = np.eye(num_x, dtype=np.float32)
+    input_size_a = SUBORDINATE_SIZE * NUM_SUBORDINATE_CATS_IN_A
+    input_size_b = SUBORDINATE_SIZE * NUM_SUBORDINATE_CATS_IN_B
+    input_size = input_size_a + input_size_b
+    x = np.eye(input_size, dtype=np.float32)
     # y
     a_sub = np.hstack((np.eye(NUM_SUBORDINATE_CATS_IN_A).repeat(SUBORDINATE_SIZE, axis=0),
-                       np.zeros((num_items_in_a, NUM_SUBORDINATE_CATS_IN_A))))
-    b_sub = np.hstack((np.zeros((num_items_in_b, NUM_SUBORDINATE_CATS_IN_B)),
+                       np.zeros((input_size_a, NUM_SUBORDINATE_CATS_IN_A))))
+    b_sub = np.hstack((np.zeros((input_size_b, NUM_SUBORDINATE_CATS_IN_B)),
                        np.eye(NUM_SUBORDINATE_CATS_IN_B).repeat(SUBORDINATE_SIZE, axis=0)))
-    a_sup = np.array([[1, 0]]).repeat(num_items_in_a, axis=0)
-    b_sup = np.array([[0, 1]]).repeat(num_items_in_b, axis=0)
+    a_sup = np.array([[1, 0]]).repeat(input_size_a, axis=0)
+    b_sup = np.array([[0, 1]]).repeat(input_size_b, axis=0)
     sub_cols = np.vstack((a_sub, b_sub))
     sup_cols = np.vstack((a_sup, b_sup))
-    y = np.hstack((sub_cols, sup_cols))
-    y = y.astype(np.float32)
-    print(y)
-
-    # to torch
+    y = np.hstack((sub_cols, sup_cols)).astype(np.float32)
+    #
     torch_x = torch.from_numpy(x)
     torch_y = torch.from_numpy(y)
 
-    gold_mat_a = np.matmul(y[:num_items_in_a], y[:num_items_in_a].T) - 1
-    gold_mat_b = np.matmul(y[-num_items_in_b:], y[-num_items_in_b:].T) - 1
+    # gold labels for category structure in A and B
+    gold_mat_a = np.matmul(y[:input_size_a], y[:input_size_a].T) - 1
+    gold_mat_b = np.matmul(y[-input_size_b:], y[-input_size_b:].T) - 1
 
     # net
+    output_size = y.shape[1]
     if init == 'random':
-        w1 = None
+        w1 = np.random.standard_normal(size=(input_size, output_size)) * SCALE_W1
     elif init == 'superordinate':
-        w1 = make_superordinate_w1(NUM_HIDDEN, num_items_in_a, num_items_in_b)
+        w1 = make_superordinate_w1(output_size, input_size_a, input_size_b) * SCALE_W1
     elif init == 'identical':
-        w1 = make_identical_w1(NUM_HIDDEN, num_items_in_a, num_items_in_b)
+        w1 = make_identical_w1(output_size, input_size_a, input_size_b) * SCALE_W1
     else:
         raise AttributeError('Invalid arg to "init".')
-    num_items_total = num_items_in_a + num_items_in_b
-    net = NeuralNet(num_in=num_items_total,
-                    num_hidden=NUM_HIDDEN,
-                    num_out=y.shape[1],
-                    w1=w1)
+    net = Net(input_size=input_size,
+              output_size=output_size,
+              w1=w1)
+
+    # optimizer + criterion
+    optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE)
+    criterion = torch.nn.MSELoss()
+
+    # eval before start of training
+    net.eval()
+    torch_o = net(torch_x)
+    net.train()
 
     # train loop
     eval_score_a = EVAL_SCORE_A  # save time - don't evaluate ba after it has reached 1.0
@@ -91,36 +100,43 @@ def experiment(init):
         # eval
         if i % EVAL_INTERVAL == 0:
             print('Evaluating at epoch {}'.format(i))
-            prediction_mat = net(torch_x).numpy()
-            sim_mat_a = cosine_similarity(prediction_mat[:num_items_in_a])
-            sim_mat_b = cosine_similarity(prediction_mat[-num_items_in_b:])
+            prediction_mat = torch_o.detach().numpy()
+            sim_mat_a = cosine_similarity(prediction_mat[:input_size_a])
+            sim_mat_b = cosine_similarity(prediction_mat[-input_size_b:])
             score_a = calc_cluster_score(sim_mat_a, gold_mat_a, CLUSTER_METRIC) if eval_score_a else 1.0
             score_b = calc_cluster_score(sim_mat_b, gold_mat_b, CLUSTER_METRIC) if eval_score_b else 1.0
             score_trajectory_a[eval_epoch_idx] = score_a
             score_trajectory_b[eval_epoch_idx] = score_b
             eval_epoch_idx += 1
             #
+            print(prediction_mat.round(2))
+            print(gold_mat_a.round(1))
             print(sim_mat_a.round(1))
-            print('{}_a={}'.format(CLUSTER_METRIC, score_a))
-            print('{}_b={}'.format(CLUSTER_METRIC, score_b))
+            print('{}_a={}'.format(CLUSTER_METRIC, score_a)) if eval_score_a else None
+            print('{}_b={}'.format(CLUSTER_METRIC, score_b)) if eval_score_b else None
             print()
             #
             if score_a == 1.0:
                 eval_score_a = False
             if score_b == 1.0:
                 eval_score_b = False
-        # train
-        o = net(torch_x)
-        net.backward(torch_x, torch_y, o)
 
-    # mse
-    mse = torch.mean((torch_y - net(torch_x)) ** 2).detach().item()
-    print('mse={}'.format(mse))
+        # train
+        optimizer.zero_grad()  # zero the gradient buffers
+        torch_o = net(torch_x)
+        loss = criterion(torch_o, torch_y)
+        loss.backward()
+        optimizer.step()  # update
+
+        # mse
+        if i % EVAL_INTERVAL == 0:
+            mse = loss.detach().numpy().item()
+            print('mse={}'.format(mse))
 
     return score_trajectory_a, score_trajectory_b
 
 
-# get experimental results returns tensor with shape = [NUM_REPS, 2, num_eval_epochs]
+# get experimental results - returns tensor with shape = [NUM_REPS, 2, num_eval_epochs]
 init_conditions = ['identical', 'superordinate', 'random']
 results_1 = np.array([experiment(init=init_conditions[0]) for _ in range(NUM_REPS)])
 results_2 = np.array([experiment(init=init_conditions[1]) for _ in range(NUM_REPS)])
@@ -145,11 +161,14 @@ for n, cat_name in enumerate(cat_names):
     stds = [results_1.std(axis=0, keepdims=True)[:, n, :].squeeze(),
             results_2.std(axis=0, keepdims=True)[:, n, :].squeeze(),
             results_3.std(axis=0, keepdims=True)[:, n, :].squeeze()]
+    sems = [std / np.sqrt(NUM_REPS) for std in stds]
+    cis = [sem * t.ppf((1 + 0.95) / 2, n-1) for sem in sems]
     fig = plot_trajectories(xs=xs,
                             ys=ys,
-                            stds=stds,
+                            cis=stds,
                             title='n={}'.format(NUM_REPS),
                             labels=init_conditions,
                             label_prefix='init = ',
-                            name='category {} '.format(cat_name) + CLUSTER_METRIC)
+                            name='category {} '.format(cat_name) + CLUSTER_METRIC,
+                            ylim=[0.5, 1.0] if CLUSTER_METRIC in ['ba', 'fs'] else [0.0, 1.0])
     fig.show()
