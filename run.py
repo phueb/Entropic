@@ -12,16 +12,18 @@ import torch.optim as optim
 VERBOSE = False
 
 SCALE_WEIGHTS = 1.0  # works with 1.0 but not with 0.01 or 0.1
-LEARNING_RATE = 1.0  # TODO test
-HIDDEN_SIZE = 4
-NUM_REPS = 3
+LEARNING_RATE = 1.0  # TODO vary
+HIDDEN_SIZE = 8
+NUM_REPS = 5
 NUM_EPOCHS = 1000
-EVAL_INTERVAL = 100
+
+EVAL_INTERVAL = 200
 CLUSTER_METRIC = 'ba'
+REPRESENTATION = 'output'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
 NUM_SUBORDINATE_CATS_IN_B = 3
-SUBORDINATE_SIZE = 3
+SUBORDINATE_SIZE = 4
 
 EVAL_SCORE_A = True
 EVAL_SCORE_B = False  # False to save time
@@ -33,7 +35,7 @@ each superordinate category contains NUM_SUBORDINATES subordinate categories.
 each subordinate category contains SUBORDINATE_SIZE items.
 """
 
-eval_epochs = np.arange(0, NUM_EPOCHS, EVAL_INTERVAL)
+eval_epochs = np.arange(0, NUM_EPOCHS + 1, EVAL_INTERVAL)  # +1 because evaluation should happen at last epoch
 num_eval_epochs = len(eval_epochs)
 
 if not EVAL_SCORE_A and not EVAL_SCORE_B:
@@ -60,6 +62,7 @@ def experiment(init):
     sub_cols = np.vstack((a_sub, b_sub))
     sup_cols = np.vstack((a_sup, b_sup))
     y = np.hstack((sub_cols, sup_cols))
+    y = np.random.permutation(y)
     #
     torch_x = torch.from_numpy(x.astype(np.float32))
     torch_y = torch.from_numpy(y.astype(np.float32))
@@ -69,9 +72,6 @@ def experiment(init):
     gold_sim_mat_b = np.rint(cosine_similarity(y[-input_size_b:]))
 
     # net
-
-    # TODO use 2 layer network
-
     output_size = y.shape[1]
     if init == 'random':
         w1 = np.random.standard_normal(size=(input_size, HIDDEN_SIZE)) * SCALE_WEIGHTS
@@ -79,6 +79,9 @@ def experiment(init):
         w1 = make_superordinate_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
     elif init == 'identical':
         w1 = make_identical_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
+    elif init == 'linear':  # each item is assigned same weight vector with linear transformation
+        w1 = make_identical_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
+        w1 += np.tile(np.linspace(0, 1, num=w1.shape[0])[:, np.newaxis], (1, w1.shape[1]))
     else:
         raise AttributeError('Invalid arg to "init".')
     net = Net(input_size=input_size,
@@ -102,11 +105,16 @@ def experiment(init):
     eval_epoch_idx = 0
     score_trajectory_a = np.ones(num_eval_epochs)
     score_trajectory_b = np.ones(num_eval_epochs)
-    for i in range(NUM_EPOCHS):
+    for i in range(NUM_EPOCHS + 1):
         # eval
         if i % EVAL_INTERVAL == 0:
             print('Evaluating at epoch {}'.format(i))
-            prediction_mat = torch_o.detach().numpy()
+            if REPRESENTATION == 'output':
+                prediction_mat = torch_o.detach().numpy()
+            elif REPRESENTATION == 'hidden':
+                prediction_mat = net.linear1(torch_x).detach().numpy()
+            else:
+                raise AttributeError('Invalid arg to "REPRESENTATION".')
             sim_mat_a = cosine_similarity(prediction_mat[:input_size_a])
             sim_mat_b = cosine_similarity(prediction_mat[-input_size_b:])
             score_a = calc_cluster_score(sim_mat_a, gold_sim_mat_a, CLUSTER_METRIC) if eval_score_a else 1.0
@@ -115,7 +123,8 @@ def experiment(init):
             score_trajectory_b[eval_epoch_idx] = score_b
             eval_epoch_idx += 1
             #
-            print(prediction_mat.round(2))
+            print(prediction_mat[:input_size_a].round(3))
+            print(prediction_mat[-input_size_b:].round(3))
             print(gold_sim_mat_a.round(1))
             print(sim_mat_a.round(4))
             print('{}_a={}'.format(CLUSTER_METRIC, score_a)) if EVAL_SCORE_A else None
@@ -143,7 +152,7 @@ def experiment(init):
 
 
 # get experimental results - returns tensor with shape = [NUM_REPS, 2, num_eval_epochs]
-init_conditions = ['identical', 'superordinate', 'random']
+init_conditions = ['linear', 'identical', 'random']
 results_1 = np.array([experiment(init=init_conditions[0]) for _ in range(NUM_REPS)])
 results_2 = np.array([experiment(init=init_conditions[1]) for _ in range(NUM_REPS)])
 results_3 = np.array([experiment(init=init_conditions[2]) for _ in range(NUM_REPS)])
