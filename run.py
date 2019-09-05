@@ -11,11 +11,12 @@ import torch.optim as optim
 
 VERBOSE = False
 
-SCALE_W1 = 0.1  # TODO
+SCALE_WEIGHTS = 1  # TODO test
 LEARNING_RATE = 1.0  # TODO test
-NUM_REPS = 20
-NUM_EPOCHS = 1000
-EVAL_INTERVAL = 200
+HIDDEN_SIZE = 8
+NUM_REPS = 3
+NUM_EPOCHS = 100
+EVAL_INTERVAL = 20
 CLUSTER_METRIC = 'ba'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
@@ -58,28 +59,33 @@ def experiment(init):
     b_sup = np.array([[0, 1]]).repeat(input_size_b, axis=0)
     sub_cols = np.vstack((a_sub, b_sub))
     sup_cols = np.vstack((a_sup, b_sup))
-    y = np.hstack((sub_cols, sup_cols)).astype(np.float32)
+    y = np.hstack((sub_cols, sup_cols))
     #
-    torch_x = torch.from_numpy(x)
-    torch_y = torch.from_numpy(y)
+    torch_x = torch.from_numpy(x.astype(np.float32))
+    torch_y = torch.from_numpy(y.astype(np.float32))
 
     # gold labels for category structure in A and B
-    gold_mat_a = np.matmul(y[:input_size_a], y[:input_size_a].T) - 1
-    gold_mat_b = np.matmul(y[-input_size_b:], y[-input_size_b:].T) - 1
+    gold_sim_mat_a = np.rint(cosine_similarity(y[:input_size_a]))
+    gold_sim_mat_b = np.rint(cosine_similarity(y[-input_size_b:]))
 
     # net
+
+    # TODO use 2 layer network
+
     output_size = y.shape[1]
     if init == 'random':
-        w1 = np.random.standard_normal(size=(input_size, output_size)) * SCALE_W1
+        w1 = np.random.standard_normal(size=(input_size, output_size)) * SCALE_WEIGHTS
     elif init == 'superordinate':
-        w1 = make_superordinate_w1(output_size, input_size_a, input_size_b) * SCALE_W1
+        w1 = make_superordinate_w1(output_size, input_size_a, input_size_b) * SCALE_WEIGHTS
     elif init == 'identical':
-        w1 = make_identical_w1(output_size, input_size_a, input_size_b) * SCALE_W1
+        w1 = make_identical_w1(output_size, input_size_a, input_size_b) * SCALE_WEIGHTS
     else:
         raise AttributeError('Invalid arg to "init".')
     net = Net(input_size=input_size,
+              hidden_size=HIDDEN_SIZE,
               output_size=output_size,
-              w1=w1)
+              w1=w1,
+              w2=np.random.standard_normal(size=(HIDDEN_SIZE, output_size)) * SCALE_WEIGHTS)
 
     # optimizer + criterion
     optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE)
@@ -103,17 +109,17 @@ def experiment(init):
             prediction_mat = torch_o.detach().numpy()
             sim_mat_a = cosine_similarity(prediction_mat[:input_size_a])
             sim_mat_b = cosine_similarity(prediction_mat[-input_size_b:])
-            score_a = calc_cluster_score(sim_mat_a, gold_mat_a, CLUSTER_METRIC) if eval_score_a else 1.0
-            score_b = calc_cluster_score(sim_mat_b, gold_mat_b, CLUSTER_METRIC) if eval_score_b else 1.0
+            score_a = calc_cluster_score(sim_mat_a, gold_sim_mat_a, CLUSTER_METRIC) if eval_score_a else 1.0
+            score_b = calc_cluster_score(sim_mat_b, gold_sim_mat_b, CLUSTER_METRIC) if eval_score_b else 1.0
             score_trajectory_a[eval_epoch_idx] = score_a
             score_trajectory_b[eval_epoch_idx] = score_b
             eval_epoch_idx += 1
             #
             print(prediction_mat.round(2))
-            print(gold_mat_a.round(1))
-            print(sim_mat_a.round(1))
-            print('{}_a={}'.format(CLUSTER_METRIC, score_a)) if eval_score_a else None
-            print('{}_b={}'.format(CLUSTER_METRIC, score_b)) if eval_score_b else None
+            print(gold_sim_mat_a.round(1))
+            print(sim_mat_a.round(4))
+            print('{}_a={}'.format(CLUSTER_METRIC, score_a)) if EVAL_SCORE_A else None
+            print('{}_b={}'.format(CLUSTER_METRIC, score_b)) if EVAL_SCORE_B else None
             print()
             #
             if score_a == 1.0:

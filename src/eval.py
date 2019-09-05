@@ -70,6 +70,7 @@ def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
     else:
         raise AttributeError('rnnlab: Invalid arg to "cluster_metric".')
     bo = BayesianOptimization(fun, {'thr': (0.0, 1.0)}, verbose=config.Eval.verbose)
+    bo.init_points.extend(config.Eval.eval_thresholds)
     bo.maximize(init_points=config.Eval.num_opt_init_steps, n_iter=config.Eval.num_opt_steps,
                 acq="poi", xi=config.Eval.xi, **gp_params)  # smaller xi: exploitation
     best_thr = bo.res['max']['max_params']['thr']
