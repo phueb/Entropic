@@ -14,8 +14,9 @@ VERBOSE = False
 SCALE_WEIGHTS = 1.0  # works with 1.0 but not with 0.01 or 0.1
 LEARNING_RATE = 1.0  # TODO vary
 HIDDEN_SIZE = 8
-NUM_REPS = 5
+NUM_REPS = 2
 NUM_EPOCHS = 1000
+IDX1_PROB = 1.0  # probability of sampling from y1 relative to y2 (if None, use both)
 
 EVAL_INTERVAL = 200
 CLUSTER_METRIC = 'ba'
@@ -23,7 +24,7 @@ REPRESENTATION = 'output'
 
 NUM_SUBORDINATE_CATS_IN_A = 3
 NUM_SUBORDINATE_CATS_IN_B = 3
-SUBORDINATE_SIZE = 4
+SUBORDINATE_SIZE = 3
 
 EVAL_SCORE_A = True
 EVAL_SCORE_B = False  # False to save time
@@ -52,6 +53,7 @@ def experiment(init):
     input_size_b = SUBORDINATE_SIZE * NUM_SUBORDINATE_CATS_IN_B
     input_size = input_size_a + input_size_b
     x = np.eye(input_size, dtype=np.float32)
+    torch_x = torch.from_numpy(x.astype(np.float32))
     # y
     a_sub = np.hstack((np.eye(NUM_SUBORDINATE_CATS_IN_A).repeat(SUBORDINATE_SIZE, axis=0),
                        np.zeros((input_size_a, NUM_SUBORDINATE_CATS_IN_A))))
@@ -61,15 +63,18 @@ def experiment(init):
     b_sup = np.array([[0, 1]]).repeat(input_size_b, axis=0)
     sub_cols = np.vstack((a_sub, b_sub))
     sup_cols = np.vstack((a_sup, b_sup))
-    y = np.hstack((sub_cols, sup_cols))
-    y = np.random.permutation(y)
-    #
-    torch_x = torch.from_numpy(x.astype(np.float32))
+    y1 = np.hstack((sub_cols, np.zeros((sup_cols.shape[0], sup_cols.shape[1]))))
+    y2 = np.hstack((np.zeros((sub_cols.shape[0], sub_cols.shape[1])), sup_cols))
+    y = y1 + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
     torch_y = torch.from_numpy(y.astype(np.float32))
 
     # gold labels for category structure in A and B
     gold_sim_mat_a = np.rint(cosine_similarity(y[:input_size_a]))
     gold_sim_mat_b = np.rint(cosine_similarity(y[-input_size_b:]))
+
+    # for probabilistic supervision - sample feedback from either y1 or y2
+    y1_ids = np.arange(y1.shape[0])
+    y2_ids = y1_ids + y1.shape[0]
 
     # net
     output_size = y.shape[1]
@@ -81,7 +86,8 @@ def experiment(init):
         w1 = make_identical_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
     elif init == 'linear':  # each item is assigned same weight vector with linear transformation
         w1 = make_identical_w1(HIDDEN_SIZE, input_size_a, input_size_b) * SCALE_WEIGHTS
-        w1 += np.tile(np.linspace(0, 1, num=w1.shape[0])[:, np.newaxis], (1, w1.shape[1]))
+        w1_delta = np.tile(np.linspace(0, 1, num=w1.shape[0])[:, np.newaxis], (1, w1.shape[1]))
+        w1 += np.random.permutation(w1_delta)  # permute otherwise linear transform will align with category structure
     else:
         raise AttributeError('Invalid arg to "init".')
     net = Net(input_size=input_size,
@@ -136,6 +142,13 @@ def experiment(init):
             if score_b == 1.0:
                 eval_score_b = False
 
+        # give feedback from either y1 or y2 but never together
+        if IDX1_PROB is not None:
+            row_ids = [idx1 if np.random.binomial(n=1, p=IDX1_PROB) else idx2
+                       for idx1, idx2 in zip(y1_ids, y2_ids)]
+            y = np.vstack((y1, y2))[row_ids]  # select rows from y1 or y2
+            torch_y = torch.from_numpy(y.astype(np.float32))
+
         # train
         optimizer.zero_grad()  # zero the gradient buffers
         torch_o = net(torch_x)
@@ -152,7 +165,7 @@ def experiment(init):
 
 
 # get experimental results - returns tensor with shape = [NUM_REPS, 2, num_eval_epochs]
-init_conditions = ['linear', 'identical', 'random']
+init_conditions = ['identical', 'linear', 'random']
 results_1 = np.array([experiment(init=init_conditions[0]) for _ in range(NUM_REPS)])
 results_2 = np.array([experiment(init=init_conditions[1]) for _ in range(NUM_REPS)])
 results_3 = np.array([experiment(init=init_conditions[2]) for _ in range(NUM_REPS)])
@@ -177,7 +190,7 @@ for n, cat_name in enumerate(cat_names):
             results_2.std(axis=0, keepdims=True)[:, n, :].squeeze(),
             results_3.std(axis=0, keepdims=True)[:, n, :].squeeze()]
     sems = [std / np.sqrt(NUM_REPS) for std in stds]
-    cis = [sem * t.ppf((1 + 0.95) / 2, n-1) for sem in sems]
+    cis = [sem * t.ppf(1 - 0.05/2, n-1) for sem in sems]
     fig = plot_trajectories(xs=xs,
                             ys=ys,
                             cis=stds,

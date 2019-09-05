@@ -20,6 +20,6 @@ def plot_trajectories(xs, ys, cis, labels, label_prefix, name,
         ax.fill_between(x, y + ci / 2, y - ci / 2, alpha=0.25, color=color)
         ax.plot(x, y, label=label_prefix + str(label), color=color)
         ax.scatter(x, y, color=color)
-
-    plt.legend(fontsize=config.Figs.leg_fs, frameon=False, loc='lower right', ncol=1)
+    #
+    plt.legend(fontsize=config.Figs.leg_fs, frameon=False, loc='best', ncol=1)
     return fig
