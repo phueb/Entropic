@@ -1,3 +1,4 @@
+PyYAML
 matplotlib
 pandas==0.23.4
 pyprind

@@ -1,3 +1,15 @@
+from pathlib import Path
+
+
+class RemoteDirs:
+    root = Path('/media/research_data') / 'InitExperiments'
+    runs = root / 'runs'
+
+
+class LocalDirs:
+    root = Path(__file__).parent.parent
+    src = root / 'init_experiments'
+    runs = root / '{}_runs'.format(src.name)
 
 
 class Eval:

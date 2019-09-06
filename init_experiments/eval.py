@@ -2,7 +2,7 @@ import numpy as np
 from bayes_opt import BayesianOptimization
 from functools import partial
 
-from src import config
+from init_experiments import config
 
 
 def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
