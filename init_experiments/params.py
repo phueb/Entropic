@@ -53,4 +53,5 @@ class Params(DefaultParams):
 
 
 # specify params to submit here
-partial_request = {'y2_noise': [[0, 0.5], [100, 0.5], [1000, 0.5]]}
+partial_request = {'y2_noise': [[0, 0.5], [100, 0.5], [1000, 0.5]],
+                   'init': ['identical']}

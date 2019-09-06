@@ -22,12 +22,14 @@ class Data:
         self.x = self.make_x()
         self.torch_x = torch.from_numpy(self.x)
         #
-        self.sub_cols_template = self.make_sub_cols()  # subordinate category feedback
-        self.sup_cols_template = self.make_sup_cols()  # superordinate category feedback
-        self.sub_cols = self.sub_cols_template.copy()
-        self.sup_cols = self.sup_cols_template.copy()
-        self.y1 = np.hstack((self.sub_cols, np.zeros((self.sup_cols.shape[0], self.sup_cols.shape[1]))))
-        self.y2 = np.hstack((np.zeros((self.sub_cols.shape[0], self.sub_cols.shape[1])), self.sup_cols))
+        self.sub_cols_template = self.make_sub_cols().astype(np.float32)  # subordinate category feedback
+        self.sup_cols_template = self.make_sup_cols().astype(np.float32)  # superordinate category feedback
+        self.sub_cols = self.sub_cols_template.copy().astype(np.float32)
+        self.sup_cols = self.sup_cols_template.copy().astype(np.float32)
+        self.y1 = np.hstack((self.sub_cols,
+                             np.zeros((self.sup_cols.shape[0], self.sup_cols.shape[1])))).astype(np.float32)
+        self.y2 = np.hstack((np.zeros((self.sub_cols.shape[0], self.sub_cols.shape[1])),
+                             self.sup_cols)).astype(np.float32)
         self.y = self.y1 + self.y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
         self.output_size = self.y.shape[1]
 

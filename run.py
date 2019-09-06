@@ -5,7 +5,7 @@ from datetime import datetime
 
 from init_experiments import config
 from init_experiments.job import main
-from init_experiments.params import Params
+from init_experiments.params import DefaultParams, partial_request
 
 hostname = socket.gethostname()
 
@@ -30,7 +30,7 @@ def run_on_host():
     """
     from ludwigcluster.utils import list_all_param2vals
 
-    for param2val in list_all_param2vals(Params(), update_d={'param_name': 'param_test', 'job_name': 'job_test'}):
+    for param2val in list_all_param2vals(partial_request, DefaultParams(), update_d={'param_name': 'param_test', 'job_name': 'job_test'}):
         main(param2val)
         raise SystemExit('Finished running first job.\n'
                          'No further jobs will be run as results would be over-written')

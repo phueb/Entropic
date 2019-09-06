@@ -14,8 +14,7 @@ X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be list
 
 
-# request = {'init': ['random', 'superordinate', 'linear', 'identical'],
-#            'y2_noise': [[100, 0.0], [100, 0.5]]}
+partial_request = {'y2_noise': [[0, 0.5], [1000, 0.5]]} or partial_request
 
 
 # collect data
