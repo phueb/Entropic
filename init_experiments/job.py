@@ -16,7 +16,11 @@ from init_experiments.utils import to_eval_epochs
 
 def main(param2val):
 
-    params = ObjectView(param2val.copy())  # TODO fix reference
+    # params
+    params = ObjectView(param2val.copy())  # TODO fix reference - make the new object part of ludwigcluster (With method for printing)
+    for k, v in param2val.items():
+        print('{}={}'.format(k, v))
+    print()
     sys.stdout.flush()
 
     # data
@@ -47,7 +51,7 @@ def main(param2val):
             collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_o)
             eval_epoch_idx += 1
 
-        y = adjust_y(data, params).astype(np.float32)
+        y = adjust_y(data, params, epoch).astype(np.float32)
 
         # train
         optimizer.zero_grad()  # zero the gradient buffers
@@ -66,6 +70,11 @@ def main(param2val):
     eval_epochs = to_eval_epochs(params)
     df_a = pd.DataFrame(scores_a, index=eval_epochs, columns=[config.Eval.metric])
     df_b = pd.DataFrame(scores_b, index=eval_epochs, columns=[config.Eval.metric])
+
+    if config.Eval.debug:
+        print(df_a)
+        print(df_b)
+        raise SystemExit('Debugging: Not saving results')
 
     # save data - do not create directory on shared drive until all results are available
     dst = config.RemoteDirs.runs / param2val['param_name'] / param2val['job_name']
@@ -86,9 +95,9 @@ def main(param2val):
             yaml.dump(param2val, f, default_flow_style=False, allow_unicode=True)
 
 
-def adjust_y(data, params):
-    # shuffle superordinate feedback   # TODO make this a function of epoch id
-    if params.y2_noise[0]:
+def adjust_y(data, params, epoch):
+    # shuffle superordinate feedback
+    if epoch < params.y2_noise[0]:
         is_noise_list = np.random.choice([True, False],
                                          p=[params.y2_noise[1], 1 - params.y2_noise[1]],
                                          size=data.input_size)
@@ -96,14 +105,19 @@ def adjust_y(data, params):
         sup_cols = np.take_along_axis(data.sup_cols_template, indices, axis=1)
         y2 = np.hstack((np.zeros((data.sub_cols.shape[0], data.sub_cols.shape[1])), sup_cols))
         y = data.y1 + y2
+
+        print(epoch)
+        print('adjusting y')
+        print(y)
+
     else:
         y2 = data.y2.copy()
         y = data.y.copy()
     # give feedback from either y1 or y2 but never together
-    if params.separate_feedback[0]:
+    if epoch < params.separate_feedback[0]:
         row_ids = [idx1 if np.random.binomial(n=1, p=params.separate_feedback[1]) else idx2
                    for idx1, idx2 in zip(data.y1_ids, data.y2_ids)]
-        y = np.vstack((data.y1, y2))[row_ids].astype(np.float32)  # select rows from y1 or y2
+        y = np.vstack((data.y1, y2))[row_ids].astype(np.float32)  # select rows from y1 OR y2
     return y
 
 

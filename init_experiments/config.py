@@ -22,7 +22,9 @@ class Eval:
     score_b = False
     metric = 'ba'
     start_epoch = 10
-    num_evals = 20
+    num_evals = 10
+
+    debug = False
 
     if not score_a and not score_b:
         raise SystemExit('config.Eval.score_a and config.Eval.score_b are set to False')

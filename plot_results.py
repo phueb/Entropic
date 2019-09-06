@@ -11,16 +11,14 @@ from ludwigcluster.utils import list_all_param2vals
 LOCAL = False
 
 CAT = '*'  # A, B or *
-X_LIMS = [[0, 5000]]  # zoom in on particular vertical region of plot
+X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
 
 
 default_dict = MatchParams.__dict__.copy()
-default_dict['y2_feedback'] = 'setting this to a random string ensures that it shows up in legend'
+default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
 
 MatchParams.init = ['random', 'superordinate', 'linear', 'identical']
-MatchParams.y2_feedback = [True]
-MatchParams.representation = ['hidden']
-MatchParams.scale_weights = [1.0]
+MatchParams.y2_noise = [[100, 0.0], [0, 0.0]]
 
 
 def gen_param_ps(param2requested, param2default):
