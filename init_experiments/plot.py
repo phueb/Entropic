@@ -4,7 +4,7 @@ import numpy as np
 from init_experiments import config
 
 
-def plot_trajectories(summary_data, y_label, ylim, figsize=(6, 6), options=''):
+def plot_trajectories(summary_data, y_label, ylim, xlim, figsize=(6, 6), options=''):
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(options, fontsize=config.Figs.title_label_fs)
     ax.set_xlabel('epoch', fontsize=config.Figs.axis_fs)
@@ -13,6 +13,7 @@ def plot_trajectories(summary_data, y_label, ylim, figsize=(6, 6), options=''):
     ax.spines['top'].set_visible(False)
     ax.tick_params(axis='both', which='both', top=False, right=False)
     ax.set_ylim([ylim[0], ylim[1] + 0.05])
+    ax.set_xlim(xlim)
     #
     colors = iter(['C0', 'C1', 'C2', 'C4'])
     for x, y, me, label, n in summary_data:

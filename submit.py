@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # parse cmd-line args
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--reps', default=2, action='store', dest='reps', type=int,
-                        choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], required=False,
+                        choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50], required=False,
                         help='Number of replications to train per hyper-param configuration')
     parser.add_argument('-w', '--worker', default=None, action='store', dest='worker',
                         choices=SFTP.worker_names, required=False,

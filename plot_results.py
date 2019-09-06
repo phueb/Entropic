@@ -10,12 +10,14 @@ from ludwigcluster.utils import list_all_param2vals
 
 LOCAL = False
 
+X_LIMS = [[0, 100], [0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
+
 
 default_dict = MatchParams.__dict__.copy()
 default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
 
-MatchParams.init = ['random']
-MatchParams.y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0], [False, 0.1]]
+MatchParams.init = ['identical']
+MatchParams.y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0]]
 
 
 def gen_param_ps(param2requested, param2default):
@@ -66,13 +68,15 @@ for param_p, label in gen_param_ps(MatchParams, default_dict):
     print('--------------------- END {}\n\n'.format(param_p.name))
 
 # sort data
-summary_data = sorted(summary_data, key=lambda data: data[1][-1], reverse=True)
+summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
 if not summary_data:
     raise SystemExit('No data found')
 
 # plot
-fig = plot_trajectories(summary_data,
-                        y_label=config.Eval.metric,  # is averaged over cat A and B
-                        ylim=[0.5, 1.0] if config.Eval.metric in ['ba', 'fs'] else [0.0, 1.0],
-                        figsize=(6, 6))
-fig.show()
+for xlim in X_LIMS:
+    fig = plot_trajectories(summary_data,
+                            y_label=config.Eval.metric,  # is averaged over cat A and B
+                            xlim=xlim,
+                            ylim=[0.5, 1.0] if config.Eval.metric in ['ba', 'fs'] else [0.0, 1.0],
+                            figsize=(6, 6))
+    fig.show()
