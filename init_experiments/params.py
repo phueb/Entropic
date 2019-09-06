@@ -6,7 +6,7 @@ class ObjectView(object):
 
 
 class Params:
-    init = ['identical', 'linear', 'random']
+    init = ['identical', 'linear', 'superordinate', 'random']
     scale_weights = [1.0]  # works with 1.0 but not with 0.01 or 0.1
     lr = [1.0]
     hidden_size = [8]

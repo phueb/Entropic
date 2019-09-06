@@ -1,7 +1,6 @@
-import numpy as np
-from scipy.stats import t
 import pandas as pd
 import yaml
+from scipy import stats
 
 from init_experiments.plot import plot_trajectories
 from init_experiments import config
@@ -15,7 +14,7 @@ LOCAL = False
 default_dict = MatchParams.__dict__.copy()
 default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
 
-MatchParams.init = ['identical', 'random']
+MatchParams.init = ['identical', 'superordinate', 'linear', 'random']
 
 
 def gen_param_ps(param2requested, param2default):
@@ -55,18 +54,13 @@ for param_p, label in gen_param_ps(MatchParams, default_dict):
         dfs.append(df)
     param_df = frame = pd.concat(dfs, axis=1)
     print(param_df)
-
-    # TODO margin of error
-    # sem_trajs = [std_traj / np.sqrt(Params.num_reps) for std_traj in std_trajs]
-    # margins_of_error = [sem_traj * t.ppf(1 - 0.05 / 2, Params.num_reps - 1)
-    # for sem_traj in sem_trajs]  # 1/2 the length CI
-
     # summarize data
+    num_reps = param_df.shape[1]
     summary_data.append((param_df.index.values,
                          param_df.mean(axis=1).values,
-                         param_df.std(axis=1).values,
+                         param_df.sem(axis=1).values * stats.t.ppf(1 - 0.05 / 2, num_reps - 1),
                          label,
-                         param_df.shape[1]))
+                         num_reps))
     print('--------------------- END {}\n\n'.format(param_p.name))
 
 # sort data
