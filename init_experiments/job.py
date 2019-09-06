@@ -98,13 +98,13 @@ def adjust_y(data, params):
         y2 = np.hstack((np.zeros((data.sub_cols.shape[0], data.sub_cols.shape[1])), sup_cols))
         y = data.y1 + y2
     else:
-        y2 = None
-        y = data.y
+        y2 = data.y2.copy()
+        y = data.y.copy()
     # give feedback from either y1 or y2 but never together
     if params.separate_feedback[0]:
         row_ids = [idx1 if np.random.binomial(n=1, p=params.separate_feedback[1]) else idx2
                    for idx1, idx2 in zip(data.y1_ids, data.y2_ids)]
-        y = np.vstack((data.y1, y2 or data.y2))[row_ids].astype(np.float32)  # select rows from y1 or y2
+        y = np.vstack((data.y1, y2))[row_ids].astype(np.float32)  # select rows from y1 or y2
     return y
 
 

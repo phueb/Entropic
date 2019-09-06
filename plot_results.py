@@ -14,7 +14,8 @@ LOCAL = False
 default_dict = MatchParams.__dict__.copy()
 default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
 
-MatchParams.init = ['identical', 'superordinate', 'linear', 'random']
+MatchParams.init = ['random']
+MatchParams.y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0], [False, 0.1]]
 
 
 def gen_param_ps(param2requested, param2default):
@@ -35,6 +36,7 @@ def gen_param_ps(param2requested, param2default):
         del param2val['job_name']
         if param2val in match_param2vals:
             label = '\n'.join(['{}={}'.format(param, param2val[param]) for param in compare_params])
+            label += '\nn={}'.format(len(list(param_p.glob('*num*'))))
             print('Param2val matches')
             print(label)
             yield param_p, label

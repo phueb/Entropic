@@ -6,14 +6,14 @@ class ObjectView(object):
 
 
 class Params:
-    init = ['identical', 'linear', 'superordinate', 'random']
+    init = ['identical', 'random']
     scale_weights = [1.0]  # works with 1.0 but not with 0.01 or 0.1
     lr = [1.0]
     hidden_size = [8]
     num_epochs = [5 * 1000]
 
-    separate_feedback = [[True, 0.5]]  # probability of using only subordinate feedback for a single item
-    y2_noise = [[False, 0.1]]  # probability of switching the superordinate label for a single item
+    separate_feedback = [[True, 0.5]]  # P of using only subordinate feedback for a single item
+    y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0]]  # P of switching the superordinate label for a single item
 
     num_evals = [10]
     representation = ['output']
@@ -31,7 +31,7 @@ class DefaultParams:
     num_epochs = [5 * 1000]
 
     separate_feedback = [[True, 0.5]]  # probability of using only subordinate feedback for a single item
-    y2_noise = [[False, 0.1]]  # probability of switching the superordinate label for a single item
+    y2_noise = [[False, 0.0]]  # probability of switching the superordinate label for a single item
 
     num_evals = [10]
     representation = ['output']
