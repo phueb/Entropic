@@ -16,7 +16,7 @@ class Net(nn.Module):
 
         # custom weight init
         w1 = self.make_w1()
-        w2 = np.random.standard_normal(size=(params.hidden_size, data.output_size)) * params.scale_weights
+        w2 = np.random.standard_normal(size=(params.hidden_size, data.output_size))
         #
         torch_w1 = torch.from_numpy(w1.T.astype(np.float32))  # needs to be [output_size, input_size]
         torch_w2 = torch.from_numpy(w2.T.astype(np.float32))  # needs to be [output_size, input_size]

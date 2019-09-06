@@ -36,8 +36,8 @@ def main(param2val):
 
     # train loop
     eval_epoch_idx = 0
-    scores_a = np.zeros(params.num_evals)
-    scores_b = np.zeros(params.num_evals)
+    scores_a = np.zeros(config.Eval.num_evals)
+    scores_b = np.zeros(config.Eval.num_evals)
     eval_epochs = to_eval_epochs(params)
     for epoch in range(params.num_epochs + 1):
         # eval
@@ -47,7 +47,7 @@ def main(param2val):
             collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_o)
             eval_epoch_idx += 1
 
-        y = adjust_y(data, params)
+        y = adjust_y(data, params).astype(np.float32)
 
         # train
         optimizer.zero_grad()  # zero the gradient buffers

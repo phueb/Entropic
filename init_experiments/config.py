@@ -17,10 +17,12 @@ class Eval:
     num_opt_steps = 5
     xi = 0.01  # 0.01 is better than 0.05
     verbose = True
-    eval_thresholds = [[0.9999], [0.999], [0.99]]
+    eval_thresholds = [[0.9999], [0.999], [0.99], [0.9]]
     score_a = True
     score_b = False
     metric = 'ba'
+    start_epoch = 10
+    num_evals = 20
 
     if not score_a and not score_b:
         raise SystemExit('config.Eval.score_a and config.Eval.score_b are set to False')
