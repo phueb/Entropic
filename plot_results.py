@@ -10,14 +10,16 @@ from ludwigcluster.utils import list_all_param2vals
 
 LOCAL = False
 
+CAT = '*'  # A, B or *
 X_LIMS = [[0, 100], [0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
 
 
 default_dict = MatchParams.__dict__.copy()
 default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
 
-MatchParams.init = ['identical']
-MatchParams.y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0]]
+MatchParams.init = ['random', 'identical']
+# MatchParams.y2_noise = [[True, 0.0], [True, 0.5], [True, 1.0]]
+MatchParams.scale_weights = [1.0, 10.0]
 
 
 def gen_param_ps(param2requested, param2default):
@@ -51,7 +53,7 @@ summary_data = []
 for param_p, label in gen_param_ps(MatchParams, default_dict):
     # param_df
     dfs = []
-    for df_p in param_p.glob('*num*/results_*.csv'):
+    for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):
         print('Reading {}'.format(df_p.name))
         df = pd.read_csv(df_p, index_col=0)
         df.index.name = 'epoch'

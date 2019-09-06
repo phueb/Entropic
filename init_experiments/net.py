@@ -32,10 +32,6 @@ class Net(nn.Module):
         layer2_a = torch.sigmoid(layer2_z)
         return layer2_a
 
-    def make_identical_w1(self):
-        res = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size, 1))
-        return res
-
     def make_w1(self):
         if self.params.init == 'random':
             w1 = np.random.standard_normal(size=(self.data.input_size, self.params.hidden_size))
@@ -46,10 +42,10 @@ class Net(nn.Module):
             w1 = np.vstack((a, b))  # [num_items_in_a + num_items_in_b, num_cols]
         #
         elif self.params.init == 'identical':
-            w1 = self.make_identical_w1()
+            w1 = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size, 1))
         #
         elif self.params.init == 'linear':  # each item is assigned same weight vector with linear transformation
-            w1 = self.make_identical_w1()
+            w1 = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size, 1))
             w1_delta = np.tile(np.linspace(0, 1, num=w1.shape[0])[:, np.newaxis], (1, w1.shape[1]))
             w1 += np.random.permutation(
                 w1_delta)  # permute otherwise linear transform will align with category structure

@@ -16,8 +16,7 @@ from init_experiments.utils import to_eval_epochs
 
 def main(param2val):
 
-
-    params = ObjectView(param2val.copy())
+    params = ObjectView(param2val.copy())  # TODO fix reference
     sys.stdout.flush()
 
     # data

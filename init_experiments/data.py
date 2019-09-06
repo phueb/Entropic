@@ -43,6 +43,6 @@ class Data:
         return np.vstack((a_sub, b_sub))
 
     def make_sup_cols(self):
-        a_sup = np.array([[1, 0]]).repeat(self.input_size_a, axis=0)
-        b_sup = np.array([[0, 1]]).repeat(self.input_size_b, axis=0)
+        a_sup = np.array([[1, 0] if self.params.y2_feedback else [0, 0]]).repeat(self.input_size_a, axis=0)
+        b_sup = np.array([[0, 1] if self.params.y2_feedback else [0, 0]]).repeat(self.input_size_b, axis=0)
         return np.vstack((a_sup, b_sup))
