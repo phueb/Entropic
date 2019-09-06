@@ -5,7 +5,7 @@ from ludwigcluster.config import SFTP
 from ludwigcluster.utils import list_all_param2vals
 
 from init_experiments import config
-from init_experiments.params import Params
+from init_experiments.params import partial_request, DefaultParams
 
 
 if __name__ == '__main__':
@@ -31,11 +31,12 @@ if __name__ == '__main__':
     if namespace.preprocess:
         raise NotImplementedError
 
-    # make list of hyperparameter configurations to submit
     if namespace.debug:
         print('WARNING: Debugging is on.')
-        Params.num_partitions = [2]
-    param2val_list = list_all_param2vals(Params)
+
+    # make list of hyper-parameter configurations to submit
+    default_params = DefaultParams()
+    param2val_list = list_all_param2vals(partial_request, default_params)
 
     SFTP.worker_names = SFTP.worker_names  # use this to specify workers (in case one is offline)
 

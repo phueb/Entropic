@@ -1,55 +1,27 @@
 import pandas as pd
-import yaml
 from scipy import stats
 
 from init_experiments.plot import plot_trajectories
 from init_experiments import config
-from init_experiments.params import DefaultParams as MatchParams
+from init_experiments.params import DefaultParams, partial_request
 
-from ludwigcluster.utils import list_all_param2vals
+from ludwigcluster.utils import gen_param_ps
 
 LOCAL = False
 
 CAT = '*'  # A, B or *
 X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
+LABEL_PARAMS = ['init']  # must be list
 
 
-default_dict = MatchParams.__dict__.copy()
-default_dict['init'] = 'setting this to a random string ensures that it shows up in legend'
-
-MatchParams.init = ['random', 'superordinate', 'linear', 'identical']
-MatchParams.y2_noise = [[100, 0.0], [0, 0.0]]
-
-
-def gen_param_ps(param2requested, param2default):
-    compare_params = [param for param, val in param2requested.__dict__.items()
-                      if val != param2default[param]]
-
-    runs_p = config.LocalDirs.runs.glob('*') if LOCAL else config.RemoteDirs.runs.glob('param_*')
-    if LOCAL:
-        print('WARNING: Looking for runs locally')
-
-    for param_p in runs_p:
-        print('Checking {}...'.format(param_p))
-        with (param_p / 'param2val.yaml').open('r') as f:
-            param2val = yaml.load(f, Loader=yaml.FullLoader)
-        param2val = param2val.copy()
-        match_param2vals = list_all_param2vals(param2requested, add_names=False)
-        del param2val['param_name']
-        del param2val['job_name']
-        if param2val in match_param2vals:
-            label = '\n'.join(['{}={}'.format(param, param2val[param]) for param in compare_params])
-            label += '\nn={}'.format(len(list(param_p.glob('*num*'))))
-            print('Param2val matches')
-            print(label)
-            yield param_p, label
-        else:
-            print('Params do not match')
+# request = {'init': ['random', 'superordinate', 'linear', 'identical'],
+#            'y2_noise': [[100, 0.0], [100, 0.5]]}
 
 
 # collect data
+runs_p = config.LocalDirs.runs.glob('*') if LOCAL else config.RemoteDirs.runs.glob('param_*')
 summary_data = []
-for param_p, label in gen_param_ps(MatchParams, default_dict):
+for param_p, label in gen_param_ps(partial_request, DefaultParams(), runs_p, LABEL_PARAMS):
     # param_df
     dfs = []
     for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):

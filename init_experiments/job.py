@@ -7,7 +7,7 @@ import yaml
 import pandas as pd
 
 from init_experiments.data import Data
-from init_experiments.params import ObjectView
+from init_experiments.params import Params
 from init_experiments import config
 from init_experiments.eval import calc_cluster_score
 from init_experiments.net import Net
@@ -17,10 +17,8 @@ from init_experiments.utils import to_eval_epochs
 def main(param2val):
 
     # params
-    params = ObjectView(param2val.copy())  # TODO fix reference - make the new object part of ludwigcluster (With method for printing)
-    for k, v in param2val.items():
-        print('{}={}'.format(k, v))
-    print()
+    params = Params(param2val)
+    print(params)
     sys.stdout.flush()
 
     # data
@@ -36,6 +34,8 @@ def main(param2val):
     # eval before start of training
     net.eval()
     torch_o = net(data.torch_x)
+    torch_y = torch.from_numpy(data.y)
+    loss = criterion(torch_o, torch_y)
     net.train()
 
     # train loop
@@ -46,10 +46,15 @@ def main(param2val):
     for epoch in range(params.num_epochs + 1):
         # eval
         if epoch in eval_epochs:
+            # cluster score
             print('Evaluating at epoch {}'.format(epoch))
-            sys.stdout.flush()
             collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_o)
             eval_epoch_idx += 1
+            # mse
+            mse = loss.detach().numpy().item()
+            print('mse={}'.format(mse))
+            print()
+            sys.stdout.flush()
 
         y = adjust_y(data, params, epoch).astype(np.float32)
 
@@ -60,11 +65,6 @@ def main(param2val):
         loss = criterion(torch_o, torch_y)  # compute loss
         loss.backward()  # back-propagate
         optimizer.step()  # update
-
-        # mse
-        if epoch in eval_epochs:
-            mse = loss.detach().numpy().item()
-            print('mse={}'.format(mse))
 
     # to pandas
     eval_epochs = to_eval_epochs(params)
@@ -107,7 +107,7 @@ def adjust_y(data, params, epoch):
         y = data.y1 + y2
 
         print(epoch)
-        print('adjusting y')
+        print('adjusting y')  # TODO test
         print(y)
 
     else:
