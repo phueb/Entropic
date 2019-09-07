@@ -2,7 +2,6 @@ import argparse
 
 from ludwigcluster.client import Client
 from ludwigcluster.config import SFTP
-from ludwigcluster.utils import list_all_param2vals
 
 from init_experiments import config
 from init_experiments.params import param2requests, param2default
@@ -17,6 +16,9 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--worker', default=None, action='store', dest='worker',
                         choices=SFTP.worker_names, required=False,
                         help='Specify a single worker name if submitting to single worker only')
+
+    # TODO add option to specify multiple workers
+
     parser.add_argument('-s', '--skip_data', default=False, action='store_true', dest='skip_data', required=False,
                         help='Whether or not to skip uploading data to file-server. ')
     parser.add_argument('-t', '--test', action='store_true', dest='test', required=False,
@@ -34,17 +36,12 @@ if __name__ == '__main__':
     if namespace.debug:
         print('WARNING: Debugging is on.')
 
-    # make list of hyper-parameter configurations to submit
-    param2val_list = list_all_param2vals(param2requests, param2default)
-
-    SFTP.worker_names = SFTP.worker_names  # use this to specify workers (in case one is offline)
-
     # submit to cluster
     data_dirs = [] if not namespace.skip_data else []  # this data is copied to file server not workers
-    client = Client(config.RemoteDirs.root.name)
+    client = Client(config.RemoteDirs.root.name, param2default)
     client.submit(src_ps=[config.LocalDirs.src],
                   data_ps=[config.LocalDirs.root / d for d in data_dirs],
-                  param2val_list=param2val_list,
+                  param2requests=param2requests,
                   reps=namespace.reps,
                   test=namespace.test,
                   worker=namespace.worker)

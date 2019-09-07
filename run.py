@@ -29,8 +29,9 @@ def run_on_cluster():
 
         # write param2val to shared drive
         param2val_p = config.RemoteDirs.runs / param2val['param_name'] / 'param2val.yaml'
+        print('Saving param2val to:\n{}'.format(param2val_p))
         if not param2val_p.exists():
-            param2val_p['job_name'] = None
+            param2val['job_name'] = None
             with param2val_p.open('w', encoding='utf8') as f:
                 yaml.dump(param2val, f, default_flow_style=False, allow_unicode=True)
 

@@ -5,23 +5,23 @@ from init_experiments.plot import plot_trajectories
 from init_experiments import config
 from init_experiments.params import param2requests, param2default
 
-from ludwigcluster.utils import gen_param_ps
-
-LOCAL = False
+from ludwigcluster.client import Client
 
 CAT = '*'  # A, B or *
 X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be list
-VLINE = 100
+VLINE = 0
+LEG_LOC = 'lower right'
 
 
-param2requests = {'init': 'random'} or param2requests
+param2requests = {'separate_feedback': [[10, 0.0, 1.0], [100, 0.0, 1.0], [1000, 0.0, 1.0]],
+                  'init': ['identical']} or param2requests
 
 
 # collect data
-runs_p = config.LocalDirs.runs.glob('*') if LOCAL else config.RemoteDirs.runs.glob('param_*')
 summary_data = []
-for param_p, label in gen_param_ps(param2requests, param2default, runs_p, LABEL_PARAMS):
+client = Client(config.RemoteDirs.root.name, param2default)
+for param_p, label in client.gen_param_ps(param2requests, label_params=LABEL_PARAMS):
     # param_df
     dfs = []
     for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):
@@ -52,5 +52,6 @@ for xlim in X_LIMS:
                             xlim=xlim,
                             ylim=[0.5, 1.0] if config.Eval.metric in ['ba', 'fs'] else [0.0, 1.0],
                             figsize=(6, 6),
-                            vline=VLINE)
+                            vline=VLINE,
+                            leg_loc=LEG_LOC)
     fig.show()

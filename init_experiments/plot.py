@@ -5,7 +5,7 @@ from init_experiments import config
 
 
 def plot_trajectories(summary_data, y_label, ylim, xlim,
-                      figsize=(6, 6), options='', vline=None):
+                      figsize=(6, 6), options='', vline=None, leg_loc='best'):
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(options, fontsize=config.Figs.title_label_fs)
     ax.set_xlabel('epoch', fontsize=config.Figs.axis_fs)
@@ -16,7 +16,7 @@ def plot_trajectories(summary_data, y_label, ylim, xlim,
     ax.set_ylim([ylim[0], ylim[1] + 0.05])
     ax.set_xlim(xlim)
     #
-    colors = iter(['C0', 'C1', 'C2', 'C4'])
+    colors = iter(['C0', 'C1', 'C2', 'C4', 'C5', 'C6'])
     for x, y, me, label, n in summary_data:
         color = next(colors)
         ax.fill_between(x, np.clip(y + me, ylim[0], ylim[1]), y - me, alpha=0.25, color=color)
@@ -26,5 +26,5 @@ def plot_trajectories(summary_data, y_label, ylim, xlim,
     if vline is not None:
         ax.axvline(x=vline, linestyle=':', color='grey', zorder=1)
     #
-    plt.legend(fontsize=config.Figs.leg_fs, frameon=False, loc='best', ncol=1)
+    plt.legend(fontsize=config.Figs.leg_fs, frameon=False, loc=leg_loc, ncol=1)
     return fig
