@@ -80,7 +80,7 @@ def main(param2val):
             print()
             sys.stdout.flush()
 
-        y = data.make_y(epoch).astype(np.float32)
+        y = data.make_y(epoch)
 
         # train
         optimizer.zero_grad()  # zero the gradient buffers
@@ -122,8 +122,7 @@ def collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_
         if score == 1.0:
             scores[eval_epoch_idx:] = 1.0
         #
-        print(rep_mat[:data.input_size].round(3))
-        print(sim_mat_gold.round(1))
-        print(sim_mat.round(4))
-        print('{}_a={}'.format(config.Eval.metric, score)) if config.Eval.score_a else None
-        print()
+        # print(rep_mat[:data.input_size].round(3))
+        # print(sim_mat_gold.round(1))
+        # print(sim_mat.round(4))
+        # print('{}_a={}'.format(config.Eval.metric, score)) if config.Eval.score_a else None

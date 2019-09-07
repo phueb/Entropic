@@ -22,7 +22,7 @@ param2default = {
 
 
 # specify params to submit here
-param2requests = {'separate_feedback': [[10, 0.0, 1.0], [100, 0.0, 1.0], [1000, 0.0, 1.0]],
+param2requests = {'y2_feedback': [[10, 1.0, 0.0], [100, 1.0, 0.0], [1000, 1.0, 0.0]],
                   'init': ['random', 'identical']}
 
 

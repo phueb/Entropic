@@ -59,17 +59,23 @@ class Data:
         return res.astype(np.float32)
 
     def make_y(self, epoch):
-        raise NotImplementedError
+        print('Making y at epoch={}'.format(epoch))
+
+        y2 = self.y2_gold.copy()
 
         if epoch < self.params.y2_static_noise:
             indices = np.array([[1, 0] if np.random.binomial(n=1, p=p) else [0, 1]
                                 for p in self.rand_probs])
             sup_cols = np.take_along_axis(self.sup_cols_gold, indices, axis=1)
-            y2 = np.hstack((np.zeros((self.sub_cols_gold.shape[0], self.sub_cols_gold.shape[1])), sup_cols))
-            y = self.y1 + y2
+            y2 = np.hstack((np.zeros_like(self.sub_cols_gold), sup_cols))
 
+        if epoch < self.params.y2_feedback[0]:  # if no y2 feedback specified, provide uninformative y2 feedback
+            if not np.random.binomial(n=1, p=self.params.y2_feedback[1]):
+                y2 = np.roll(self.y1_gold, self.output_size // 2)
+        else:
+            if not np.random.binomial(n=1, p=self.params.y2_feedback[2]):
+                y2 = np.roll(self.y1_gold, self.output_size // 2)
 
-        # TODO
-        res = y1 + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
+        res = self.y1_gold + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
         return res.astype(np.float32)
 
