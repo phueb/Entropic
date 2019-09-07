@@ -3,7 +3,7 @@ from scipy import stats
 
 from init_experiments.plot import plot_trajectories
 from init_experiments import config
-from init_experiments.params import DefaultParams, partial_request
+from init_experiments.params import param2requests, param2default
 
 from ludwigcluster.utils import gen_param_ps
 
@@ -15,14 +15,13 @@ LABEL_PARAMS = ['init']  # must be list
 VLINE = 100
 
 
-partial_request = {'y2_static_noise': [100, 0],
-                   'init': ['random']} or partial_request
+param2requests = {'init': 'random'} or param2requests
 
 
 # collect data
 runs_p = config.LocalDirs.runs.glob('*') if LOCAL else config.RemoteDirs.runs.glob('param_*')
 summary_data = []
-for param_p, label in gen_param_ps(partial_request, DefaultParams(), runs_p, LABEL_PARAMS):
+for param_p, label in gen_param_ps(param2requests, param2default, runs_p, LABEL_PARAMS):
     # param_df
     dfs = []
     for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):

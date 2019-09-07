@@ -1,11 +1,4 @@
 """
-y2_flip doesn't result in worse learning because it affects members of a superordinate consistently on average.
-each member has the same probability that superordinate feedback is switched from category A to B and vice versa.
-the point is that each member is equally affected and this similarity should push them closer together
-in representational space
-"""
-
-"""
 use only dictionaries to store parameters.
 ludwigcluster works on dictionaries and any custom class would force potentially unwanted logic on user.
 using non-standard classes here would also make it harder for user to understand.
@@ -21,7 +14,7 @@ param2default = {
     'hidden_size': 8,
     'num_epochs': 5 * 1000,
     'y2_feedback': True,
-    'separate_feedback': [0, 0.0],  # P of using only subordinate feedback for a single item
+    'separate_feedback': [0, 0.0, 0.0],  # [epoch, P(y1 vs. y2 before epoch), P(y1 vs. y2 feedback after epoch)
     'y2_flip': [0, 0.0],  # P of switching the superordinate label for a single item
     'y2_static_noise': 0,  # epoch before which to apply static noise to y2
     'representation': 'output',
@@ -32,5 +25,14 @@ param2default = {
 
 
 # specify params to submit here
-param2requests = {'y2_static_noise': [100, 0],
+param2requests = {'separate_feedback': [[10, 0.0, 1.0], [100, 0.0, 1.0], [1000, 0.0, 1.0]],
                   'init': ['random', 'identical']}
+
+
+"""
+NOTES:
+y2_flip doesn't result in worse learning because it affects members of a superordinate consistently on average.
+each member has the same probability that superordinate feedback is switched from category A to B and vice versa.
+the point is that each member is equally affected and this similarity should push them closer together
+in representational space
+"""
