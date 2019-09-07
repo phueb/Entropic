@@ -38,7 +38,8 @@ if __name__ == '__main__':
 
     # submit to cluster
     data_dirs = [] if not namespace.skip_data else []  # this data is copied to file server not workers
-    client = Client(config.RemoteDirs.root.name, param2default)
+    project_name = config.RemoteDirs.root.name
+    client = Client(project_name, param2default)
     client.submit(src_ps=[config.LocalDirs.src],
                   data_ps=[config.LocalDirs.root / d for d in data_dirs],
                   param2requests=param2requests,

@@ -1,8 +1,8 @@
 import argparse
 import pickle
 import socket
-import yaml
 from datetime import datetime
+import yaml
 
 from init_experiments import config
 from init_experiments.job import main
@@ -25,11 +25,25 @@ def run_on_cluster():
         assert config.RemoteDirs.runs.exists()  # this throws error if host is down
 
         # execute job
-        main(param2val)
+        dfs = main(param2val)  # name the returned dataframes using 'name' attribute
+
+        if config.Eval.debug:
+            for df in dfs:
+                print(df.name)
+                print(df)
+            raise SystemExit('Debugging: Not saving results')
+
+        # save dfs
+        dst = config.RemoteDirs.runs / param2val['param_name'] / param2val['job_name']
+        if not dst.exists():
+            dst.mkdir(parents=True)
+        for df in dfs:
+            with (dst / '{}.csv'.format(df.name)).open('w') as f:
+                df.to_csv(f, index=True)
 
         # write param2val to shared drive
         param2val_p = config.RemoteDirs.runs / param2val['param_name'] / 'param2val.yaml'
-        print('Saving param2val to:\n{}'.format(param2val_p))
+        print('Saving param2val to:\n{}\n'.format(param2val_p))
         if not param2val_p.exists():
             param2val['job_name'] = None
             with param2val_p.open('w', encoding='utf8') as f:
@@ -43,10 +57,12 @@ def run_on_host():
     """
     run jobs on the local host for testing/development
     """
-    from ludwigcluster.utils import list_all_param2vals
+    from ludwigcluster.client import Client
 
-    for param2val in list_all_param2vals(param2requests, param2default,
-                                         update_d={'param_name': 'param_test', 'job_name': 'job_test'}):
+    project_name = config.LocalDirs.src.name
+    client = Client(project_name, param2default)
+    for param2val in client.list_all_param2vals(param2requests,
+                                                update_d={'param_name': 'test', 'job_name': 'test'}):
         main(param2val)
         raise SystemExit('Finished running first job.\n'
                          'No further jobs will be run as results would be over-written')

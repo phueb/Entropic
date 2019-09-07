@@ -4,7 +4,7 @@ import torch
 
 class Data:
     """
-    structure of the data:
+    structure of the self:
     there are 2 superordinate categories (category A and B).
     each superordinate category contains NUM_SUBORDINATES subordinate categories.
     each subordinate category contains SUBORDINATE_SIZE items.
@@ -12,44 +12,64 @@ class Data:
 
     def __init__(self, params):
         self.params = params
-        self.input_size_a = self.params.subordinate_size * self.params.num_subordinate_cats_in_a
-        self.input_size_b = self.params.subordinate_size * self.params.num_subordinate_cats_in_b
-        self.input_size = self.input_size_a + self.input_size_b
+        self.input_size = 2 * self.params.subordinate_size * self.params.num_subordinate_cats
+        self.output_size = 2 * 2 * self.params.num_subordinate_cats  # a and b, y1 and y2 each have num_subordinate_cats
 
-        #
+        # x
         self.x = self.make_x()
         self.torch_x = torch.from_numpy(self.x)
-        #
-        self.sub_cols_template = self.make_sub_cols().astype(np.float32)  # subordinate category feedback
-        self.sup_cols_template = self.make_sup_cols().astype(np.float32)  # superordinate category feedback
-        self.sub_cols = self.sub_cols_template.copy().astype(np.float32)
-        self.sup_cols = self.sup_cols_template.copy().astype(np.float32)
-        self.y1 = np.hstack((self.sub_cols,
-                             np.zeros((self.sup_cols.shape[0], self.sup_cols.shape[1])))).astype(np.float32)
-        self.y2 = np.hstack((np.zeros((self.sub_cols.shape[0], self.sub_cols.shape[1])),
-                             self.sup_cols)).astype(np.float32)
-        self.y = self.y1 + self.y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
-        self.output_size = self.y.shape[1]
+
+        # y
+        self.sub_cols_gold = self.make_sub_cols_gold()  # subordinate category feedback
+        self.sup_cols_gold = self.make_sup_cols_gold()  # superordinate category feedback
+        self.y1_gold = np.hstack((self.sub_cols_gold, np.zeros_like(self.sup_cols_gold)))
+        self.y2_gold = np.hstack((np.zeros_like(self.sub_cols_gold), self.sup_cols_gold))
+        assert self.y1_gold.shape[0] == self.input_size
+        assert self.y1_gold.shape[1] == self.output_size
+        assert self.y2_gold.shape[0] == self.input_size
+        assert self.y2_gold.shape[1] == self.output_size
+
+        self.y_gold = self.y1_gold + self.y2_gold
+        assert np.sum(self.y_gold) == 2 * self.input_size  # each item is associated with sub and superordinate label
 
         # use with params.y2_static_noise
         self.rand_probs = np.random.rand(self.input_size)
-
-        # for probabilistic supervision - sample feedback from either y1 or y2
-        self.y1_ids = np.arange(self.input_size)
-        self.y2_ids = self.y1_ids + self.input_size
 
     def make_x(self):
         x = np.eye(self.input_size, dtype=np.float32)
         return x
 
-    def make_sub_cols(self):
-        a_sub = np.hstack((np.eye(self.params.num_subordinate_cats_in_a).repeat(self.params.subordinate_size, axis=0),
-                           np.zeros((self.input_size_a, self.params.num_subordinate_cats_in_a))))
-        b_sub = np.hstack((np.zeros((self.input_size_b, self.params.num_subordinate_cats_in_b)),
-                           np.eye(self.params.num_subordinate_cats_in_b).repeat(self.params.subordinate_size, axis=0)))
-        return np.vstack((a_sub, b_sub))
+    def make_sub_cols_gold(self):
+        res = np.repeat(np.eye(2 * self.params.num_subordinate_cats), self.params.subordinate_size, axis=0)
 
-    def make_sup_cols(self):
-        a_sup = np.array([[1, 0] if self.params.y2_feedback else [0, 0]]).repeat(self.input_size_a, axis=0)
-        b_sup = np.array([[0, 1] if self.params.y2_feedback else [0, 0]]).repeat(self.input_size_b, axis=0)
-        return np.vstack((a_sup, b_sup))
+        assert res.shape[0] == self.input_size
+        assert res.shape[1] == self.output_size // 2
+
+        return res.astype(np.float32)
+
+    def make_sup_cols_gold(self):
+
+        res = np.zeros((self.input_size, 2 * self.params.num_subordinate_cats))
+        res[:, 0] = np.array([[1], [0]]).repeat(self.input_size // 2)
+        res[:, 1] = np.array([[0], [1]]).repeat(self.input_size // 2)
+
+        assert res.shape[0] == self.input_size
+        assert res.shape[1] == self.output_size // 2
+
+        return res.astype(np.float32)
+
+    def make_y(self, epoch):
+        raise NotImplementedError
+
+        if epoch < self.params.y2_static_noise:
+            indices = np.array([[1, 0] if np.random.binomial(n=1, p=p) else [0, 1]
+                                for p in self.rand_probs])
+            sup_cols = np.take_along_axis(self.sup_cols_gold, indices, axis=1)
+            y2 = np.hstack((np.zeros((self.sub_cols_gold.shape[0], self.sub_cols_gold.shape[1])), sup_cols))
+            y = self.y1 + y2
+
+
+        # TODO
+        res = y1 + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
+        return res.astype(np.float32)
+

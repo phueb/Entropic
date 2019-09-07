@@ -37,8 +37,8 @@ class Net(nn.Module):
             w1 = np.random.standard_normal(size=(self.data.input_size, self.params.hidden_size))
         #
         elif self.params.init == 'superordinate':
-            a = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size_a, 1))
-            b = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size_b, 1))
+            a = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size, 1))
+            b = np.tile(np.random.standard_normal(size=(1, self.params.hidden_size)), (self.data.input_size, 1))
             w1 = np.vstack((a, b))  # [num_items_in_a + num_items_in_b, num_cols]
         #
         elif self.params.init == 'identical':
