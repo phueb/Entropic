@@ -3,7 +3,7 @@ from scipy import stats
 
 from init_experiments.plot import plot_trajectories
 from init_experiments import config
-from init_experiments.params import param2default
+from init_experiments.params import param2default, param2requests
 
 from ludwigcluster.client import Client
 
@@ -13,9 +13,6 @@ LABEL_PARAMS = ['init']  # must be a list
 VLINE = 0
 LEG_LOC = 'lower right'
 
-
-param2requests = {'y2_gold_on': [[5000, 1.0, 0.0], [5000, 0.0, 1.0]],
-                  'init': ['random']}
 
 # collect data
 summary_data = []

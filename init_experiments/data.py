@@ -4,10 +4,13 @@ import torch
 
 class Data:
     """
-    structure of the self:
+    structure of the data:
     there are 2 superordinate categories (category A and B).
     each superordinate category contains NUM_SUBORDINATES subordinate categories.
     each subordinate category contains SUBORDINATE_SIZE items.
+
+    y1 has subordinate category feedback
+    y2 has superordinate category feedback
     """
 
     def __init__(self, params):
@@ -62,27 +65,33 @@ class Data:
 
     def make_y(self, epoch):
 
-
         # TODO test
 
-        # at each update step, chose randomly between two y2 feedback options:
         # y2_random results in worst performance (no similarity between members of same subordinate
         # y2_subordinates_identical results in best performance (max similarity between members of same subordinate)
         # do not simply create a random y2 matrix because members of same subordinate are exposed to same statistics
         # which makes representations between members of same subordinate more similar
+        # instead, flip between two feedback modes
+        # this simulates that a word often appears in the correct superordinate (noun) context and
+        # often appears in one different superordinate (e.g. verb or adjective) context
 
-        # this creates y2 by choosing randomly a row from either y2_random or y2_subordinates_identical
-        rand_ints = np.random.random_integers(0, 1, size=self.input_size)
-        y2 = np.matmul(np.diag(rand_ints - 0), self.y2_random) + \
-             np.matmul(np.diag(1 - rand_ints), self.y2_subordinates_identical)
-
-        if epoch < self.params.y2_gold_on[0]:  # if y2 is turned on, gold (superordinate) feedback is given
-            if np.random.binomial(n=1, p=self.params.y2_gold_on[1]):
-                y2 = self.y2_gold.copy()
+        if epoch < self.params.y2_gold_on[0]:
+            gold_prob = self.params.y2_gold_on[1]
         else:
-            if np.random.binomial(n=1, p=self.params.y2_gold_on[2]):
-                y2 = self.y2_gold.copy()
+            gold_prob = self.params.y2_gold_on[2]
 
-        res = self.y1_gold + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
+        y2 = self.chose_y2_rows(gold_prob)
+
+        res = self.y1_gold + y2
         return res.astype(np.float32)
 
+    def chose_y2_rows(self, gold_prob):
+        """
+        return matrix by choosing randomly rows from y2_random and y2_gold
+        """
+        rand_ints = np.random.choice([1, 0],
+                                     p=[gold_prob, 1 - gold_prob],
+                                     size=self.input_size)
+        res = np.matmul(np.diag(rand_ints - 0), self.y2_gold) + \
+              np.matmul(np.diag(1 - rand_ints), self.y2_random)  # gold has to be first
+        return res

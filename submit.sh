@@ -13,5 +13,8 @@ python submit.py -r50 -s
 deactivate
 echo "Submission completed"
 
-sleep 5
+sleep 2
 tail -n 10 /media/research_data/stdout/*.out
+
+
+# watch -n1 "cd /media/research_data/InitExperiments/runs; find .  -name *.csv | wc -l"
