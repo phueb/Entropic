@@ -12,7 +12,8 @@ class Data:
 
     def __init__(self, params):
         self.params = params
-        self.input_size = 2 * self.params.subordinate_size * self.params.num_subordinate_cats
+        self.superordinate_size = self.params.subordinate_size * self.params.num_subordinate_cats
+        self.input_size = 2 * self.superordinate_size
         self.output_size = 2 * 2 * self.params.num_subordinate_cats  # a and b, y1 and y2 each have num_subordinate_cats
 
         # x
@@ -29,8 +30,13 @@ class Data:
         assert self.y2_gold.shape[0] == self.input_size
         assert self.y2_gold.shape[1] == self.output_size
 
-        self.y_gold = self.y1_gold + self.y2_gold
-        assert np.sum(self.y_gold) == 2 * self.input_size  # each item is associated with sub and superordinate label
+        # improves learning because each subordinate is made more similar
+        self.y2_subordinates_identical = np.roll(self.y1_gold, self.output_size // 2)
+
+        # a baseline (random) condition which should not help learning
+        self.y2_random = np.random.permutation(self.y1_gold)
+
+        assert np.sum(self.y1_gold + self.y2_gold) == 2 * self.input_size  # each item has sub and super ordinate cat
 
         # use with params.y2_static_noise
         self.rand_probs = np.random.rand(self.input_size)
@@ -59,22 +65,21 @@ class Data:
         return res.astype(np.float32)
 
     def make_y(self, epoch):
-        print('Making y at epoch={}'.format(epoch))
 
-        y2 = self.y2_gold.copy()
+        y2 = self.y2_random.copy()  # permuted y2 feedback is given by default
 
-        if epoch < self.params.y2_static_noise:
+        if epoch < self.params.y2_static_noise:  # TODO update to take advantage of larger number of sup cols
             indices = np.array([[1, 0] if np.random.binomial(n=1, p=p) else [0, 1]
                                 for p in self.rand_probs])
-            sup_cols = np.take_along_axis(self.sup_cols_gold, indices, axis=1)
+            sup_cols = np.take_along_axis(self.sup_cols_gold, indices, axis=1)  # copies data (as it should)
             y2 = np.hstack((np.zeros_like(self.sub_cols_gold), sup_cols))
 
-        if epoch < self.params.y2_feedback[0]:  # if no y2 feedback specified, provide uninformative y2 feedback
-            if not np.random.binomial(n=1, p=self.params.y2_feedback[1]):
-                y2 = np.roll(self.y1_gold, self.output_size // 2)
+        if epoch < self.params.y2_gold_on[0]:  # if y2 is turned on, gold (superordinate) feedback is given
+            if np.random.binomial(n=1, p=self.params.y2_gold_on[1]):
+                y2 = self.y2_gold.copy()
         else:
-            if not np.random.binomial(n=1, p=self.params.y2_feedback[2]):
-                y2 = np.roll(self.y1_gold, self.output_size // 2)
+            if np.random.binomial(n=1, p=self.params.y2_gold_on[2]):
+                y2 = self.y2_gold.copy()
 
         res = self.y1_gold + y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
         return res.astype(np.float32)

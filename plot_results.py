@@ -3,20 +3,19 @@ from scipy import stats
 
 from init_experiments.plot import plot_trajectories
 from init_experiments import config
-from init_experiments.params import param2requests, param2default
+from init_experiments.params import param2default
 
 from ludwigcluster.client import Client
 
 CAT = '*'  # A, B or *
-X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
-LABEL_PARAMS = ['init']  # must be list
-VLINE = 0
+X_LIMS = [[0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
+LABEL_PARAMS = ['init']  # must be a list
+VLINE = 1000
 LEG_LOC = 'lower right'
 
 
-param2requests = {'separate_feedback': [[10, 0.0, 1.0], [100, 0.0, 1.0], [1000, 0.0, 1.0]],
-                  'init': ['identical']} or param2requests
-
+param2requests = {'y2_gold_on': [[5000, 1.0, 0.0], [5000, 0.0, 1.0]],
+                  'init': ['random']}
 
 # collect data
 summary_data = []

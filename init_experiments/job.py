@@ -82,6 +82,10 @@ def main(param2val):
 
         y = data.make_y(epoch)
 
+        # TODO debug
+        print(epoch)
+        print(y)
+
         # train
         optimizer.zero_grad()  # zero the gradient buffers
         torch_o = net(data.torch_x)  # feed-forward
@@ -101,16 +105,18 @@ def main(param2val):
 
 
 def collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_o):
-    # rep_mat_a_b
+    # rep_mat
     if params.representation == 'output':
-        rep_mat_a_b = torch_o.detach().numpy()  # TODO make gif of evolving prediction mat
+        rep_mat = torch_o.detach().numpy()  # TODO make gif of evolving prediction mat
     elif params.representation == 'hidden':
-        rep_mat_a_b = net.linear1(data.torch_x).detach().numpy()
+        rep_mat = net.linear1(data.torch_x).detach().numpy()
     else:
         raise AttributeError('Invalid arg to "representation".')
     #
-    rep_mats = [rep_mat_a_b[:data.input_size], rep_mat_a_b[-data.input_size:]]
-    rep_mats_gold = [data.y_gold, data.y_gold]
+    rep_mats = [rep_mat[:data.superordinate_size],
+                rep_mat[-data.superordinate_size:]]
+    rep_mats_gold = [data.y1_gold[:data.superordinate_size],
+                     data.y1_gold[-data.superordinate_size:]]
     for scores, rep_mat, rep_mat_gold in zip([scores_a, scores_b], rep_mats, rep_mats_gold):
         if scores[max(0, eval_epoch_idx - 1)] == 1.0:
             continue
@@ -122,7 +128,7 @@ def collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_
         if score == 1.0:
             scores[eval_epoch_idx:] = 1.0
         #
-        # print(rep_mat[:data.input_size].round(3))
-        # print(sim_mat_gold.round(1))
-        # print(sim_mat.round(4))
-        # print('{}_a={}'.format(config.Eval.metric, score)) if config.Eval.score_a else None
+        print(rep_mat.round(3))
+        print(sim_mat_gold.round(1))
+        print(sim_mat.round(4))
+        print('{}={}'.format(config.Eval.metric, score)) if config.Eval.score_a else None

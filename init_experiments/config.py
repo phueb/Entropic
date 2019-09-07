@@ -22,7 +22,7 @@ class Eval:
     score_b = False
     metric = 'ba'
     start_epoch = 100
-    num_evals = 10
+    num_evals = 20
 
     debug = False
 
