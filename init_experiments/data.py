@@ -15,9 +15,7 @@ class Data:
         self.input_size_a = self.params.subordinate_size * self.params.num_subordinate_cats_in_a
         self.input_size_b = self.params.subordinate_size * self.params.num_subordinate_cats_in_b
         self.input_size = self.input_size_a + self.input_size_b
-        # for probabilistic supervision - sample feedback from either y1 or y2
-        self.y1_ids = np.arange(self.input_size)
-        self.y2_ids = self.y1_ids + self.input_size
+
         #
         self.x = self.make_x()
         self.torch_x = torch.from_numpy(self.x)
@@ -32,6 +30,13 @@ class Data:
                              self.sup_cols)).astype(np.float32)
         self.y = self.y1 + self.y2  # y1 has subordinate category feedback, y2 has superordinate category feedback
         self.output_size = self.y.shape[1]
+
+        # use with params.y2_static_noise
+        self.rand_probs = np.random.rand(self.input_size)
+
+        # for probabilistic supervision - sample feedback from either y1 or y2
+        self.y1_ids = np.arange(self.input_size)
+        self.y2_ids = self.y1_ids + self.input_size
 
     def make_x(self):
         x = np.eye(self.input_size, dtype=np.float32)

@@ -4,7 +4,8 @@ import numpy as np
 from init_experiments import config
 
 
-def plot_trajectories(summary_data, y_label, ylim, xlim, figsize=(6, 6), options=''):
+def plot_trajectories(summary_data, y_label, ylim, xlim,
+                      figsize=(6, 6), options='', vline=None):
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(options, fontsize=config.Figs.title_label_fs)
     ax.set_xlabel('epoch', fontsize=config.Figs.axis_fs)
@@ -21,6 +22,9 @@ def plot_trajectories(summary_data, y_label, ylim, xlim, figsize=(6, 6), options
         ax.fill_between(x, np.clip(y + me, ylim[0], ylim[1]), y - me, alpha=0.25, color=color)
         ax.plot(x, y, label=label, color=color)
         ax.scatter(x, y, color=color)
+    #
+    if vline is not None:
+        ax.axvline(x=vline, linestyle=':', color='grey', zorder=1)
     #
     plt.legend(fontsize=config.Figs.leg_fs, frameon=False, loc='best', ncol=1)
     return fig

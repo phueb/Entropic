@@ -3,15 +3,34 @@ import torch
 import sys
 from sklearn.metrics.pairwise import cosine_similarity
 from torch import optim as optim
-import yaml
 import pandas as pd
 
 from init_experiments.data import Data
-from init_experiments.params import Params
 from init_experiments import config
 from init_experiments.eval import calc_cluster_score
 from init_experiments.net import Net
 from init_experiments.utils import to_eval_epochs
+
+
+class Params:
+
+    def __init__(self, param2val):
+        self.param_name = param2val.pop('param_name')
+        self.job_name = param2val.pop('job_name')
+
+        self.param2val = param2val
+
+    def __getattr__(self, name):
+        if name in self.param2val:
+            return self.param2val[name]
+        else:
+            raise AttributeError('No such attribute')
+
+    def __str__(self):
+        res = ''
+        for k, v in sorted(self.param2val.items()):
+            res += '{}={}\n'.format(k, v)
+        return res
 
 
 def main(param2val):
@@ -28,14 +47,17 @@ def main(param2val):
     net = Net(params, data)
 
     # optimizer + criterion
+    # noinspection PyUnresolvedReferences
     optimizer = optim.SGD(net.parameters(), lr=params.lr)
     criterion = torch.nn.MSELoss()
 
     # eval before start of training
+    # noinspection PyUnresolvedReferences
     net.eval()
     torch_o = net(data.torch_x)
     torch_y = torch.from_numpy(data.y)
     loss = criterion(torch_o, torch_y)
+    # noinspection PyUnresolvedReferences
     net.train()
 
     # train loop
@@ -87,29 +109,24 @@ def main(param2val):
     with (dst / 'results_b.csv').open('w') as f:
         df_b.to_csv(f, index=True)
 
-    # write param2val to shared drive
-    param2val_p = config.RemoteDirs.runs / param2val['param_name'] / 'param2val.yaml'
-    if not param2val_p.exists():
-        param2val['job_name'] = None
-        with param2val_p.open('w', encoding='utf8') as f:
-            yaml.dump(param2val, f, default_flow_style=False, allow_unicode=True)
-
 
 def adjust_y(data, params, epoch):
     # shuffle superordinate feedback
-    if epoch < params.y2_noise[0]:
+    if epoch < params.y2_flip[0]:
         is_noise_list = np.random.choice([True, False],
-                                         p=[params.y2_noise[1], 1 - params.y2_noise[1]],
+                                         p=[params.y2_flip[1], 1 - params.y2_flip[1]],
                                          size=data.input_size)
         indices = np.array([[1, 0] if is_noise else [0, 1] for is_noise in is_noise_list])
         sup_cols = np.take_along_axis(data.sup_cols_template, indices, axis=1)
         y2 = np.hstack((np.zeros((data.sub_cols.shape[0], data.sub_cols.shape[1])), sup_cols))
         y = data.y1 + y2
 
-        print(epoch)
-        print('adjusting y')  # TODO test
-        print(y)
-
+    elif epoch < params.y2_static_noise:
+        indices = np.array([[1, 0] if np.random.binomial(n=1, p=p) else [0, 1]
+                            for p in data.rand_probs])
+        sup_cols = np.take_along_axis(data.sup_cols_template, indices, axis=1)
+        y2 = np.hstack((np.zeros((data.sub_cols.shape[0], data.sub_cols.shape[1])), sup_cols))
+        y = data.y1 + y2
     else:
         y2 = data.y2.copy()
         y = data.y.copy()

@@ -12,9 +12,11 @@ LOCAL = False
 CAT = '*'  # A, B or *
 X_LIMS = [[0, 100], [0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be list
+VLINE = 100
 
 
-partial_request = {'y2_noise': [[0, 0.5], [1000, 0.5]]} or partial_request
+partial_request = {'y2_static_noise': [100, 0],
+                   'init': ['random']} or partial_request
 
 
 # collect data
@@ -50,5 +52,6 @@ for xlim in X_LIMS:
                             y_label=config.Eval.metric,  # is averaged over cat A and B
                             xlim=xlim,
                             ylim=[0.5, 1.0] if config.Eval.metric in ['ba', 'fs'] else [0.0, 1.0],
-                            figsize=(6, 6))
+                            figsize=(6, 6),
+                            vline=VLINE)
     fig.show()
