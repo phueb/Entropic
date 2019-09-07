@@ -10,7 +10,7 @@ from ludwigcluster.client import Client
 CAT = '*'  # A, B or *
 X_LIMS = [[0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be a list
-VLINE = 1000
+VLINE = 0
 LEG_LOC = 'lower right'
 
 

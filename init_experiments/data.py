@@ -33,13 +33,9 @@ class Data:
         # improves learning because each subordinate is made more similar
         self.y2_subordinates_identical = np.roll(self.y1_gold, self.output_size // 2)
 
-        # a baseline (random) condition which should not help learning
         self.y2_random = np.random.permutation(self.y2_subordinates_identical)
 
         assert np.sum(self.y1_gold + self.y2_gold) == 2 * self.input_size  # each item has sub and super ordinate cat
-
-        # use with params.y2_static_noise
-        self.rand_probs = np.random.rand(self.input_size)
 
     def make_x(self):
         x = np.eye(self.input_size, dtype=np.float32)
@@ -66,13 +62,19 @@ class Data:
 
     def make_y(self, epoch):
 
-        y2 = self.y2_random.copy()  # permuted y2 feedback is given by default
 
-        if epoch < self.params.y2_static_noise:  # TODO update to take advantage of larger number of sup cols
-            indices = np.array([[1, 0] if np.random.binomial(n=1, p=p) else [0, 1]
-                                for p in self.rand_probs])
-            sup_cols = np.take_along_axis(self.sup_cols_gold, indices, axis=1)  # copies data (as it should)
-            y2 = np.hstack((np.zeros_like(self.sub_cols_gold), sup_cols))
+        # TODO test
+
+        # at each update step, chose randomly between two y2 feedback options:
+        # y2_random results in worst performance (no similarity between members of same subordinate
+        # y2_subordinates_identical results in best performance (max similarity between members of same subordinate)
+        # do not simply create a random y2 matrix because members of same subordinate are exposed to same statistics
+        # which makes representations between members of same subordinate more similar
+
+        # this creates y2 by choosing randomly a row from either y2_random or y2_subordinates_identical
+        rand_ints = np.random.random_integers(0, 1, size=self.input_size)
+        y2 = np.matmul(np.diag(rand_ints - 0), self.y2_random) + \
+             np.matmul(np.diag(1 - rand_ints), self.y2_subordinates_identical)
 
         if epoch < self.params.y2_gold_on[0]:  # if y2 is turned on, gold (superordinate) feedback is given
             if np.random.binomial(n=1, p=self.params.y2_gold_on[1]):

@@ -14,7 +14,6 @@ param2default = {
     'hidden_size': 8,
     'num_epochs': 5 * 1000,
     'y2_gold_on': [0, 0.0, 0.0],  # [epoch, P(y2 feedback before epoch), P(2 feedback after epoch)
-    'y2_static_noise': 0,  # epoch before which to apply static noise to y2
     'representation': 'output',
     'num_subordinate_cats': 3,
     'subordinate_size': 3
