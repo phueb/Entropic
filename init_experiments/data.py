@@ -34,7 +34,7 @@ class Data:
         self.y2_subordinates_identical = np.roll(self.y1_gold, self.output_size // 2)
 
         # a baseline (random) condition which should not help learning
-        self.y2_random = np.random.permutation(self.y1_gold)
+        self.y2_random = np.random.permutation(self.y2_subordinates_identical)
 
         assert np.sum(self.y1_gold + self.y2_gold) == 2 * self.input_size  # each item has sub and super ordinate cat
 
