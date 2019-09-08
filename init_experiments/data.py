@@ -65,8 +65,6 @@ class Data:
 
     def make_y(self, epoch):
 
-        # TODO test
-
         # y2_random results in worst performance (no similarity between members of same subordinate
         # y2_subordinates_identical results in best performance (max similarity between members of same subordinate)
         # do not simply create a random y2 matrix because members of same subordinate are exposed to same statistics

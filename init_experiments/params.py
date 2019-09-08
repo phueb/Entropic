@@ -21,8 +21,8 @@ param2default = {
 
 
 # specify params to submit here
-param2requests = {'y2_gold_on': [[5000, 0.1, 0.0], [5000, 0.2, 0.], [5000, 0.3, 0.], [5000, 0.5, 0.]],
-                  'init': ['random']}
+param2requests = {'y2_gold_on': [[2500, 0.5, 0.2], [2500, 0.2, 0.5]],
+                  'init': ['identical']}
 
 # if using y2_gold_on, make sure to flip y2_gold_on[1] and y2_gold_on[2] between conditions
 # otherwise model needs to learn to change in-out mapping (more difficult) and the other does not

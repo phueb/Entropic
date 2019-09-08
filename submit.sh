@@ -8,12 +8,12 @@ bash kill_job.sh InitExperiments
 
 echo "Submitting to Ludwig..."
 cd /home/ph/InitExperiments/
-source venv/bin/activate
+source init_experiments_venv/bin/activate
 python submit.py -r50 -s
 deactivate
 echo "Submission completed"
 
-sleep 2
+sleep 0
 tail -n 10 /media/research_data/stdout/*.out
 
 

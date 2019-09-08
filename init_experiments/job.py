@@ -82,10 +82,6 @@ def main(param2val):
 
         y = data.make_y(epoch)
 
-        # TODO debug
-        print(epoch)
-        print(y)
-
         # train
         optimizer.zero_grad()  # zero the gradient buffers
         torch_o = net(data.torch_x)  # feed-forward

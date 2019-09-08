@@ -7,11 +7,10 @@ from init_experiments.params import param2default, param2requests
 
 from ludwigcluster.client import Client
 
-CAT = '*'  # A, B or *
+CAT = '*'  # a, b or *  # TODO
 X_LIMS = [[0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be a list
-VLINE = 0
-LEG_LOC = 'lower right'
+VLINE = 2500
 
 
 # collect data
@@ -47,7 +46,5 @@ for xlim in X_LIMS:
                             y_label=config.Eval.metric,  # is averaged over cat A and B
                             xlim=xlim,
                             ylim=[0.5, 1.0] if config.Eval.metric in ['ba', 'fs'] else [0.0, 1.0],
-                            figsize=(6, 6),
-                            vline=VLINE,
-                            leg_loc=LEG_LOC)
+                            vline=VLINE)
     fig.show()

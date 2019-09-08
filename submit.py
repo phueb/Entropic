@@ -3,11 +3,11 @@ import argparse
 from ludwigcluster.client import Client
 from ludwigcluster.config import SFTP
 
-from init_experiments import config
+from init_experiments import config  # TODO point script to these modules with args
 from init_experiments.params import param2requests, param2default
 
 
-if __name__ == '__main__':
+def main():
     # parse cmd-line args
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--reps', default=2, action='store', dest='reps', type=int,
@@ -46,3 +46,7 @@ if __name__ == '__main__':
                   reps=namespace.reps,
                   test=namespace.test,
                   worker=namespace.worker)
+
+
+if __name__ == '__main__':
+    main()
