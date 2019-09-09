@@ -21,7 +21,7 @@ param2default = {
 
 
 # specify params to submit here
-param2requests = {'y2_gold_on': [[2500, 0.5, 0.2], [2500, 0.2, 0.5]],
+param2requests = {'y2_gold_on': [[2500, 0.5, 0.3], [2500, 0.3, 0.5]],
                   'init': ['identical']}
 
 # if using y2_gold_on, make sure to flip y2_gold_on[1] and y2_gold_on[2] between conditions

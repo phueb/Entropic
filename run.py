@@ -3,12 +3,19 @@ import pickle
 import socket
 from datetime import datetime
 import yaml
+import pandas as pd
+import sys
+
+# TODO import these programmatically
 
 from init_experiments import config
 from init_experiments.job import main
 from init_experiments.params import param2requests, param2default
 
 hostname = socket.gethostname()
+
+
+# TODO this file (run.py) could be generated when calling "ludwig"
 
 
 def run_on_cluster():
@@ -38,6 +45,9 @@ def run_on_cluster():
         if not dst.exists():
             dst.mkdir(parents=True)
         for df in dfs:
+            if not isinstance(df, pd.DataFrame):
+                print('WARNING: Object returned by job is not a pandas.DataFrame object.')
+                continue
             with (dst / '{}.csv'.format(df.name)).open('w') as f:
                 df.to_csv(f, index=True)
 
@@ -51,6 +61,7 @@ def run_on_cluster():
 
     print('Finished all {} jobs at {}.'.format(config.LocalDirs.src.name, datetime.now()))
     print()
+    sys.stdout.flush()
 
 
 def run_on_host():
