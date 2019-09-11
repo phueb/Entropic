@@ -25,7 +25,6 @@ param2requests = {'y2_gold_on': [[2500, 0.9, 0.5], [2500, 0.5, 0.9]],
                   'init': ['random']}
 
 
-
 """
 NOTES:
 
