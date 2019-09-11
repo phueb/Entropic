@@ -127,4 +127,4 @@ def collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_
         print(rep_mat.round(3))
         print(sim_mat_gold.round(1))
         print(sim_mat.round(4))
-        print('{}={}'.format(config.Eval.metric, score)) if config.Eval.score_a else None
+        print('{}={}'.format(config.Eval.metric, score))

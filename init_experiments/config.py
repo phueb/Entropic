@@ -12,22 +12,19 @@ class LocalDirs:
     runs = root / '{}_runs'.format(src.name)
 
 
+class Global:
+    debug = False
+
+
 class Eval:
     num_opt_init_steps = 0
     num_opt_steps = 5
     xi = 0.01  # 0.01 is better than 0.05
     verbose = False
     eval_thresholds = [[0.9999], [0.999], [0.99], [0.9]]
-    score_a = True
-    score_b = False
     metric = 'ba'
     start_epoch = 100
     num_evals = 10
-
-    debug = False
-
-    if not score_a and not score_b:
-        raise SystemExit('config.Eval.score_a and config.Eval.score_b are set to False')
 
 
 class Figs:

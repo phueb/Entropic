@@ -21,15 +21,17 @@ param2default = {
 
 
 # specify params to submit here
-param2requests = {'y2_gold_on': [[2500, 0.5, 0.3], [2500, 0.3, 0.5]],
-                  'init': ['identical']}
+param2requests = {'y2_gold_on': [[2500, 0.9, 0.5], [2500, 0.5, 0.9]],
+                  'init': ['random']}
 
-# if using y2_gold_on, make sure to flip y2_gold_on[1] and y2_gold_on[2] between conditions
-# otherwise model needs to learn to change in-out mapping (more difficult) and the other does not
 
 
 """
 NOTES:
+
+if using y2_gold_on, make sure to flip y2_gold_on[1] and y2_gold_on[2] between conditions
+otherwise model needs to learn to change in-out mapping (more difficult) and the other does not
+
 flipping y2 from [0, 1] to [1, 0] and vice versa
  doesn't result in worse learning because it affects members of a superordinate consistently on average.
 each member has the same probability that superordinate feedback is switched from category A to B and vice versa.

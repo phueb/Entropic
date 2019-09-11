@@ -8,7 +8,7 @@ from init_experiments.params import param2default, param2requests
 from ludwigcluster.client import Client
 
 CAT = '*'  # a, b or *  # TODO
-X_LIMS = [[0, 1000], [0, 5000]]  # zoom in on particular vertical region of plot
+X_LIMS = [[0, 5000]]  # zoom in on particular vertical region of plot
 LABEL_PARAMS = ['init']  # must be a list
 VLINE = 2500
 
