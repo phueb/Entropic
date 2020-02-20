@@ -1,8 +1,8 @@
-# InitExperiments
-Research code for experimenting with neural network weight initialization to speed subcategory learning
+# Straddler
+Research code for understanding lexical categlry learning in the RNN
 
 
-To run the default configuration, call `init_experiments.job.main` like so:
+To run the default configuration, call `straaddler.job.main` like so:
 
 ```python
 from init_experiments.job import main
