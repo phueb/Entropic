@@ -73,7 +73,7 @@ def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
     elif cluster_metric == 'ck':
         fun = calc_probes_ck
     else:
-        raise AttributeError('rnnlab: Invalid arg to "cluster_metric".')
+        raise AttributeError('Invalid arg to "cluster_metric".')
     bo = BayesianOptimization(fun, {'thr': (0.0, 1.0)}, verbose=config.Eval.verbose)
     bo.init_points.extend(config.Eval.eval_thresholds)
     bo.maximize(init_points=config.Eval.num_opt_init_steps, n_iter=config.Eval.num_opt_steps,
@@ -96,23 +96,22 @@ def softmax(z):
     return res
 
 
-def make_straddler_p(prep: Union[PartitionedPrep, SlidingPrep],
-                     token_ids_array: np.ndarray,
-                     straddler: str,
-                     ) -> np.ndarray:
+def make_xw_p(prep: Union[PartitionedPrep, SlidingPrep],
+              token_ids_array: np.ndarray,
+              xw: str,
+              ) -> np.ndarray:
     """
     make the true next-word probability distribution for the straddler word
     """
 
-    x, y, x_y = get_outcomes(prep, token_ids_array, [straddler])  # outcomes where xw is straddler
+    x, y, x_y = get_outcomes(prep, token_ids_array, [xw])  # outcomes where xw is in slot -2
     wid2f = Counter(y)
     res = np.asarray([wid2f[i] for i in range(prep.num_types)])
-    print(res.shape)
     res = res / res.sum()
-    print(res.shape)
-    print()
 
-    print(f'"{straddler}" occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
+    # TODO is this correct? why does dp not drop lower?
+
+    print(f'"{xw}" occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
     assert np.sum(res).round(4).item() == 1.0, np.sum(res).round(4).item()
 
     return res

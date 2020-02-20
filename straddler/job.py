@@ -8,7 +8,7 @@ from pyitlib import discrete_random_variable as drv
 from preppy import SlidingPrep
 
 from straddler import config
-from straddler.eval import calc_cluster_score, make_straddler_p
+from straddler.eval import calc_cluster_score, make_xw_p
 from straddler.toy_corpus import ToyCorpus
 from straddler.rnn import RNN
 from straddler.eval import softmax
@@ -63,7 +63,8 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    straddler_p = make_straddler_p(prep, prep.token_ids_array, toy_corpus.straddler)
+    p1 = make_xw_p(prep, prep.token_ids_array, toy_corpus.straddler)
+    p2 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -77,7 +78,8 @@ def main(param2val):
 
     # train loop
     eval_steps = []
-    dps = []
+    dps1 = []
+    dps2 = []
     pps = []
     bas = []
     for step, batch in enumerate(prep.generate_batches()):
@@ -95,20 +97,27 @@ def main(param2val):
         rnn.train()
         optimizer.zero_grad()  # zero the gradient buffers
         logits = rnn(inputs)['logits']
-        loss = criterion(logits, targets)
+        xe = criterion(logits, targets)
 
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
             # dp - how lexically specific are next word predictions for straddler, which is in no particular sub-group?
-            straddler_x = np.array([[prep.store.w2id[toy_corpus.straddler]]])
-            straddler_logits = rnn(torch.cuda.LongTensor(straddler_x))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            straddler_q = np.squeeze(softmax(straddler_logits))
+            x1 = np.array([[prep.store.w2id[toy_corpus.straddler]]])
+            logits1 = rnn(torch.cuda.LongTensor(x1))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            q1 = np.squeeze(softmax(logits1))
 
-            print(straddler_p.shape)
-            print(straddler_q.shape)
+            x2 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
+            logits2 = rnn(torch.cuda.LongTensor(x2))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            q2 = np.squeeze(softmax(logits2))
 
-            dp = drv.divergence_jensenshannon_pmf(straddler_p, straddler_q)
+            # dp = drv.divergence_jensenshannon_pmf(straddler_p, straddler_q)
+
+            dp1 = drv.entropy_cross_pmf(p1, q1, base=np.exp(1).item())  # straddler
+            dp2 = drv.entropy_cross_pmf(p2, q2, base=np.exp(1).item())  # non-straddler
+
+            print(f'{dp1:.4f}')
+            print(f'{dp2:.4f}')
 
             # ba
             xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -116,26 +125,29 @@ def main(param2val):
             ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
 
             # console
-            pp = torch.exp(loss).detach().cpu().numpy().item()
-            print(f'step={step:>6,}/{prep.num_mbs}: pp={pp:.1f} ba={ba:.4f} dp={dp:.4f}', flush=True)
+            pp = torch.exp(xe).detach().cpu().numpy().item()
+            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f} dp={dp1:.4f}', flush=True)
             print()
 
             # collect performance data
             eval_steps.append(step)
-            dps.append(dp)
+            dps1.append(dp1)
+            dps2.append(dp2)
             pps.append(pp)
             bas.append(ba)
 
         # TRAIN
-        loss.backward()
+        xe.backward()
         optimizer.step()
 
     # return performance as pandas Series
-    s1 = pd.Series(dps, index=eval_steps)
-    s2 = pd.Series(pps, index=eval_steps)
-    s3 = pd.Series(bas, index=eval_steps)
+    s1 = pd.Series(dps1, index=eval_steps)
+    s2 = pd.Series(dps2, index=eval_steps)
+    s3 = pd.Series(pps, index=eval_steps)
+    s4 = pd.Series(bas, index=eval_steps)
     s1.name = 'dp_straddler'
-    s2.name = 'pp'
-    s3.name = 'ba'
+    s2.name = 'dp_non-straddler'
+    s3.name = 'pp'
+    s4.name = 'ba'
 
-    return s1, s2, s3
+    return s1, s2, s3, s4
