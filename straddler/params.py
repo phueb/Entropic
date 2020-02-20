@@ -1,7 +1,7 @@
 
 
 param2requests = {
-    'num_fragments': [2, 3, 4],
+    'num_fragments': [4],
     'optimizer': ['adagrad'],
 }
 
@@ -10,7 +10,7 @@ param2default = {
     # rnn
     'hidden_size': 128,  # TODO
     # toy corpus
-    'doc_size': 100_000,
+    'doc_size': 5_000_000,
     'num_xws': 512,
     'num_types': 4096,
     'num_fragments': 2,

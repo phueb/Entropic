@@ -1,4 +1,3 @@
-from numpy.lib.stride_tricks import as_strided
 from pyitlib import discrete_random_variable as drv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,6 +7,7 @@ from preppy import PartitionedPrep
 from straddler.figs import make_example_fig
 from straddler.toy_corpus import ToyCorpus
 from straddler.figs import plot_singular_values
+from straddler.outcomes import get_outcomes
 
 DOC_SIZE = 100_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
@@ -35,20 +35,7 @@ probes = [p for p in toy_corpus.xws if p in prep.store.w2id]
 s_list = []
 for part_id, part in enumerate(prep.reordered_parts):
 
-    # windows
-    token_ids_array = part.astype(np.int64)
-    num_possible_windows = len(token_ids_array) - prep.num_tokens_in_window
-    shape = (num_possible_windows, prep.num_tokens_in_window)
-    windows = as_strided(token_ids_array, shape, strides=(8, 8), writeable=False)
-
-    # windows with probe in position -2
-    row_ids = np.isin(windows[:, -2], [prep.store.w2id[w] for w in probes])
-    probe_windows = windows[row_ids]
-
-    # conditional entropy
-    x = probe_windows[:, -2]  # x-word
-    y = probe_windows[:, -1]  # y-word
-    x_y = np.vstack((x, y))   # joint outcome
+    x, y, x_y = get_outcomes(prep, part, probes)
 
     # map word ID of x-words to IDs between [0, len(probes)]
     # this makes creating a matrix with the right number of columns easier

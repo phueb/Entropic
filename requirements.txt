@@ -11,4 +11,3 @@ tables
 numpy==1.18.0
 torch
 https://github.com/phueb/Preppy/archive/v2.0.0.tar.gz
-https://github.com/phueb/CategoryEval/archive/v3.0.0.tar.gz

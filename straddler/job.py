@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
+from pyitlib import discrete_random_variable as drv
 
 from preppy import SlidingPrep
 
@@ -10,6 +11,7 @@ from straddler import config
 from straddler.eval import calc_cluster_score
 from straddler.toy_corpus import ToyCorpus
 from straddler.rnn import RNN
+from straddler.outcomes import make_straddler_p
 
 
 @attr.s
@@ -61,6 +63,11 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
+    p = make_straddler_p(prep, prep.token_ids_array, toy_corpus.straddler)
+
+    # TODO test
+    make_straddler_p(prep, prep.token_ids_array, toy_corpus.xws[9])
+    raise SystemExit
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -86,21 +93,22 @@ def main(param2val):
         for xi in x[::2]:
             assert xi.item() in xw_ids
         inputs = torch.cuda.LongTensor(x)
-        targets = torch.cuda.LongTensor(y)  # TODO copying batch to GPU each time is costly
+        targets = torch.cuda.LongTensor(y)
 
+        # feed forward
         rnn.train()
         optimizer.zero_grad()  # zero the gradient buffers
-        logits = rnn(inputs)['logits']  # feed-forward
+        logits = rnn(inputs)['logits']
         loss = criterion(logits, targets)
 
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # dp
-            dp = 0  # TODO calc divergence from prototype: how lexically specific are next word predictions for straddler?
+            # dp - how lexically specific are next word predictions for straddler, who is in no particular sub-group?
+            js = drv.divergence_jensenshannon_pmf(p, q)
+            dp = js
 
             # ba
-            rnn.eval()
             xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
             sim_mat = cosine_similarity(xw_reps)
 
@@ -120,7 +128,7 @@ def main(param2val):
             pps.append(pp)
             bas.append(ba)
 
-        # update RNN weights
+        # TRAIN
         loss.backward()
         optimizer.step()
 
