@@ -1,23 +1,32 @@
 import attr
 import numpy as np
 import torch
-import sys
 from sklearn.metrics.pairwise import cosine_similarity
 from torch import optim as optim
 import pandas as pd
-from pathlib import Path
 
-from straddler.data import Data
+from preppy import SlidingPrep
+
 from straddler import config
 from straddler.eval import calc_cluster_score
-from straddler.net import Net
-from straddler.utils import to_eval_epochs
+from straddler.toy_corpus import ToyCorpus
+from straddler.rnn import RNN
 
 
 @attr.s
 class Params(object):
-    batch_size = attr.ib(validator=attr.validators.instance_of(int))  # TODO params
-
+    # rnn
+    batch_size = attr.ib(validator=attr.validators.instance_of(int))
+    lr = attr.ib(validator=attr.validators.instance_of(float))
+    hidden_size = attr.ib(validator=attr.validators.instance_of(int))
+    # toy corpus
+    doc_size = attr.ib(validator=attr.validators.instance_of(int))
+    num_xws = attr.ib(validator=attr.validators.instance_of(int))
+    num_types = attr.ib(validator=attr.validators.instance_of(int))
+    num_fragments = attr.ib(validator=attr.validators.instance_of(int))
+    fragmentation_prob = attr.ib(validator=attr.validators.instance_of(float))
+    # training
+    slide_size = attr.ib(validator=attr.validators.instance_of(int))
 
     @classmethod
     def from_param2val(cls, param2val):
@@ -37,60 +46,71 @@ def main(param2val):
     params = Params.from_param2val(param2val)
     print(params, flush=True)
 
-    # data
-    data = Data(params)
+    # create toy input
+    toy_corpus = ToyCorpus(doc_size=params.doc_size,
+                           num_types=params.num_types,
+                           num_xws=params.num_xws,
+                           num_fragments=params.num_fragments,
+                           fragmentation_prob=params.fragmentation_prob,
+                           )
+    prep = SlidingPrep([toy_corpus.doc],
+                       reverse=False,
+                       num_types=params.num_types,
+                       slide_size=params.slide_size,
+                       batch_size=params.batch_size,
+                       context_size=1)
 
-    # net
-    net = Net(params, data)
+    rnn = RNN('rnn', input_size=params.num_types, hidden_size=params.hidden_size)
 
     # optimizer + criterion
-    optimizer = optim.SGD(net.parameters(), lr=params.lr)
+    optimizer = optim.SGD(rnn.parameters(), lr=params.lr)
     criterion = torch.nn.MSELoss()  # TODO cross entropy
 
-    # eval before start of training
-    net.eval()
-    torch_o = net(data.torch_x)
-    torch_y = torch.from_numpy(data.make_y(epoch=0))
-    loss = criterion(torch_o, torch_y)
-
     # train loop
-    eval_epoch_idx = 0
-    scores_a = np.zeros(config.Eval.num_evals)
-    scores_b = np.zeros(config.Eval.num_evals)
-    eval_epochs = to_eval_epochs(params)
-    for epoch in range(params.num_epochs + 1):
+    eval_steps = []
+    dps = []
+    pps = []
+    bas = []
+    for step, batch in enumerate(prep.generate_batches()):
 
-        # eval
-        if epoch in eval_epochs:
-            # cluster score
-            net.eval()
-            print('Evaluating at epoch {}'.format(epoch))
-            sim_mat = cosine_similarity(rep_mat)
-            sim_mat_gold = np.rint(cosine_similarity(rep_mat_gold))
-            score = calc_cluster_score(sim_mat, sim_mat_gold, config.Eval.metric)
-            eval_epoch_idx += 1
-
-            # mse
-            mse = loss.detach().numpy().item()
-            print('pp={}'.format(mse), flush=True)
-            print()
-
-        # get batch
+        # prepare x, y
+        x, y = batch[:-1], batch[:, -1]
         torch_x = torch.from_numpy(x)
         torch_y = torch.from_numpy(y)
 
-        # train
-        net.train()
+        # ba
+        rnn.eval()
+        sim_mat = cosine_similarity(rep_mat)
+        sim_mat_gold = np.rint(cosine_similarity(rep_mat_gold))
+        ba = calc_cluster_score(sim_mat, sim_mat_gold, 'ba')
+
+        # feed-forward + compute loss
+        rnn.train()
         optimizer.zero_grad()  # zero the gradient buffers
-        torch_o = net(torch_x)  # feed-forward
-        loss = criterion(torch_o, torch_y)  # compute loss
+        torch_o = rnn(torch_x)  # feed-forward
+        loss = criterion(torch_o, torch_y).detach().numpy().item()  # compute loss
+
+        # console
+        pp = torch.exp(loss)
+        print(f'pp={pp}', flush=True)
+        print()
+
+        # update RNN weights
         loss.backward()  # back-propagate
         optimizer.step()  # update
 
-    # return performance as pandas Series # TODO return series not df
-    s_a = pd.Series(scores_a, index=eval_epochs)
-    s_b = pd.Series(scores_b, index=eval_epochs)
-    s_a.name = 'results_a'
-    s_b.name = 'results_b'
+        # collect performance data
+        eval_steps.append(step)
+        dps.append(dp)
+        pps.append(pp)
+        bas.append(ba)
 
-    return s_a, s_b
+    # return performance as pandas Series
+    s1 = pd.Series(dps, index=eval_steps)
+    s2 = pd.Series(pps, index=eval_steps)
+    s3 = pd.Series(bas, index=eval_steps)
+    s1.name = 'dp_straddler'
+    s2.name = 'pp'
+    s3.name = 'ba'
+
+    return s1, s2, s3
