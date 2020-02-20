@@ -28,12 +28,13 @@ class ToyCorpus:
         self.yws = [f'y{i:0>6}' for i in range(self.num_yws)]
 
         # a smaller set of yws
-        self.yws_limited = [o for o in self.yws if float(o[1:]) % num_fragments == 0]
+        self.yws_limited = self.yws[::num_fragments]
 
         # map subsets of xws to mutually exclusive subsets of yws
         c = cycle([self.yws[offset::num_fragments] for offset in range(num_fragments)])
         self.xw2yws = {xw: next(c) for xw in self.xws}
 
+        print(f'Lowest theoretical pp={len(self.yws_limited)}')
         print('Initialized ToyCorpus with number of limited yws:', len(self.yws_limited))
 
     @cached_property
@@ -54,13 +55,12 @@ class ToyCorpus:
         return res
 
     @cached_property
-    def sim_mat_gold(self) -> np.ndarray:  # TODO test
+    def sim_mat_gold(self) -> np.ndarray:
 
         res = np.zeros((self.num_xws, self.num_xws))
-        for i in range(self.num_xws):
-            for j in range(self.num_xws):
-                if i % self.num_fragments == 0 and j % self.num_fragments == 0:
-                    res[i, j] += 1
+        for row_id in range(self.num_xws):
+            offset = row_id % self.num_fragments
+            res[row_id, offset::self.num_fragments] += 1
 
         if self.num_fragments > 1:
             assert res.size != res.sum(), 'Gold sim matrix has all 1s'

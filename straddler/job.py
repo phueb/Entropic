@@ -80,46 +80,49 @@ def main(param2val):
     for step, batch in enumerate(prep.generate_batches()):
 
         # prepare x, y
-        x, y = batch[:, -1, np.newaxis], batch[:, -1]
+        batch = batch[::params.num_fragments]  # get only windows where x is in first slot
+        assert batch.shape[1] == 2
+        x, y = batch[:, 0, np.newaxis], batch[:, 1]
+        for xi in x[::2]:
+            assert xi.item() in xw_ids
         inputs = torch.cuda.LongTensor(x)
         targets = torch.cuda.LongTensor(y)  # TODO copying batch to GPU each time is costly
 
-        print(x.shape)
-        print(y.shape)
-
-        # ba
-        rnn.eval()
-        xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
-        sim_mat = cosine_similarity(xw_reps)
-
-        print(sim_mat.shape)
-        print(sim_mat.mean)
-
-        ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
-
-        # feed-forward + compute loss
         rnn.train()
-        logits = rnn(inputs)['logits']  # feed-forward
         optimizer.zero_grad()  # zero the gradient buffers
+        logits = rnn(inputs)['logits']  # feed-forward
         loss = criterion(logits, targets)
 
-        # dp
-        dp = 0  # TODO calc divergence from prototype: how lexically specific are next word predictions for straddler?
+        # EVAL
+        if step % config.Eval.eval_interval == 0:
 
-        # console
-        pp = torch.exp(loss).detach().cpu().numpy().item()
-        print(f'step={step:>6,}: pp={pp:.1f} ba={ba:.4f}', flush=True)
-        print()
+            # dp
+            dp = 0  # TODO calc divergence from prototype: how lexically specific are next word predictions for straddler?
+
+            # ba
+            rnn.eval()
+            xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
+            sim_mat = cosine_similarity(xw_reps)
+
+            print(sim_mat.round(2))
+            print(toy_corpus.sim_mat_gold.round(2))
+
+            ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
+
+            # console
+            pp = torch.exp(loss).detach().cpu().numpy().item()
+            print(f'step={step:>6,}: pp={pp:.1f} ba={ba:.4f}', flush=True)
+            print()
+
+            # collect performance data
+            eval_steps.append(step)
+            dps.append(dp)
+            pps.append(pp)
+            bas.append(ba)
 
         # update RNN weights
         loss.backward()
         optimizer.step()
-
-        # collect performance data
-        eval_steps.append(step)
-        dps.append(dp)
-        pps.append(pp)
-        bas.append(ba)
 
     # return performance as pandas Series
     s1 = pd.Series(dps, index=eval_steps)

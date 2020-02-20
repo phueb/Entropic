@@ -13,7 +13,7 @@ DOC_SIZE = 100_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
 NUM_FRAGMENTS = 3  # number of x-word sub categories, or singular dimensions
-FRAGMENTATION_PROB = 0.8  # the higher, the more prominent are sub-categories (and singular values)
+FRAGMENTATION_PROB = 1.0  # the higher, the more prominent are sub-categories (and singular values)
 NUM_SINGULAR_DIMS_PLOT = 8
 
 
