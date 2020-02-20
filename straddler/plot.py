@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from init_experiments import config
+from straddler import config
 
 
 def plot_trajectories(summary_data, y_label, ylim, xlim,

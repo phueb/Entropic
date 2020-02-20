@@ -1,46 +1,41 @@
+import attr
 import numpy as np
 import torch
 import sys
 from sklearn.metrics.pairwise import cosine_similarity
 from torch import optim as optim
 import pandas as pd
+from pathlib import Path
 
-from init_experiments.data import Data
-from init_experiments import config
-from init_experiments.eval import calc_cluster_score
-from init_experiments.net import Net
-from init_experiments.utils import to_eval_epochs
+from straddler.data import Data
+from straddler import config
+from straddler.eval import calc_cluster_score
+from straddler.net import Net
+from straddler.utils import to_eval_epochs
 
 
-class Params:
+@attr.s
+class Params(object):
+    batch_size = attr.ib(validator=attr.validators.instance_of(int))  # TODO params
 
-    def __init__(self, param2val):
-        param2val = param2val.copy()
 
-        self.param_name = param2val.pop('param_name')
-        self.job_name = param2val.pop('job_name')
-
-        self.param2val = param2val
-
-    def __getattr__(self, name):
-        if name in self.param2val:
-            return self.param2val[name]
-        else:
-            raise AttributeError('No such attribute')
-
-    def __str__(self):
-        res = ''
-        for k, v in sorted(self.param2val.items()):
-            res += '{}={}\n'.format(k, v)
-        return res
+    @classmethod
+    def from_param2val(cls, param2val):
+        """
+        instantiate class.
+        exclude keys from param2val which are added by Ludwig.
+        they are relevant to job submission only.
+        """
+        kwargs = {k: v for k, v in param2val.items()
+                  if k not in ['job_name', 'param_name', 'project_path', 'save_path']}
+        return cls(**kwargs)
 
 
 def main(param2val):
 
     # params
-    params = Params(param2val)
-    print(params)
-    sys.stdout.flush()
+    params = Params.from_param2val(param2val)
+    print(params, flush=True)
 
     # data
     data = Data(params)
@@ -90,14 +85,14 @@ def main(param2val):
         loss.backward()  # back-propagate
         optimizer.step()  # update
 
-    # to pandas
+    # return performance as pandas Series # TODO return series not df
     eval_epochs = to_eval_epochs(params)
     df_a = pd.DataFrame(scores_a, index=eval_epochs, columns=[config.Eval.metric])
     df_b = pd.DataFrame(scores_b, index=eval_epochs, columns=[config.Eval.metric])
     df_a.name = 'results_a'
     df_b.name = 'results_b'
 
-    return df_a, df_b  # ludwigcluster expects named dfs
+    return df_a, df_b
 
 
 def collect_scores(data, params, net, eval_epoch_idx, scores_a, scores_b, torch_o):

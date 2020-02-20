@@ -1,3 +1,4 @@
+attrs
 PyYAML
 matplotlib
 pandas==0.23.4
@@ -6,5 +7,5 @@ sklearn
 scipy
 bayesian-optimization==0.6
 tables
-numpy==1.16.0
+numpy==1.18.0
 torch

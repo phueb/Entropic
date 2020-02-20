@@ -1,11 +1,11 @@
 import pandas as pd
 from scipy import stats
 
-from init_experiments.plot import plot_trajectories
-from init_experiments import config
-from init_experiments.params import param2default, param2requests
+from straddler.plot import plot_trajectories
+from straddler import config
+from straddler.params import param2default, param2requests
 
-from ludwigcluster.client import Client
+from ludwig.results import gen_param_paths
 
 CAT = '*'  # a, b or *  # TODO
 X_LIMS = [[0, 5000]]  # zoom in on particular vertical region of plot
@@ -15,8 +15,10 @@ VLINE = 2500
 
 # collect data
 summary_data = []
-client = Client(config.RemoteDirs.root.name, param2default)
-for param_p, label in client.gen_param_ps(param2requests, label_params=LABEL_PARAMS):
+for param_p, label in gen_param_paths(config.Dirs.root.name,
+                                      param2requests,
+                                      param2default,
+                                      label_params=LABEL_PARAMS):
     # param_df
     dfs = []
     for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):

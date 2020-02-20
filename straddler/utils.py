@@ -1,5 +1,5 @@
 import numpy as np
-from init_experiments import config
+from straddler import config
 
 
 def to_eval_epochs(params):
