@@ -1,14 +1,13 @@
 
 
 param2requests = {
-    'num_fragments': [1, 2, 3, 4],
+    'num_fragments': [2, 3, 4],
+    'optimizer': ['adagrad'],
 }
 
 
 param2default = {
     # rnn
-    'batch_size': 64,
-    'lr': 0.01,
     'hidden_size': 512,
     # toy corpus
     'doc_size': 100_000,
@@ -18,4 +17,7 @@ param2default = {
     'fragmentation_prob': 1.0,
     # training
     'slide_size': 64,
+    'optimizer': 'adagrad',
+    'batch_size': 64,
+    'lr': 0.01,
 }

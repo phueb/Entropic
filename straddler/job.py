@@ -2,7 +2,6 @@ import attr
 import numpy as np
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
-from torch import optim as optim
 import pandas as pd
 
 from preppy import SlidingPrep
@@ -16,8 +15,6 @@ from straddler.rnn import RNN
 @attr.s
 class Params(object):
     # rnn
-    batch_size = attr.ib(validator=attr.validators.instance_of(int))
-    lr = attr.ib(validator=attr.validators.instance_of(float))
     hidden_size = attr.ib(validator=attr.validators.instance_of(int))
     # toy corpus
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -27,6 +24,9 @@ class Params(object):
     fragmentation_prob = attr.ib(validator=attr.validators.instance_of(float))
     # training
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
+    optimizer = attr.ib(validator=attr.validators.instance_of(str))
+    batch_size = attr.ib(validator=attr.validators.instance_of(int))
+    lr = attr.ib(validator=attr.validators.instance_of(float))
 
     @classmethod
     def from_param2val(cls, param2val):
@@ -60,11 +60,17 @@ def main(param2val):
                        batch_size=params.batch_size,
                        context_size=1)
 
-    rnn = RNN('rnn', input_size=params.num_types, hidden_size=params.hidden_size)
+    xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
 
-    # optimizer + criterion
-    optimizer = optim.SGD(rnn.parameters(), lr=params.lr)
-    criterion = torch.nn.MSELoss()  # TODO cross entropy
+    rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
+
+    criterion = torch.nn.CrossEntropyLoss()
+    if params.optimizer == 'adagrad':
+        optimizer = torch.optim.Adagrad(rnn.parameters(), lr=params.lr)
+    elif params.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(rnn.parameters(), lr=params.lr)
+    else:
+        raise AttributeError('Invalid arg to "optimizer')
 
     # train loop
     eval_steps = []
@@ -74,30 +80,40 @@ def main(param2val):
     for step, batch in enumerate(prep.generate_batches()):
 
         # prepare x, y
-        x, y = batch[:-1], batch[:, -1]
-        torch_x = torch.from_numpy(x)
-        torch_y = torch.from_numpy(y)
+        x, y = batch[:, -1, np.newaxis], batch[:, -1]
+        inputs = torch.cuda.LongTensor(x)
+        targets = torch.cuda.LongTensor(y)  # TODO copying batch to GPU each time is costly
+
+        print(x.shape)
+        print(y.shape)
 
         # ba
         rnn.eval()
-        sim_mat = cosine_similarity(rep_mat)
-        sim_mat_gold = np.rint(cosine_similarity(rep_mat_gold))
-        ba = calc_cluster_score(sim_mat, sim_mat_gold, 'ba')
+        xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
+        sim_mat = cosine_similarity(xw_reps)
+
+        print(sim_mat.shape)
+        print(sim_mat.mean)
+
+        ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
 
         # feed-forward + compute loss
         rnn.train()
+        logits = rnn(inputs)['logits']  # feed-forward
         optimizer.zero_grad()  # zero the gradient buffers
-        torch_o = rnn(torch_x)  # feed-forward
-        loss = criterion(torch_o, torch_y).detach().numpy().item()  # compute loss
+        loss = criterion(logits, targets)
+
+        # dp
+        dp = 0  # TODO calc divergence from prototype: how lexically specific are next word predictions for straddler?
 
         # console
-        pp = torch.exp(loss)
-        print(f'pp={pp}', flush=True)
+        pp = torch.exp(loss).detach().cpu().numpy().item()
+        print(f'step={step:>6,}: pp={pp:.1f} ba={ba:.4f}', flush=True)
         print()
 
         # update RNN weights
-        loss.backward()  # back-propagate
-        optimizer.step()  # update
+        loss.backward()
+        optimizer.step()
 
         # collect performance data
         eval_steps.append(step)

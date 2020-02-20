@@ -1,6 +1,7 @@
 from cached_property import cached_property
 import random
 from itertools import cycle
+import numpy as np
 
 
 class ToyCorpus:
@@ -50,4 +51,18 @@ class ToyCorpus:
             else:
                 yw = random.choice(self.yws_limited)
             res += f'{xw} {yw} '  # whitespace after each
+        return res
+
+    @cached_property
+    def sim_mat_gold(self) -> np.ndarray:  # TODO test
+
+        res = np.zeros((self.num_xws, self.num_xws))
+        for i in range(self.num_xws):
+            for j in range(self.num_xws):
+                if i % self.num_fragments == 0 and j % self.num_fragments == 0:
+                    res[i, j] += 1
+
+        if self.num_fragments > 1:
+            assert res.size != res.sum(), 'Gold sim matrix has all 1s'
+
         return res
