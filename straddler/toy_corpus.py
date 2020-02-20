@@ -31,8 +31,12 @@ class ToyCorpus:
         self.yws_limited = [o for o in self.yws if float(o[1:]) % num_fragments == 0]
 
         # subsets of xws precede subsets of yws
-        c = cycle([[yw for yw in self.yws if int(yw[1:]) % (f + 1) == 0] for f in range(num_fragments)])
-        self.xw2yw_limited = {xw: next(c) for xw in self.xws}
+        c = cycle([self.yws[offset::num_fragments] for offset in range(num_fragments)])
+        self.xw2yws = {xw: next(c) for xw in self.xws}
+
+        for k, v in self.xw2yws.items():
+            print(k)
+            print(v)
 
         print('Initialized ToyCorpus with number of limited yws:', len(self.yws_limited))
 
@@ -46,7 +50,7 @@ class ToyCorpus:
 
             # sample next-word from one of many sub-population (this keeps overall type frequency the same)
             if random.random() < self.fragmentation_prob:
-                yw = random.choice(self.xw2yw_limited[xw])
+                yw = random.choice(self.xw2yws[xw])
             # sample next-word from a single sub-population
             else:
                 yw = random.choice(self.yws_limited)

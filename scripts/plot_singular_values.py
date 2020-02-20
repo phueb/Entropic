@@ -9,10 +9,10 @@ from straddler.figs import make_example_fig
 from straddler.toy_corpus import ToyCorpus
 from straddler.figs import plot_singular_values
 
-DOC_SIZE = 100_000
+DOC_SIZE = 1_000_000
 NUM_TYPES = 1024  # this needs to be large to result in reduction in conditional entropy
 NUM_XWS = 512
-NUM_FRAGMENTS = 2  # can be used in combination with FRAGMENTED_CONTROl
+NUM_FRAGMENTS = 3  # can be used in combination with FRAGMENTED_CONTROl
 FRAGMENTATION_PROB = 1.0  # TODO test
 
 
