@@ -1,8 +1,13 @@
+from collections import Counter
+from typing import Union
 import numpy as np
 from bayes_opt import BayesianOptimization
 from functools import partial
 
+from preppy import PartitionedPrep, SlidingPrep
+
 from straddler import config
+from straddler.outcomes import get_outcomes
 
 
 def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
@@ -77,4 +82,37 @@ def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
     # use best_thr
     results = fun(best_thr)
     res = np.mean(results)
+    return res
+
+
+def softmax(z):
+    a = 1  # should be 1 if rows should sum to 1
+    z_norm = np.exp(z - np.max(z, axis=a, keepdims=True))
+    res = np.divide(z_norm, np.sum(z_norm, axis=a, keepdims=True))
+
+    # check that softmax works correctly - row sum must be close to 1
+    assert round(res[0, :].sum().item(), 2) == 1
+
+    return res
+
+
+def make_straddler_p(prep: Union[PartitionedPrep, SlidingPrep],
+                     token_ids_array: np.ndarray,
+                     straddler: str,
+                     ) -> np.ndarray:
+    """
+    make the true next-word probability distribution for the straddler word
+    """
+
+    x, y, x_y = get_outcomes(prep, token_ids_array, [straddler])  # outcomes where xw is straddler
+    wid2f = Counter(y)
+    res = np.asarray([wid2f[i] for i in range(prep.num_types)])
+    print(res.shape)
+    res = res / res.sum()
+    print(res.shape)
+    print()
+
+    print(f'"{straddler}" occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
+    assert np.sum(res).round(4).item() == 1.0, np.sum(res).round(4).item()
+
     return res
