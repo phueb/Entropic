@@ -39,10 +39,13 @@ class ToyCorpus:
         for yw_pop in zip(*yw_fragments):
             i = next(c)
             self.yws_extra_fragment.append(yw_pop[i])
-
+        # ensure extra fragment shares an equal amount of yws with each other fragment
         num_shared_with_fragment1 = len(set(self.yws_extra_fragment).intersection(yw_fragments[0]))
         num_shared_with_fragment2 = len(set(self.yws_extra_fragment).intersection(yw_fragments[1]))
         assert num_shared_with_fragment1 == num_shared_with_fragment2
+        # all fragments mut be same size
+        assert len(self.yws_extra_fragment) == len(yw_fragments[0]), (len(self.yws_extra_fragment), len(yw_fragments[0]))
+        assert len(self.yws_extra_fragment) == len(yw_fragments[1]), (len(self.yws_extra_fragment), len(yw_fragments[1]))
 
         print('Initialized ToyCorpus')
         print(f'Lowest theoretical pp ={len(self.yws_extra_fragment):>6,}')
