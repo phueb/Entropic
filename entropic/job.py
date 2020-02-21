@@ -8,7 +8,7 @@ from pyitlib import discrete_random_variable as drv
 from preppy import SlidingPrep
 
 from entropic import config
-from entropic.eval import calc_cluster_score, make_xw_p
+from entropic.eval import calc_cluster_score, make_xw_true_out_probabilities
 from entropic.toy_corpus import ToyCorpus
 from entropic.rnn import RNN
 from entropic.eval import softmax
@@ -64,8 +64,8 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    p_xw0 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[0])
-    p_xw1 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])  # TODO compute dp between xw ZERO and xw ONE and vice versa - to show that representation of xw1 moves toward xw2 at first, and vice versa
+    p_xw0 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[0])  # this xw is in category 1
+    p_xw1 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[1])  # this xw is in category 2
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -94,6 +94,7 @@ def main(param2val):
         # TODO this determines whether phantom category emerges or not - why?
         if params.xws_in_slot_1_only:
             batch = batch[::params.num_fragments]  # get only windows where x is in first slot
+            assert batch[0, 0].item() in xw_ids
 
         # prepare x, y
         x, y = batch[:, 0, np.newaxis], batch[:, 1]
@@ -110,16 +111,16 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # compute dp between xw 1 and 0 and vice versa
-            x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])
-            x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
+            x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])  # this x-word is in category 1
+            x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])  # this x-word is in category 2
             logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
             logit_xw1 = rnn(torch.cuda.LongTensor(x_xw1))['logits'].detach().cpu().numpy()[np.newaxis, :]
             q_xw0 = np.squeeze(softmax(logit_xw0))
             q_xw1 = np.squeeze(softmax(logit_xw1))
-            dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0, base=np.exp(1).item())
-            dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1, base=np.exp(1).item())
-            dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1, base=np.exp(1).item())
-            dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0, base=np.exp(1).item())
+            dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0)
+            dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1)
+            dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1)
+            dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0)
 
             # TODO do next-word probabilities go up equally? if so, evidence of intermediate abstract category
             # get only probabilities for y-words

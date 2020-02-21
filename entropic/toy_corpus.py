@@ -27,19 +27,29 @@ class ToyCorpus:
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
         self.yws = [f'y{i:0>6}' for i in range(self.num_yws)]
 
-        # a smaller set of yws
-        self.yws_limited = self.yws[::num_fragments]
-
-        # map subsets of xws to mutually exclusive subsets of yws
-        c = cycle([self.yws[offset::num_fragments] for offset in range(num_fragments)])
+        # map subsets of xws to mutually exclusive subsets/fragments of yws
+        yw_fragments = [self.yws[offset::num_fragments] for offset in range(num_fragments)]
+        c = cycle(yw_fragments)
         self.xw2yws = {xw: next(c) for xw in self.xws}
 
+        # a smaller set of yws - that has an equal amount of yws from each category, giving rise to a third category
+        # sampling from these gives rise to third category which should be equally different from other categories
+        self.yws_extra_fragment = []
+        c = cycle(range(num_fragments))
+        for yw_pop in zip(*yw_fragments):
+            i = next(c)
+            self.yws_extra_fragment.append(yw_pop[i])
+
+        num_shared_with_fragment1 = len(set(self.yws_extra_fragment).intersection(yw_fragments[0]))
+        num_shared_with_fragment2 = len(set(self.yws_extra_fragment).intersection(yw_fragments[1]))
+        assert num_shared_with_fragment1 == num_shared_with_fragment2
+
         print('Initialized ToyCorpus')
-        print(f'Lowest theoretical pp ={len(self.yws_limited):>6,}')
-        print(f'Number of limited yws ={len(self.yws_limited):>6,}')
+        print(f'Lowest theoretical pp ={len(self.yws_extra_fragment):>6,}')
+        print(f'Number of limited yws ={len(self.yws_extra_fragment):>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
 
-        assert len(self.yws_limited) == self.num_yws // num_fragments
+        assert len(self.yws_extra_fragment) == self.num_yws // num_fragments
 
     @cached_property
     def doc(self) -> str:
@@ -49,12 +59,12 @@ class ToyCorpus:
             # sample xw randomly
             xw = random.choice(self.xws)
 
-            # sample yw from one of many sub-population (this keeps overall type frequency the same)
-            if random.random() < self.fragmentation_prob:
+            # sample yw from one of many subset
+            if random.random() < self.fragmentation_prob or xw in self.xws[:2]:  # first two x-words should be pure
                 yw = random.choice(self.xw2yws[xw])
-            # sample yw from a single sub-population
+            # sample yw from a single subset that is equally different from all other subsets
             else:
-                yw = random.choice(self.yws_limited)
+                yw = random.choice(self.yws_extra_fragment)  # TODO select from limited sub pop unique to each xw
             res += f'{xw} {yw} '  # whitespace after each
         return res
 

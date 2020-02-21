@@ -16,7 +16,7 @@ NUM_FRAGMENTS = 2  # number of x-word sub categories, or singular dimensions
 FRAGMENTATION_PROBS = [1.0, 0.75, 0.5, 0.25]  # the higher, the more prominent are sub-categories (and singular values)
 NUM_SINGULAR_DIMS_PLOT = 8
 
-SHOW_HEATMAP = False
+SHOW_HEATMAP = True
 
 
 s_list = []

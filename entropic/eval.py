@@ -96,10 +96,10 @@ def softmax(z):
     return res
 
 
-def make_xw_p(prep: Union[PartitionedPrep, SlidingPrep],
-              token_ids_array: np.ndarray,
-              xw: str,
-              ) -> np.ndarray:
+def make_xw_true_out_probabilities(prep: Union[PartitionedPrep, SlidingPrep],
+                                   token_ids_array: np.ndarray,
+                                   xw: str,
+                                   ) -> np.ndarray:
     """
     make the true next-word probability distribution for some x-word
     """
