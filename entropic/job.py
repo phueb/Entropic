@@ -63,7 +63,7 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    p2 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
+    pr = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -77,7 +77,7 @@ def main(param2val):
 
     # train loop
     eval_steps = []
-    dps1 = []
+    dps = []
     pps = []
     bas = []
     for step, batch in enumerate(prep.generate_batches()):
@@ -100,13 +100,11 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            x2 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
-            logits2 = rnn(torch.cuda.LongTensor(x2))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            q2 = np.squeeze(softmax(logits2))
-
-            dp1 = drv.divergence_jensenshannon_pmf(p2, q2, base=np.exp(1).item())
-
-            print(f'{dp1:.4f}')
+            # compute dp for random x-word
+            xr = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
+            logits_r = rnn(torch.cuda.LongTensor(xr))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            qr = np.squeeze(softmax(logits_r))
+            dp = drv.divergence_jensenshannon_pmf(pr, qr, base=np.exp(1).item())
 
             # ba
             xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -115,12 +113,12 @@ def main(param2val):
 
             # console
             pp = torch.exp(xe).detach().cpu().numpy().item()
-            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f} dp={dp1:.4f}', flush=True)
+            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f} dp={dp:.4f}', flush=True)
             print()
 
             # collect performance data
             eval_steps.append(step)
-            dps1.append(dp1)
+            dps.append(dp)
             pps.append(pp)
             bas.append(ba)
 
@@ -129,7 +127,7 @@ def main(param2val):
         optimizer.step()
 
     # return performance as pandas Series
-    s1 = pd.Series(dps1, index=eval_steps)
+    s1 = pd.Series(dps, index=eval_steps)
     s2 = pd.Series(pps, index=eval_steps)
     s3 = pd.Series(bas, index=eval_steps)
     s1.name = 'dp'
