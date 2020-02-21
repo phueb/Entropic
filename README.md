@@ -35,7 +35,7 @@ One explanation is that the fewer target categories the RNN is tasked to learn, 
 This sequence of acquisition and discarding may slow down learning when the number of target categories is large.
 
 To demonstrate the presence of intermediate, emergent superordinate categories, one must track the evolution of learned next-word probability distributions.
-The presence of an emergent category is confirmed if a word's learned next-word probability distribution includes probability density for words that never actually followed the word of interest during training.
+The presence of a "phantom" category is confirmed if learned next-word probability distributions for words in one category temporarily converge towards similar next-word probability distributions for words in another category.
 
 ### Results
 
