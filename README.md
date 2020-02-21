@@ -4,13 +4,20 @@ Research code for understanding lexical category learning in the RNN.
 
 ## Background
 
-### Intermediate categories
+### "Phantom" superordinate categories
 
-The goal is to demonstrate that an RNN language model first represents members of different lexical categories as equally good members of emergent superordinate categories,
-that are formed during early stages of training.
-These superordinate categories may map on to real categories.
-They are important as they constrain the representational trajectory of word representations, and help us understand how RNN converges on the target categories.
-The composition of early emergent superordinate categories is best understood within the framework of maximum entropy. 
+The goal is to demonstrate that an RNN language model first represents members of different lexical categories as equally good members of "phantom" superordinate categories,
+that are temporarily formed during training.
+These "phantom" categories may map on to existing linguistic categories, but need not.
+
+Understanding "phantom" categories should be of interest to researchers studying cognitive development,
+ as they can potentially explain periods during which infants generalize linguistic knowledge based on some unobserved, induced abstract principle.
+Also, understanding "phantom" categories can provide insight into the representational trajectory of word representations during RNN training.
+Knowing that "phantom" categories emerge during RNN training can help explain how the RNN converges on the target categories, and how inductive biases might help constrain certain hypotheses.
+
+### Progressive Differentiation & Maximum Entropy
+
+The composition of "phantom" superordinate categories is best understood within the framework of maximum entropy.
 A superordinate category in the RNN can emerge temporarily when a learned output probability distribution best captures a collection of individual next-word probability distributions,
  given the information gathered so far.
 In this case, the cross entropy between a single next-word probability distribution is sufficient to capture the next-word probability distributions of all category members. 
