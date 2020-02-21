@@ -53,7 +53,7 @@ This is indicated by the observation that the JS divergence between the two mutu
 
 
 <div align="center">
- <img src="images/dp_0_1.png" width="250">
+ <img src="images/dp_0_1.png" width="400">
 </div>
 
 
