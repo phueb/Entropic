@@ -64,6 +64,7 @@ def main(param2val):
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
     p_xw0 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[0])
+    p_xw1 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])  # TODO compute dp between xw ZERO and xw ONE and vice versa - to show that representation of xw1 moves toward xw2 at first, and vice versa
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -77,11 +78,16 @@ def main(param2val):
 
     # train loop
     eval_steps = []
-    dps = []
-    pps = []
-    bas = []
-    e1s = []
-    e2s = []
+    name2col = {
+        'dp_0_0': [],
+        'dp_0_1': [],
+        'dp_1_1': [],
+        'dp_1_0': [],
+        'e1': [],
+        'e2': [],
+        'ba': [],
+        'pp': [],
+    }
     for step, batch in enumerate(prep.generate_batches()):
 
         # prepare x, y
@@ -102,16 +108,17 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # compute dp for x-word 0
+            # compute dp between xw 1 and 0 and vice versa
             x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])
-            logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            q_xw0 = np.squeeze(softmax(logit_xw0))
-            dp = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0, base=np.exp(1).item())
-
-            # compute dp for x-word 1
             x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
+            logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
             logit_xw1 = rnn(torch.cuda.LongTensor(x_xw1))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            q_xw0 = np.squeeze(softmax(logit_xw0))
             q_xw1 = np.squeeze(softmax(logit_xw1))
+            dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0, base=np.exp(1).item())
+            dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1, base=np.exp(1).item())
+            dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1, base=np.exp(1).item())
+            dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0, base=np.exp(1).item())
 
             # TODO do next-word probabilities go up equally? if so, evidence of intermediate abstract category
             # get only probabilities for y-words
@@ -133,31 +140,29 @@ def main(param2val):
 
             # console
             pp = torch.exp(xe).detach().cpu().numpy().item()
-            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f} dp={dp:.4f}', flush=True)
+            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f}', flush=True)
             print()
 
             # collect performance data
             eval_steps.append(step)
-            dps.append(dp)
-            pps.append(pp)
-            bas.append(ba)
-            e1s.append(e1)
-            e2s.append(e2)
+            name2col['dp_0_0'].append(dp_0_0)
+            name2col['dp_0_1'].append(dp_0_1)
+            name2col['dp_1_1'].append(dp_1_1)
+            name2col['dp_1_0'].append(dp_1_0)
+            name2col['pp'].append(pp)
+            name2col['ba'].append(ba)
+            name2col['e1'].append(e1)
+            name2col['e2'].append(e2)
 
         # TRAIN
         xe.backward()
         optimizer.step()
 
     # return performance as pandas Series
-    s1 = pd.Series(dps, index=eval_steps)
-    s2 = pd.Series(pps, index=eval_steps)
-    s3 = pd.Series(bas, index=eval_steps)
-    s4 = pd.Series(e1s, index=eval_steps)
-    s5 = pd.Series(e2s, index=eval_steps)
-    s1.name = 'dp'
-    s2.name = 'pp'
-    s3.name = 'ba'
-    s4.name = 'e1'
-    s5.name = 'e2'
+    series_list = []
+    for name, col in name2col.items():
+        s = pd.Series(col, index=eval_steps)
+        s.name = name
+        series_list.append(s)
 
-    return s1, s2, s3, s4, s5
+    return series_list
