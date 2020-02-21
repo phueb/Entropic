@@ -7,11 +7,10 @@ from entropic.params import param2default, param2requests
 
 from ludwig.results import gen_param_paths
 
-CAT = '*'  # a, b or *  # TODO
-X_LIMS = [[0, 5000]]  # zoom in on particular vertical region of plot
-LABEL_PARAMS = ['init']  # must be a list
-VLINE = 2500
 
+LABEL_PARAMS = []  # must be a list
+NAME = 'dp_0_1'
+LEGEND = False
 
 # collect data
 summary_data = []
@@ -21,13 +20,14 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
                                       label_params=LABEL_PARAMS):
     # param_df
     dfs = []
-    for df_p in param_p.glob('*num*/results_{}.csv'.format(CAT)):
+    for df_p in param_p.glob(f'*num*/{NAME}.csv'):
         print('Reading {}'.format(df_p.name))
         df = pd.read_csv(df_p, index_col=0)
         df.index.name = 'epoch'
         dfs.append(df)
     param_df = frame = pd.concat(dfs, axis=1)
     print(param_df)
+
     # summarize data
     num_reps = param_df.shape[1]
     summary_data.append((param_df.index.values,
@@ -43,10 +43,8 @@ if not summary_data:
     raise SystemExit('No data found')
 
 # plot
-for xlim in X_LIMS:
-    fig = plot_summary(summary_data,
-                       y_label='ba',  # is averaged over cat A and B
-                       xlim=xlim,
-                       ylim=[0.5, 1.0],
-                       vline=VLINE)
-    fig.show()
+fig = plot_summary(summary_data,
+                   y_label=NAME,
+                   legend=LEGEND,
+                   )
+fig.show()
