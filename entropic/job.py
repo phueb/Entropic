@@ -63,7 +63,7 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    p_xw0 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
+    p_xw0 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[0])
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -102,12 +102,13 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # compute dp for Random x-word
+            # compute dp for x-word 0
             x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])
             logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
             q_xw0 = np.squeeze(softmax(logit_xw0))
             dp = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0, base=np.exp(1).item())
 
+            # compute dp for x-word 1
             x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
             logit_xw1 = rnn(torch.cuda.LongTensor(x_xw1))['logits'].detach().cpu().numpy()[np.newaxis, :]
             q_xw1 = np.squeeze(softmax(logit_xw1))

@@ -1,8 +1,8 @@
 
 
 param2requests = {
-    'num_fragments': [2, 4, 6, 8],
-    'doc_size': [1_000_000],
+    'num_fragments': [2],
+    'doc_size': [100_000],
     'fragmentation_prob': [1.0],  # TODO
 }
 
