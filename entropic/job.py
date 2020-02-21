@@ -57,13 +57,13 @@ def main(param2val):
                            )
     prep = SlidingPrep([toy_corpus.doc],
                        reverse=False,
-                       num_types=params.num_types,
+                       num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.slide_size,
                        batch_size=params.batch_size,
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    pr = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
+    p_xw0 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -80,6 +80,8 @@ def main(param2val):
     dps = []
     pps = []
     bas = []
+    e1s = []
+    e2s = []
     for step, batch in enumerate(prep.generate_batches()):
 
         # prepare x, y
@@ -100,11 +102,28 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # compute dp for random x-word
-            xr = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
-            logits_r = rnn(torch.cuda.LongTensor(xr))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            qr = np.squeeze(softmax(logits_r))
-            dp = drv.divergence_jensenshannon_pmf(pr, qr, base=np.exp(1).item())
+            # compute dp for Random x-word
+            x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])
+            logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            q_xw0 = np.squeeze(softmax(logit_xw0))
+            dp = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0, base=np.exp(1).item())
+
+            x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
+            logit_xw1 = rnn(torch.cuda.LongTensor(x_xw1))['logits'].detach().cpu().numpy()[np.newaxis, :]
+            q_xw1 = np.squeeze(softmax(logit_xw1))
+
+            # TODO do next-word probabilities go up equally? if so, evidence of intermediate abstract category
+            # get only probabilities for y-words
+            q_xw0_yws = q_xw0[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
+            q_xw1_yws = q_xw1[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
+            print(q_xw0_yws[:8].round(6))
+            print(q_xw1_yws[:8].round(6))
+
+            # entropy of distribution over yws - should peak during early training - evidence of intermediate category
+            e1 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
+            e2 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
+            print(e1)
+            print(e2)
 
             # ba
             xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -121,6 +140,8 @@ def main(param2val):
             dps.append(dp)
             pps.append(pp)
             bas.append(ba)
+            e1s.append(e1)
+            e2s.append(e2)
 
         # TRAIN
         xe.backward()
@@ -130,8 +151,12 @@ def main(param2val):
     s1 = pd.Series(dps, index=eval_steps)
     s2 = pd.Series(pps, index=eval_steps)
     s3 = pd.Series(bas, index=eval_steps)
+    s4 = pd.Series(e1s, index=eval_steps)
+    s5 = pd.Series(e2s, index=eval_steps)
     s1.name = 'dp'
     s2.name = 'pp'
     s3.name = 'ba'
+    s4.name = 'e1'
+    s5.name = 'e2'
 
-    return s1, s2, s3
+    return s1, s2, s3, s4, s5

@@ -39,6 +39,8 @@ class ToyCorpus:
         print(f'Number of limited yws ={len(self.yws_limited):>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
 
+        assert len(self.yws_limited) == self.num_yws // 2
+
     @cached_property
     def doc(self) -> str:
         res = ''

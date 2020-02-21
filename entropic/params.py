@@ -3,6 +3,7 @@
 param2requests = {
     'num_fragments': [2, 4, 6, 8],
     'doc_size': [1_000_000],
+    'fragmentation_prob': [1.0],  # TODO
 }
 
 
@@ -12,7 +13,7 @@ param2default = {
     # toy corpus
     'doc_size': 5_000_000,
     'num_xws': 512,
-    'num_types': 4096,
+    'num_types': 1024,
     'num_fragments': 2,
     'fragmentation_prob': 1.0,
     # training

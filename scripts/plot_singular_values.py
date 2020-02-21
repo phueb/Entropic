@@ -9,10 +9,10 @@ from entropic.toy_corpus import ToyCorpus
 from entropic.figs import plot_singular_values
 from entropic.outcomes import get_outcomes
 
-DOC_SIZE = 2_000_000
+DOC_SIZE = 6_000_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
-NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
+NUM_FRAGMENTS = 8  # number of x-word sub categories, or singular dimensions
 FRAGMENTATION_PROB = 1.0  # the higher, the more prominent are sub-categories (and singular values)
 NUM_SINGULAR_DIMS_PLOT = 8
 
