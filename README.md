@@ -1,4 +1,7 @@
-# Entropic
+<div align="center">
+ <img src="images/logo.png" width="250">
+</div>
+
 
 Research code for understanding lexical category learning in the RNN.
 
@@ -33,6 +36,13 @@ This sequence of acquisition and discarding may slow down learning when the numb
 
 To demonstrate the presence of intermediate, emergent superordinate categories, one must track the evolution of learned next-word probability distributions.
 The presence of an emergent category is confirmed if a word's learned next-word probability distribution includes probability density for words that never actually followed the word of interest during training.
+
+### Results
+
+<div align="center">
+ <img src="images/results_dp_0_1.png" width="250">
+</div>
+
 
 ## Usage
 
