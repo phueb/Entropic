@@ -30,12 +30,13 @@ This process continues, until the cross entropy is as small as it can be, and no
 
 ### Hypothesis
 
-Learning fewer categories takes fewer weight updates to converge to perfect categorization accuracy.
-One explanation is that the fewer target categories the RNN is tasked to learn, the fewer intermediate superordinate categories must be acquired and discarded.
-This sequence of acquisition and discarding may slow down learning when the number of target categories is large.
+<div align="center">
+ <img src="images/phantom_categories.png" width="600">
+</div>
 
-To demonstrate the presence of intermediate, emergent superordinate categories, one must track the evolution of learned next-word probability distributions.
-The presence of a "phantom" category is confirmed if learned next-word probability distributions for words in one category temporarily converge towards similar next-word probability distributions for words in another category.
+To demonstrate the presence of an emergent "phantom" superordinate category, one must track the evolution of learned next-word probability distributions.
+The presence of a "phantom" category is confirmed if learned next-word probability distributions for words in one category temporarily converge towards similar next-word probability distributions for words in another category,
+ even though the two probability distributions are maximally different.
 
 ### Results
 
@@ -56,6 +57,16 @@ This is indicated by the observation that the JS divergence between the two mutu
  <img src="images/dp_0_1.png" width="600">
 </div>
 
+### Implications
+
+One previously unexplained finding training the RNN on artificial language sequences is that the RNN converges faster on the target categories if there are fewer of them.
+Using the principle of maximum entropy and knowledge of temporarily stable "phantom" categories, this can be explained as follows:
+The fewer target categories the RNN is tasked to learn, the fewer temporarily stable "phantom" states must be traversed during training.
+
+
+Moreover, "phantom" categories may help researchers understand how to train RNN language models that remain in a more uncommitted/undifferentiated state longer.
+Staying uncommitted longer during early training should help category learning in situations where the input distribution is non-stationary,
+such as training on child-directed speech in the order in which it is actually experienced by children on a developmental time-scale (1-6 first years of life).
 
 ## Usage
 
