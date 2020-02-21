@@ -1,9 +1,8 @@
 
 
 param2requests = {
-    'num_fragments': [8],
-    'optimizer': ['adagrad'],
-    'doc_size': [1_000_000],
+    'num_fragments': [2, 4, 6, 8],
+    'doc_size': [5_000_000],
 }
 
 

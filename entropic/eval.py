@@ -6,8 +6,8 @@ from functools import partial
 
 from preppy import PartitionedPrep, SlidingPrep
 
-from straddler import config
-from straddler.outcomes import get_outcomes
+from entropic import config
+from entropic.outcomes import get_outcomes
 
 
 def calc_cluster_score(sim_mat, gold_mat, cluster_metric):
@@ -101,7 +101,7 @@ def make_xw_p(prep: Union[PartitionedPrep, SlidingPrep],
               xw: str,
               ) -> np.ndarray:
     """
-    make the true next-word probability distribution for the straddler word
+    make the true next-word probability distribution for some x-word
     """
 
     x, y, x_y = get_outcomes(prep, token_ids_array, [xw])  # outcomes where xw is in slot -2

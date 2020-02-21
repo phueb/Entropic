@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 from preppy import PartitionedPrep
 
-from straddler.figs import make_example_fig
-from straddler.toy_corpus import ToyCorpus
-from straddler.figs import plot_singular_values
-from straddler.outcomes import get_outcomes
+from entropic.figs import make_example_fig
+from entropic.toy_corpus import ToyCorpus
+from entropic.figs import plot_singular_values
+from entropic.outcomes import get_outcomes
 
 DOC_SIZE = 2_000_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects

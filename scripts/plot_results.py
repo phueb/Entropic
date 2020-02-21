@@ -1,9 +1,9 @@
 import pandas as pd
 from scipy import stats
 
-from straddler.figs import plot_summary
-from straddler import config
-from straddler.params import param2default, param2requests
+from entropic.figs import plot_summary
+from entropic import config
+from entropic.params import param2default, param2requests
 
 from ludwig.results import gen_param_paths
 

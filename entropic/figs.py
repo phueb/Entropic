@@ -3,7 +3,7 @@ from matplotlib.lines import Line2D
 from typing import List, Tuple
 import numpy as np
 
-from straddler import config
+from entropic import config
 
 
 def make_example_fig(mat,

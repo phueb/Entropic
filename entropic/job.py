@@ -7,11 +7,11 @@ from pyitlib import discrete_random_variable as drv
 
 from preppy import SlidingPrep
 
-from straddler import config
-from straddler.eval import calc_cluster_score, make_xw_p
-from straddler.toy_corpus import ToyCorpus
-from straddler.rnn import RNN
-from straddler.eval import softmax
+from entropic import config
+from entropic.eval import calc_cluster_score, make_xw_p
+from entropic.toy_corpus import ToyCorpus
+from entropic.rnn import RNN
+from entropic.eval import softmax
 
 
 @attr.s
@@ -63,7 +63,6 @@ def main(param2val):
                        context_size=1)
 
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    p1 = make_xw_p(prep, prep.token_ids_array, toy_corpus.straddler)
     p2 = make_xw_p(prep, prep.token_ids_array, toy_corpus.xws[1])
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
@@ -79,7 +78,6 @@ def main(param2val):
     # train loop
     eval_steps = []
     dps1 = []
-    dps2 = []
     pps = []
     bas = []
     for step, batch in enumerate(prep.generate_batches()):
@@ -102,22 +100,13 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # dp - how lexically specific are next word predictions for straddler, which is in no particular sub-group?
-            x1 = np.array([[prep.store.w2id[toy_corpus.straddler]]])
-            logits1 = rnn(torch.cuda.LongTensor(x1))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            q1 = np.squeeze(softmax(logits1))
-
             x2 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])
             logits2 = rnn(torch.cuda.LongTensor(x2))['logits'].detach().cpu().numpy()[np.newaxis, :]
             q2 = np.squeeze(softmax(logits2))
 
-            # dp = drv.divergence_jensenshannon_pmf(straddler_p, straddler_q)
-
-            dp1 = drv.entropy_cross_pmf(p1, q1, base=np.exp(1).item())  # straddler
-            dp2 = drv.entropy_cross_pmf(p2, q2, base=np.exp(1).item())  # non-straddler
+            dp1 = drv.divergence_jensenshannon_pmf(p2, q2, base=np.exp(1).item())
 
             print(f'{dp1:.4f}')
-            print(f'{dp2:.4f}')
 
             # ba
             xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -132,7 +121,6 @@ def main(param2val):
             # collect performance data
             eval_steps.append(step)
             dps1.append(dp1)
-            dps2.append(dp2)
             pps.append(pp)
             bas.append(ba)
 
@@ -142,12 +130,10 @@ def main(param2val):
 
     # return performance as pandas Series
     s1 = pd.Series(dps1, index=eval_steps)
-    s2 = pd.Series(dps2, index=eval_steps)
-    s3 = pd.Series(pps, index=eval_steps)
-    s4 = pd.Series(bas, index=eval_steps)
-    s1.name = 'dp_straddler'
-    s2.name = 'dp_non-straddler'
-    s3.name = 'pp'
-    s4.name = 'ba'
+    s2 = pd.Series(pps, index=eval_steps)
+    s3 = pd.Series(bas, index=eval_steps)
+    s1.name = 'dp'
+    s2.name = 'pp'
+    s3.name = 'ba'
 
-    return s1, s2, s3, s4
+    return s1, s2, s3

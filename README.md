@@ -1,17 +1,28 @@
-# Straddler
-Research code for understanding lexical category learning in the RNN
+# Entropic
+
+Research code for understanding lexical category learning in the RNN.
 
 ## Background
 
-The goal is to understand at what time during training on pseudo-language sequences, does the RNN first create lexical category boundaries. This is investigated by training the RNN on the statistical behavior of pseudo-words belonging to two lexical categories, and noting when knowledge about the difference between these two categories pushes the representation of a straddler, a word that is an equally good member of both categories, to be more similar to representations for words in one or the other category.
+The goal is to demonstrate that an RNN language model first represents members of different lexical categories as equally good members of emergent superordinate categories,
+that are formed during early stages of training.
+These superordinate categories may map on to real categories.
+They are important as they constrain the representational trajectory of word representations, and help us understand how RNN converges on the target categories.
+The composition of early emergent superordinate categories is best understood within the framework of maximum entropy. 
+A superordinate category in the RNN can emerge temporarily when a learned output probability distribution best captures a collection of individual next-word probability distributions,
+ given the information gathered so far.
+In this case, the cross entropy between a single next-word probability distribution is sufficient to capture the next-word probability distributions of all category members. 
+As more information is gathered, evidence for differences in next-word probability distributions causes the single next-word probability distribution to no longer be optimal, and the category is split,
+to reach optimality again.
+This process continues, until the cross entropy is as small as it can be, and no further categories must be split.   
 
 ## Usage
 
-To run the default configuration, call `straaddler.job.main` like so:
+To run the default configuration, call `entropic.job.main` like so:
 
 ```python
-from straddler.job import main
-from straddler.params import param2default
+from entropic.job import main
+from entropic.params import param2default
 
 main(param2default)  # runs the experiment in default configuration
 ```
