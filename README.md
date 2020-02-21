@@ -35,8 +35,13 @@ This process continues, until the cross entropy is as small as it can be, and no
 </div>
 
 To demonstrate the presence of an emergent "phantom" superordinate category, one must track the evolution of learned next-word probability distributions.
-The presence of a "phantom" category is confirmed if learned next-word probability distributions for words in one category temporarily converge towards similar next-word probability distributions for words in another category,
- even though the two probability distributions are maximally different.
+The presence of a "phantom" category can be demonstrated in the following scenario:
+The RNN is trained on 2-word sequences, in which words in the first slot belong to one of two maximally different categories. 
+That is, the next-word probability distribution for words in category 1 is maximally different from the next-word probability distribution of words in category 2.
+If the learned next-word probability distributions for words in one category temporarily converge towards the next-word probability distributions for words in another category,
+ this cannot be due to any similarity between the two categories, and must instead be due to some inductive bias inherent in the RNN.
+This inductive bias is presumably its tendency to learn next-word probability distributions with maximum entropy.
+The maximum entropy principle would explain why the RNN would infer that two maximally different categories should be  grouped into a single superordinate category.
 
 ### Results
 
