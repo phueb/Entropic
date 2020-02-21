@@ -59,6 +59,7 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
 
 def plot_singular_values(ys: List[np.ndarray],
                          max_s: int,
+                         fps,
                          fontsize: int = 12,
                          figsize: Tuple[int] = (5, 5),
                          markers: bool = False,
@@ -74,9 +75,12 @@ def plot_singular_values(ys: List[np.ndarray],
     if label_all_x:
         ax.set_xticks(x)
         ax.set_xticklabels(x)
+
     # plot
+    colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6'])
     for n, y in enumerate(ys):
-        ax.plot(x, y, label='toy corpus part {}'.format(n + 1), linewidth=2)
+        color = next(colors)
+        ax.plot(x, y, label=f'fragmentation prob={fps[n]}', linewidth=2, color=color)
         if markers:
             ax.scatter(x, y)
     ax.legend(loc='upper right', frameon=False, fontsize=fontsize)
@@ -101,7 +105,7 @@ def plot_summary(summary_data,
     ax.spines['top'].set_visible(False)
 
     #
-    colors = iter(['C0', 'C1', 'C2', 'C4', 'C5', 'C6'])
+    colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6'])
     for x, y, me, label, n in summary_data:
         color = next(colors)
         ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)

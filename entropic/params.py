@@ -3,7 +3,8 @@
 param2requests = {
     'num_fragments': [2],
     'doc_size': [100_000],
-    'fragmentation_prob': [1.0],  # TODO
+    'fragmentation_prob': [1.0, 0.75, 0.5, 0.25],  # TODO
+    'xws_in_slot_1_only': [True],  # TODO
 }
 
 
@@ -17,6 +18,7 @@ param2default = {
     'num_fragments': 2,
     'fragmentation_prob': 1.0,
     # training
+    'xws_in_slot_1_only': True,  # True results in "phantom categories"
     'slide_size': 64,
     'optimizer': 'adagrad',
     'batch_size': 64,

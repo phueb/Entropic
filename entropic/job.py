@@ -25,6 +25,7 @@ class Params(object):
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     fragmentation_prob = attr.ib(validator=attr.validators.instance_of(float))
     # training
+    xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -90,12 +91,12 @@ def main(param2val):
     }
     for step, batch in enumerate(prep.generate_batches()):
 
+        # TODO this determines whether phantom category emerges or not - why?
+        if params.xws_in_slot_1_only:
+            batch = batch[::params.num_fragments]  # get only windows where x is in first slot
+
         # prepare x, y
-        batch = batch[::params.num_fragments]  # get only windows where x is in first slot
-        assert batch.shape[1] == 2
         x, y = batch[:, 0, np.newaxis], batch[:, 1]
-        for xi in x[::2]:
-            assert xi.item() in xw_ids
         inputs = torch.cuda.LongTensor(x)
         targets = torch.cuda.LongTensor(y)
 
