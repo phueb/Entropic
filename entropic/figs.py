@@ -6,10 +6,10 @@ import numpy as np
 from entropic import config
 
 
-def make_example_fig(mat,
+def make_heatmap_fig(mat,
                      xlabel='x-words',
                      ylabel='y-words'):
-    fig, ax = plt.subplots(dpi=163)
+    fig, ax = plt.subplots(dpi=163 * 4)
     plt.title('', fontsize=5)
 
     # heatmap
@@ -80,7 +80,7 @@ def plot_singular_values(ys: List[np.ndarray],
     colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6'])
     for n, y in enumerate(ys):
         color = next(colors)
-        ax.plot(x, y, label=f'fragmentation prob={fps[n]}', linewidth=2, color=color)
+        ax.plot(x, y, label=f'period prob={fps[n]}', linewidth=2, color=color)
         if markers:
             ax.scatter(x, y)
     ax.legend(loc='upper right', frameon=False, fontsize=fontsize)

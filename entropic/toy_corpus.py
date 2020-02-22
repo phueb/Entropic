@@ -15,13 +15,15 @@ class ToyCorpus:
                  num_types: int = 4096,
                  num_xws: int = 512,
                  num_fragments: int = 2,  # number of sub-categories in xws
-                 fragmentation_prob: float = 0.5,
+                 period_probability: float = 0.0,
+                 alpha: float = 2.0,
                  ) -> None:
         self.doc_size = doc_size
         self.num_types = num_types
         self.num_xws = num_xws
         self.num_fragments = num_fragments
-        self.fragmentation_prob = fragmentation_prob
+        self.period_probability = period_probability
+        self.alpha = alpha
         self.num_yws = self.num_types - self.num_xws
 
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
@@ -32,43 +34,48 @@ class ToyCorpus:
         c = cycle(yw_fragments)
         self.xw2yws = {xw: next(c) for xw in self.xws}
 
-        # a smaller set of yws - that has an equal amount of yws from each category, giving rise to a third category
-        # sampling from these gives rise to third category which should be equally different from other categories
-        self.yws_extra_fragment = []
-        c = cycle(range(num_fragments))
-        for yw_pop in zip(*yw_fragments):
-            i = next(c)
-            self.yws_extra_fragment.append(yw_pop[i])
-        # ensure extra fragment shares an equal amount of yws with each other fragment
-        num_shared_with_fragment1 = len(set(self.yws_extra_fragment).intersection(yw_fragments[0]))
-        num_shared_with_fragment2 = len(set(self.yws_extra_fragment).intersection(yw_fragments[1]))
-        assert num_shared_with_fragment1 == num_shared_with_fragment2
-        # all fragments mut be same size
-        assert len(self.yws_extra_fragment) == len(yw_fragments[0]), (len(self.yws_extra_fragment), len(yw_fragments[0]))
-        assert len(self.yws_extra_fragment) == len(yw_fragments[1]), (len(self.yws_extra_fragment), len(yw_fragments[1]))
+        self.fragment_size = self.num_yws // self.num_fragments
+
+        # the number of legal joint outcomes is the total number divided by the fragment size
+        self.num_possible = self.num_xws*self.num_yws / num_fragments
 
         print('Initialized ToyCorpus')
-        print(f'Lowest theoretical pp ={len(self.yws_extra_fragment):>6,}')
-        print(f'Number of limited yws ={len(self.yws_extra_fragment):>6,}')
+        print(f'Lowest theoretical pp ={self.fragment_size:>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
-
-        assert len(self.yws_extra_fragment) == self.num_yws // num_fragments
 
     @cached_property
     def doc(self) -> str:
+        joint_outcomes = set()
+
+        # make cumulative weights that mimic power distribution
+        pseudo_periods = self.yws[::32]
+        logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
+        cum_weights = [l / logits[-1] for l in logits]
+        print(self.alpha)
+        print(logits)
+        print(cum_weights)
+
         res = ''
         for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words
 
             # sample xw randomly
             xw = random.choice(self.xws)
 
-            # sample yw from one of many subset
-            if random.random() < self.fragmentation_prob or xw in self.xws[:2]:  # first two x-words should be pure
-                yw = random.choice(self.xw2yws[xw])
-            # sample yw from a single subset that is equally different from all other subsets
+            # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
+            if random.random() < self.period_probability:
+                yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
+
+            # sample yw consistent with xw category
             else:
-                yw = random.choice(self.yws_extra_fragment)  # TODO select from limited sub pop unique to each xw
+                yw = random.choice(self.xw2yws[xw])
+
+            # collect
             res += f'{xw} {yw} '  # whitespace after each
+            joint_outcomes.add((xw, yw))
+
+        print(f'Number of unique joint outcomes={len(joint_outcomes):,}/{self.num_possible:,}')
+        print(f'Coverage={len(joint_outcomes) / self.num_possible:.2f}')
+
         return res
 
     @cached_property

@@ -23,7 +23,7 @@ class Params(object):
     num_xws = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
-    fragmentation_prob = attr.ib(validator=attr.validators.instance_of(float))
+    period_probability = attr.ib(validator=attr.validators.instance_of(float))
     # training
     xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -54,7 +54,7 @@ def main(param2val):
                            num_types=params.num_types,
                            num_xws=params.num_xws,
                            num_fragments=params.num_fragments,
-                           fragmentation_prob=params.fragmentation_prob,
+                           period_probability=params.period_probability,
                            )
     prep = SlidingPrep([toy_corpus.doc],
                        reverse=False,

@@ -4,28 +4,30 @@ import matplotlib.pyplot as plt
 
 from preppy import PartitionedPrep
 
-from entropic.figs import make_example_fig
+from entropic.figs import make_heatmap_fig
 from entropic.toy_corpus import ToyCorpus
 from entropic.figs import plot_singular_values
 from entropic.outcomes import get_outcomes
 
-DOC_SIZE = 1_000_000
+DOC_SIZE = 500_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
 NUM_FRAGMENTS = 2  # number of x-word sub categories, or singular dimensions
-FRAGMENTATION_PROBS = [1.0, 0.75, 0.5, 0.25]  # the higher, the more prominent are sub-categories (and singular values)
+ALPHA = 2.0
+PERIOD_PROBABILITIES = [0.1, 0.0]  # TODO
 NUM_SINGULAR_DIMS_PLOT = 8
 
 SHOW_HEATMAP = True
 
 
 s_list = []
-for fp in FRAGMENTATION_PROBS:
+for pp in PERIOD_PROBABILITIES:
     toy_corpus = ToyCorpus(doc_size=DOC_SIZE,
                            num_types=NUM_TYPES,
                            num_xws=NUM_XWS,
                            num_fragments=NUM_FRAGMENTS,
-                           fragmentation_prob=fp,
+                           alpha=ALPHA,
+                           period_probability=pp
                            )
     prep = PartitionedPrep([toy_corpus.doc],
                            reverse=False,
@@ -51,16 +53,16 @@ for fp in FRAGMENTATION_PROBS:
     # make co-occurrence plot
     if SHOW_HEATMAP:
         last_num_rows = NUM_TYPES - NUM_XWS  # other rows are just empty because of x-words not occurring with x-words
-        fig, ax = make_example_fig(np.log(cf_mat[-last_num_rows:]))
+        fig, ax = make_heatmap_fig(np.log(cf_mat[-last_num_rows:]))
         ce = drv.entropy_conditional(x, y).item()
         je = drv.entropy_joint(x_y).item()
         ye = drv.entropy_joint(y).item()
-        plt.title(f'Toy Corpus\nfragmentation prob={fp}\nH(x-word|y-word)={ce:.4f}\nH(x-word,y-word)={je:.4f}\nH(y-word)={ye:.4f}')
+        plt.title(f'Toy Corpus\nperiod prob={pp}\nH(x-word|y-word)={ce:.4f}\nH(x-word,y-word)={je:.4f}\nH(y-word)={ye:.4f}')
         plt.show()
 
     # collect singular values for plotting
     s = np.linalg.svd(cf_mat, compute_uv=False)
     s_list.append(np.asarray(s[:NUM_SINGULAR_DIMS_PLOT]))
 
-plot_singular_values(s_list, max_s=NUM_SINGULAR_DIMS_PLOT, fps=FRAGMENTATION_PROBS)
+plot_singular_values(s_list, max_s=NUM_SINGULAR_DIMS_PLOT, fps=PERIOD_PROBABILITIES)
 
