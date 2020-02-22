@@ -51,9 +51,6 @@ class ToyCorpus:
         pseudo_periods = self.yws[::32]
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
-        print(self.alpha)
-        print(logits)
-        print(cum_weights)
 
         res = ''
         for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words

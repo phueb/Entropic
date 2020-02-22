@@ -9,7 +9,7 @@ from entropic import config
 def make_heatmap_fig(mat,
                      xlabel='x-words',
                      ylabel='y-words'):
-    fig, ax = plt.subplots(dpi=163 * 4)
+    fig, ax = plt.subplots(dpi=163 * 1)
     plt.title('', fontsize=5)
 
     # heatmap
@@ -59,13 +59,16 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
 
 def plot_singular_values(ys: List[np.ndarray],
                          max_s: int,
-                         fps,
+                         pps: List[float],
+                         normed: bool,
                          fontsize: int = 12,
                          figsize: Tuple[int] = (5, 5),
                          markers: bool = False,
                          label_all_x: bool = False):
     fig, ax = plt.subplots(1, figsize=figsize, dpi=None)
-    plt.title('SVD of simulated co-occurrence matrix', fontsize=fontsize)
+    title = 'SVD of toy corpus co-occurrence matrix'
+    title += f'\nnormalized={normed}'
+    plt.title(title, fontsize=fontsize)
     ax.set_ylabel('Singular value', fontsize=fontsize)
     ax.set_xlabel('Singular Dimension', fontsize=fontsize)
     ax.spines['right'].set_visible(False)
@@ -80,7 +83,7 @@ def plot_singular_values(ys: List[np.ndarray],
     colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6'])
     for n, y in enumerate(ys):
         color = next(colors)
-        ax.plot(x, y, label=f'period prob={fps[n]}', linewidth=2, color=color)
+        ax.plot(x, y, label=f'period prob={pps[n]}', linewidth=2, color=color)
         if markers:
             ax.scatter(x, y)
     ax.legend(loc='upper right', frameon=False, fontsize=fontsize)
