@@ -1,7 +1,7 @@
 from pyitlib import discrete_random_variable as drv
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, scale
 
 from preppy import PartitionedPrep
 
@@ -21,7 +21,7 @@ NUM_SINGULAR_DIMS_PLOT = 8
 SHOW_HEATMAP = True
 
 
-s_list_normed = []
+s_list_scaled = []
 s_list_intact = []
 for pp in PERIOD_PROBABILITIES:
     toy_corpus = ToyCorpus(doc_size=DOC_SIZE,
@@ -63,14 +63,14 @@ for pp in PERIOD_PROBABILITIES:
         plt.show()
 
     # collect singular values for plotting
-    cf_mat_intact = cf_mat
-    cf_mat_normed = normalize(cf_mat, axis=1, norm='l2', copy=True)  # normalizing each row
+    cf_mat_intact = scale(cf_mat, axis=1, with_std=False, with_mean=False)
+    cf_mat_scaled = scale(cf_mat, axis=1, with_std=False, with_mean=True)  # subtracting mean from rows
     s_intact = np.linalg.svd(cf_mat_intact, compute_uv=False)
-    s_normed = np.linalg.svd(cf_mat_normed, compute_uv=False)
+    s_scaled = np.linalg.svd(cf_mat_scaled, compute_uv=False)
     s_list_intact.append(np.asarray(s_intact[:NUM_SINGULAR_DIMS_PLOT]))
-    s_list_normed.append(np.asarray(s_normed[:NUM_SINGULAR_DIMS_PLOT]))
+    s_list_scaled.append(np.asarray(s_scaled[:NUM_SINGULAR_DIMS_PLOT]))
 
 # difference between normalizing and no normalizing matters!
-plot_singular_values(s_list_intact, normed=False, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
-plot_singular_values(s_list_normed, normed=True, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
+plot_singular_values(s_list_intact, scaled=False, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
+plot_singular_values(s_list_scaled, scaled=True, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
 

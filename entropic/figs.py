@@ -60,14 +60,14 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
 def plot_singular_values(ys: List[np.ndarray],
                          max_s: int,
                          pps: List[float],
-                         normed: bool,
+                         scaled: bool,
                          fontsize: int = 12,
                          figsize: Tuple[int] = (5, 5),
                          markers: bool = False,
                          label_all_x: bool = False):
     fig, ax = plt.subplots(1, figsize=figsize, dpi=None)
     title = 'SVD of toy corpus co-occurrence matrix'
-    title += f'\nnormalized={normed}'
+    title += f'\nrows are scaled to mean={scaled}'
     plt.title(title, fontsize=fontsize)
     ax.set_ylabel('Singular value', fontsize=fontsize)
     ax.set_xlabel('Singular Dimension', fontsize=fontsize)
