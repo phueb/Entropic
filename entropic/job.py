@@ -86,6 +86,10 @@ def main(param2val):
         'dp_1_0': [],
         'e1': [],
         'e2': [],
+        'sing-dim-1_0': [],  # xw 0 loading on sing dim 1
+        'sing-dim-2_0': [],  # xw 0 loading on sing dim 2
+        'sing-dim-1_1': [],  # xw 1 loading on sing dim 1
+        'sing-dim-2_1': [],  # xw 1 loading on sing dim 1
         'ba': [],
         'pp': [],
     }
@@ -110,28 +114,36 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
+            # get output representations for all words
+            x_all = np.array([[prep.store.w2id[xw]] for xw in toy_corpus.xws])
+            output_probabilities_all = softmax(rnn(torch.cuda.LongTensor(x_all))['logits'].detach().cpu().numpy())
+
             # compute dp between xw 1 and 0 and vice versa
-            x_xw0 = np.array([[prep.store.w2id[toy_corpus.xws[0]]]])  # this x-word is in category 1
-            x_xw1 = np.array([[prep.store.w2id[toy_corpus.xws[1]]]])  # this x-word is in category 2
-            logit_xw0 = rnn(torch.cuda.LongTensor(x_xw0))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            logit_xw1 = rnn(torch.cuda.LongTensor(x_xw1))['logits'].detach().cpu().numpy()[np.newaxis, :]
-            q_xw0 = np.squeeze(softmax(logit_xw0))
-            q_xw1 = np.squeeze(softmax(logit_xw1))
+            q_xw0 = output_probabilities_all[0]
+            q_xw1 = output_probabilities_all[1]
             dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0)
             dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1)
             dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1)
             dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0)
 
-            # TODO do next-word probabilities go up equally? if so, evidence of intermediate abstract category
+            # TODO show that cat 1 and 2 representations converge along sing dim 1 together at first,
+            #  and then diverge along sing dim 2
+            u, s, v = np.linalg.svd(output_probabilities_all, compute_uv=True)
+
+            # singular dim 2 should increase steadily when num_fragments=2
+            print(f'dim1 sv={s[0]:2.4f}')
+            print(f'dim2 sv={s[1]:2.4f}')
+            print(f'dim3 sv={s[2]:2.4f}')
+            print(f'dim4 sv={s[3]:2.4f}')
+
             # get only probabilities for y-words
             q_xw0_yws = q_xw0[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
             q_xw1_yws = q_xw1[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
-            print(q_xw0_yws[:8].round(6))
-            print(q_xw1_yws[:8].round(6))
-
             # entropy of distribution over yws - should peak during early training - evidence of intermediate category
             e1 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
             e2 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
+
+            # entropy should move from 9 to 8 if using num_fragments=2 and num_types=1024, because 2^8=1024/2
             print(e1)
             print(e2)
 
@@ -155,6 +167,17 @@ def main(param2val):
             name2col['ba'].append(ba)
             name2col['e1'].append(e1)
             name2col['e2'].append(e2)
+            name2col['sing-dim-1_0'].append(u[0::2, 0].mean())  # this is informative only when num_fragments=2
+            name2col['sing-dim-2_0'].append(u[0::2, 1].mean())
+            name2col['sing-dim-1_1'].append(u[1::2, 0].mean())
+            name2col['sing-dim-2_1'].append(u[1::2, 1].mean())
+
+            # TODO test
+            print('u')
+            print(f'{u[0::2, 0].mean(): 1.4f}')
+            print(f'{u[0::2, 1].mean(): 1.4f}')
+            print(f'{u[1::2, 0].mean(): 1.4f}')
+            print(f'{u[1::2, 1].mean(): 1.4f}')
 
         # TRAIN
         xe.backward()
@@ -163,6 +186,7 @@ def main(param2val):
     # return performance as pandas Series
     series_list = []
     for name, col in name2col.items():
+        print(f'Making pandas series with name={name} and length={len(col)}')
         s = pd.Series(col, index=eval_steps)
         s.name = name
         series_list.append(s)

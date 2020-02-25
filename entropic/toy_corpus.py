@@ -47,8 +47,19 @@ class ToyCorpus:
     def doc(self) -> str:
         joint_outcomes = set()
 
+        # make
+        pseudo_periods = []
+        c = cycle(range(self.num_fragments))
+        yw_fragments = [self.yws[offset::self.num_fragments] for offset in range(self.num_fragments)]
+        num_max = 8  # should be small - to ensure that joint entropy is smaller in partition 1
+        for yw_pop in list(zip(*yw_fragments))[:num_max]:
+            i = next(c)
+            pseudo_periods.append(yw_pop[i])
+
+        print('pseudo_periods')
+        print(pseudo_periods)
+
         # make cumulative weights that mimic power distribution
-        pseudo_periods = self.yws[::32]
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
 
@@ -59,7 +70,7 @@ class ToyCorpus:
             xw = random.choice(self.xws)
 
             # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
-            if random.random() < self.period_probability:
+            if random.random() < self.period_probability and xw not in self.xws[:2]:
                 yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
 
             # sample yw consistent with xw category

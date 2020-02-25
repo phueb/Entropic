@@ -2,7 +2,7 @@
 
 param2requests = {
     'num_fragments': [2],
-    'doc_size': [500_000],
+    'doc_size': [100_000],
     'period_probability': [0.1, 0.0],
     'xws_in_slot_1_only': [True],
 }

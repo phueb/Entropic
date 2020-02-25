@@ -1,12 +1,16 @@
 import torch
 import numpy as np
+from typing import Optional
+
+from entropic import config
 
 
 class RNN(torch.nn.Module):
     def __init__(self,
                  flavor: str,
                  input_size: int,
-                 hidden_size: int
+                 hidden_size: int,
+                 max_w: Optional[float] = config.Model.max_w,
                  ):
 
         super().__init__()
@@ -31,7 +35,8 @@ class RNN(torch.nn.Module):
                                        out_features=input_size)
 
         # init weights - this is required to get good balanced accuracy
-        max_w = np.sqrt(1 / hidden_size)
+        if max_w is None:
+            max_w = np.sqrt(1 / hidden_size)
         self.embed.weight.data.uniform_(-max_w, max_w)
         self.project.weight.data.uniform_(-max_w, max_w)
         self.project.bias.data.fill_(0.0)
