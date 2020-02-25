@@ -1,7 +1,7 @@
 
 
 param2requests = {
-    'period_probability': [0.2, 0.0],
+    'period_probability': [0.1, 0.0],
 }
 
 
