@@ -4,6 +4,7 @@ import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 from pyitlib import discrete_random_variable as drv
+from pathlib import Path
 
 from preppy import SlidingPrep
 
@@ -48,6 +49,8 @@ def main(param2val):
     # params
     params = Params.from_param2val(param2val)
     print(params, flush=True)
+
+    save_path = Path(param2val['save_path'])
 
     # create toy input
     toy_corpus = ToyCorpus(doc_size=params.doc_size,
@@ -172,12 +175,9 @@ def main(param2val):
             name2col['sing-dim-1_1'].append(u[1::2, 0].mean())
             name2col['sing-dim-2_1'].append(u[1::2, 1].mean())
 
-            # TODO test
-            print('u')
-            print(f'{u[0::2, 0].mean(): 1.4f}')
-            print(f'{u[0::2, 1].mean(): 1.4f}')
-            print(f'{u[1::2, 0].mean(): 1.4f}')
-            print(f'{u[1::2, 1].mean(): 1.4f}')
+            # TODO save softmax probabilities to file
+            out_path = save_path / f'output_probabilities_{step:0>9}.npy'
+            np.save(out_path, output_probabilities_all)
 
         # TRAIN
         xe.backward()

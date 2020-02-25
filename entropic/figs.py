@@ -1,7 +1,11 @@
-from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from typing import List, Tuple, Optional
 import numpy as np
+from sklearn.decomposition import TruncatedSVD
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib import patheffects
+from math import gcd
 
 from entropic import config
 
@@ -57,6 +61,75 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
     plt.gca().add_artist(leg2)  # order of legend creation matters here
 
 
+def equidistant_elements(l, n):
+    """return "n" elements from "l" such that they are equally far apart iin "l" """
+    while not gcd(n, len(l)) == n:
+        l.pop()
+    step = len(l) // n
+    ids = np.arange(step, len(l) + step, step) - 1  # -1 for indexing
+    res = np.asarray(l)[ids].tolist()
+    return res
+
+
+def make_svd_across_time_fig(embeddings: np.ndarray,
+                             words: List[str],
+                             component1: int,
+                             component2: int,
+                             label: str,
+                             num_ticks: int,
+                             ) -> plt.Figure:
+    """
+    Returns res showing evolution of embeddings in 2D space using PCA.
+    """
+
+    assert np.ndim(embeddings) == 3  # (ticks, words, embedding dimensions)
+    assert len(words) == embeddings.shape[1]
+
+    palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
+    model_ticks = [n for n, _ in enumerate(embeddings)]
+    equidistant_ticks = equidistant_elements(model_ticks, num_ticks)
+
+    # fit svd model on last tick
+    num_components = component2 + 1
+    svd_model = TruncatedSVD(n_components=num_components)
+    svd_model.fit(embeddings[-1])
+
+    # transform embeddings at requested ticks with pca model
+    transformations = []
+    for ei in embeddings[equidistant_ticks]:
+        transformations.append(svd_model.transform(ei)[:, [component1, component2]])
+
+    # fig
+    res, ax = plt.subplots(figsize=config.Fig.fig_size, dpi=config.Fig.dpi)
+    ax.set_title(f'Singular dimensions {component1} and {component2}\nEvolution across training\n' + label)
+    ax.axis('off')
+    ax.axhline(y=0, linestyle='--', c='grey', linewidth=1.0)
+    ax.axvline(x=0, linestyle='--', c='grey', linewidth=1.0)
+
+    # plot
+    for n, word in enumerate(words):
+
+        # scatter
+        x, y = zip(*[t[n] for t in transformations])
+        ax.plot(x, y, c=palette[n], lw=config.Fig.line_width)
+
+        # annotate text start
+        x_pos, y_pos = transformations[0][n, :]
+        txt = ax.text(x_pos, y_pos, f'{word} start', fontsize=8,
+                      color=palette[n])
+        txt.set_path_effects([
+            patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+
+        # annotate text end
+        x_pos, y_pos = transformations[-1][n, :]
+        txt = ax.text(x_pos, y_pos, f'{word} end', fontsize=8,
+                      color=palette[n])
+        txt.set_path_effects([
+            patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+
+    return res
+
+
 def plot_singular_values(ys: List[np.ndarray],
                          max_s: int,
                          pps: List[float],
@@ -99,11 +172,11 @@ def plot_summary(summary_data,
                  ):
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    plt.title(title, fontsize=config.Figs.title_label_fs)
-    ax.set_xlabel('Training Time [step]', fontsize=config.Figs.axis_fs)
+    plt.title(title, fontsize=config.Fig.title_label_fs)
+    ax.set_xlabel('Training Time [step]', fontsize=config.Fig.axis_fs)
     y_label = {'ba': 'balanced accuracy',
                'dp_0_1': 'JS-Divergence [bits]\nbetween\ntrue category 1 and learned category 2 out probabilities'}[y_label]
-    ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=config.Figs.axis_fs)
+    ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=config.Fig.axis_fs)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
@@ -119,6 +192,6 @@ def plot_summary(summary_data,
 
     if legend:
         plt.legend(bbox_to_anchor=(1.0, 1.0), borderaxespad=1.0,
-                   fontsize=config.Figs.leg_fs, frameon=False, loc='upper left', ncol=1)
+                   fontsize=config.Fig.leg_fs, frameon=False, loc='upper left', ncol=1)
 
     return fig

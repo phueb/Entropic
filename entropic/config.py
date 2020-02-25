@@ -19,7 +19,10 @@ class Model:
     max_w = None  # TODO can set to None, but the higher, the more variance in initial RNN weights
 
 
-class Figs:
+class Fig:
     title_label_fs = 8
     axis_fs = 12
     leg_fs = 12
+    fig_size = (6, 6)
+    dpi = 163
+    line_width = 2

@@ -58,6 +58,8 @@ class ToyCorpus:
 
         print('pseudo_periods')
         print(pseudo_periods)
+        print(sum([1 if pp in self.xw2yws[self.xws[0]] else 0 for pp in pseudo_periods]))
+        print(sum([1 if pp in self.xw2yws[self.xws[1]] else 0 for pp in pseudo_periods]))
 
         # make cumulative weights that mimic power distribution
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
