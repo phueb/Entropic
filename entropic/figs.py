@@ -1,12 +1,12 @@
 from mpl_toolkits import mplot3d  # this is unused but needed for 3d plotting
 from matplotlib.lines import Line2D
 from typing import List, Tuple, Optional
-from celluloid import Camera
 import numpy as np
-from sklearn.decomposition import TruncatedSVD, PCA
+from sklearn.decomposition import TruncatedSVD
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patheffects
+from itertools import cycle
 
 from entropic import config
 
@@ -174,9 +174,10 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       component2: int,
                                       component3: int,
                                       steps_in_tick: int,
-                                      ):
+                                      job_id: int,
+                                      ) -> None:
     """
-    Returns res showing evolution of embeddings in 2D space using PCA.
+    Saves figures, showing rotating 3d figure of SVD time course
     """
 
     assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
@@ -198,8 +199,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
         transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
 
     # fig
-    fig = plt.figure(dpi=163//2)
-    camera = Camera(fig)
+    plt.figure(dpi=163)
     ax = plt.axes(projection='3d')
     ax.set_title('Progressive Differentiation')
     ax.set_xticklabels([])
@@ -209,23 +209,37 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     ax.set_ylabel('Singular Dim 1', labelpad=-10)
     ax.set_zlabel('Singular Dim 2', labelpad=-10)
 
+    ax.set_xlim(left=np.min(np.asarray(transformations)[:, :, 0]), right=np.max(np.asarray(transformations)[:, :, 0]))
+    ax.set_ylim(bottom=np.min(np.asarray(transformations)[:, :, 1]), top=np.max(np.asarray(transformations)[:, :, 1]))
+    ax.set_zlim(bottom=np.min(np.asarray(transformations)[:, :, 2]), top=np.max(np.asarray(transformations)[:, :, 2]))
+
+    angles = cycle(range(360))
+    start_angle = 0
+
     # plot
     for tick in range(1, len(transformations)):
 
-        # add step
-        ax.text(0, 0, 0, f'step={tick * steps_in_tick}')
+        # slowly rotate
+        angle = next(angles)
+        ax.view_init(30, angle + start_angle)
+
+        # title
+        title_pos = 1.0
+        ax.set_title(f'step={tick * steps_in_tick}')
+        ax.title.set_y(title_pos)  # otherwise the Axes3D object will lower it over time
 
         # lines
         for cat_id in range(num_cats):
             color = palette[cat_id]
             x, y, z = zip(*[transformation[cat_id] for transformation in transformations[:tick]])
-            plt.plot(x, y, z, c=color, lw=config.Fig.line_width)
-        print(f'snapping at tick={tick}')
-        camera.snap()
+            plt.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
 
-    animation = camera.animate()
-
-    return animation
+        # save each fig individually, because celluloid.camera cannot deal with rotating axis
+        path = config.Dirs.images / f'job_id_{job_id}' / f'{tick}.png'
+        if not path.parent.exists():
+            path.parent.mkdir()
+        print(f'Saving {path}')
+        plt.savefig(path)
 
 
 def plot_singular_values(ys: List[np.ndarray],

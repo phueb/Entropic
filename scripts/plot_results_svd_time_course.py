@@ -11,11 +11,11 @@ from ludwig.results import gen_param_paths
 
 
 LABEL_TICK_INTERVAL = 100
-PLOT_INDIVIDUAL_DYNAMICS = True
-FPS = 24
+PLOT_INDIVIDUAL_STATIC_FIGURE = False
+PLOT_INDIVIDUAL_ANIMATION = True
 
 
-param2requests['period_probability'] = [0.1]
+param2requests['period_probability'] = [0.0, 0.1]
 
 
 def to_step(file_name):
@@ -62,7 +62,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
             cat_reps = np.vstack([r_job[offset::num_fragments].mean(0) for offset in range(num_fragments)])
             big[job_id, tick] += cat_reps
 
-        if PLOT_INDIVIDUAL_DYNAMICS:
+        if PLOT_INDIVIDUAL_STATIC_FIGURE:
             fig = make_svd_across_time_3d_fig(big[job_id],
                                               component1=0,
                                               component2=1,
@@ -72,20 +72,14 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               steps_in_tick=steps_in_tick)
             fig.show()
 
-            # animated version
-            animation = make_svd_across_time_3d_animation(big[job_id],
-                                                          component1=0,
-                                                          component2=1,
-                                                          component3=2,
-                                                          steps_in_tick=steps_in_tick,
-                                                          )
-
-            # saving take a while - especially when DPI is large
-            label_no_new_lines = label.replace('\n', '-')
-            print('Saving animation...This may take a while.')
-            animation.save(f'svd_time_course_{job_id}_{label_no_new_lines}.gif',
-                           fps=FPS,
-                           )
+        if PLOT_INDIVIDUAL_ANIMATION:
+            make_svd_across_time_3d_animation(big[job_id],
+                                              component1=0,
+                                              component2=1,
+                                              component3=2,
+                                              steps_in_tick=steps_in_tick,
+                                              job_id=job_id,
+                                              )
 
     # get average
     rep_time_course_avg = np.sum(big, axis=0) / num_jobs

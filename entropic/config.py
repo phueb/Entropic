@@ -4,6 +4,7 @@ from pathlib import Path
 class Dirs:
     root = Path(__file__).parent.parent
     src = root / 'entropic'
+    images = root / 'images'
 
 
 class Eval:
