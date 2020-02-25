@@ -72,18 +72,17 @@ def equidistant_elements(l, n):
 
 
 def make_svd_across_time_fig(embeddings: np.ndarray,
-                             words: List[str],
                              component1: int,
                              component2: int,
                              label: str,
                              num_ticks: int,
+                             label_tick_interval: int = 10,
                              ) -> plt.Figure:
     """
     Returns res showing evolution of embeddings in 2D space using PCA.
     """
 
-    assert np.ndim(embeddings) == 3  # (ticks, words, embedding dimensions)
-    assert len(words) == embeddings.shape[1]
+    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
 
     palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
     model_ticks = [n for n, _ in enumerate(embeddings)]
@@ -107,25 +106,18 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
     ax.axvline(x=0, linestyle='--', c='grey', linewidth=1.0)
 
     # plot
-    for n, word in enumerate(words):
+    for n in range(embeddings.shape[1]):
 
         # scatter
         x, y = zip(*[t[n] for t in transformations])
         ax.plot(x, y, c=palette[n], lw=config.Fig.line_width)
 
-        # annotate text start
-        x_pos, y_pos = transformations[0][n, :]
-        txt = ax.text(x_pos, y_pos, f'{word} start', fontsize=8,
-                      color=palette[n])
-        txt.set_path_effects([
-            patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
-
-        # annotate text end
-        x_pos, y_pos = transformations[-1][n, :]
-        txt = ax.text(x_pos, y_pos, f'{word} end', fontsize=8,
-                      color=palette[n])
-        txt.set_path_effects([
-            patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+        # annotate
+        for tick in range(0, len(transformations) + 1, label_tick_interval):
+            x_pos, y_pos = transformations[tick][n, :]
+            txt = ax.text(x_pos, y_pos, f'{tick}', fontsize=8, color=palette[n])
+            txt.set_path_effects([
+                patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
 
     return res
 

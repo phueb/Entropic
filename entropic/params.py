@@ -2,6 +2,7 @@
 
 param2requests = {
     'period_probability': [0.1, 0.0],
+    'num_fragments': [2],
 }
 
 
