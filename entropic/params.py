@@ -1,10 +1,7 @@
 
 
 param2requests = {
-    'num_fragments': [2],
-    'doc_size': [100_000],
-    'period_probability': [0.1, 0.0],
-    'xws_in_slot_1_only': [True],
+    'period_probability': [0.2, 0.0],
 }
 
 
@@ -12,7 +9,7 @@ param2default = {
     # rnn
     'hidden_size': 128,  # TODO
     # toy corpus
-    'doc_size': 500_000,
+    'doc_size': 100_000,
     'num_xws': 512,
     'num_types': 1024,
     'num_fragments': 2,
