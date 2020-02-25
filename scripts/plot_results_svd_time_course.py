@@ -4,6 +4,7 @@ import yaml
 from entropic import config
 from entropic.params import param2default, param2requests
 from entropic.figs import make_svd_across_time_fig
+from entropic.figs import make_svd_across_time_3d_fig
 
 from ludwig.results import gen_param_paths
 
@@ -43,14 +44,27 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
         cat_reps = np.vstack([representations_job[offset::num_fragments].mean(0) for offset in range(num_fragments)])
         representations_avg[tick] += cat_reps
 
-    assert np.ndim(representations_avg) == 3  # (ticks, words/categories, embedding dimensions)
+    print(representations_avg.shape)
 
-    # plot
-    fig = make_svd_across_time_fig(representations_avg,
-                                   component1=0,
-                                   component2=1,
-                                   label=label,
-                                   steps_in_tick=steps_in_tick)
+    assert np.ndim(representations_avg) == 3  # (ticks, num_fragments, embedding dimensions)
+    assert representations_avg.shape[1] == num_fragments
+
+    # plot in 3d
+    if num_fragments == 4:
+        fig = make_svd_across_time_3d_fig(representations_avg,
+                                          component1=0,
+                                          component2=1,
+                                          component3=2,
+                                          label=label,
+                                          steps_in_tick=steps_in_tick)
+    # plot in 2d
+    elif num_fragments == 2:
+        fig = make_svd_across_time_fig(representations_avg,
+                                       component1=0,
+                                       component2=1,
+                                       label=label,
+                                       steps_in_tick=steps_in_tick)
+    else:
+        raise AttributeError('"num_fragments" is too large to plot')
+
     fig.show()
-
-    # TODO make a 3d svd time-course figure for num_fragments=4

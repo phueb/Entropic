@@ -12,11 +12,11 @@ class Eval:
     xi = 0.01  # 0.01 is better than 0.05
     verbose = False
     eval_thresholds = [[0.9999], [0.999], [0.99], [0.9]]
-    eval_interval = 20
+    eval_interval = 40
 
 
 class Model:
-    max_w = None  # TODO can set to None, but the higher, the more variance in initial RNN weights
+    max_w = None  # best to leave this as None, any higher makes the prior of the RNN less entropic
 
 
 class Fig:

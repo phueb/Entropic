@@ -1,14 +1,14 @@
 
 
 param2requests = {
-    'period_probability': [0.1, 0.0],
-    'num_fragments': [2],
+    'period_probability': [0.05],
+    'num_fragments': [4],
 }
 
 
 param2default = {
     # rnn
-    'hidden_size': 128,  # TODO
+    'hidden_size': 128,  # TODO how low?
     # toy corpus
     'doc_size': 100_000,
     'num_xws': 512,

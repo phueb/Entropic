@@ -1,7 +1,8 @@
+from mpl_toolkits import mplot3d  # this is unused but needed for 3d plotting
 from matplotlib.lines import Line2D
 from typing import List, Tuple, Optional
 import numpy as np
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import TruncatedSVD, PCA
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patheffects
@@ -61,16 +62,6 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
     plt.gca().add_artist(leg2)  # order of legend creation matters here
 
 
-def equidistant_elements(l, n):
-    """return "n" elements from "l" such that they are equally far apart iin "l" """
-    while not gcd(n, len(l)) == n:
-        l.pop()
-    step = len(l) // n
-    ids = np.arange(step, len(l) + step, step) - 1  # -1 for indexing
-    res = np.asarray(l)[ids].tolist()
-    return res
-
-
 def make_svd_across_time_fig(embeddings: np.ndarray,
                              component1: int,
                              component2: int,
@@ -79,13 +70,12 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
                              label_tick_interval: int = 10,
                              ) -> plt.Figure:
     """
-    Returns res showing evolution of embeddings in 2D space using PCA.
+    Returns res showing evolution of embeddings in 2D space using SVD.
     """
 
     assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
 
     palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
-    model_ticks = [n for n, _ in enumerate(embeddings)]
 
     # fit svd model on last tick
     num_components = component2 + 1
@@ -107,7 +97,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
     # plot
     for n in range(embeddings.shape[1]):
 
-        # scatter
+        # lines
         x, y = zip(*[t[n] for t in transformations])
         ax.plot(x, y, c=palette[n], lw=config.Fig.line_width)
 
@@ -115,6 +105,64 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
         for tick in range(0, len(transformations) + 1, label_tick_interval):
             x_pos, y_pos = transformations[tick][n, :]
             txt = ax.text(x_pos, y_pos, f'{tick * steps_in_tick}', fontsize=8, color=palette[n])
+            txt.set_path_effects([
+                patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+
+    return res
+
+
+def make_svd_across_time_3d_fig(embeddings: np.ndarray,
+                                component1: int,
+                                component2: int,
+                                component3: int,
+                                label: str,
+                                steps_in_tick: int,
+                                label_tick_interval: int = 20,
+                                ) -> plt.Figure:
+    """
+    Returns res showing evolution of embeddings in 2D space using PCA.
+    """
+
+    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
+
+    assert component1 != component2
+    assert component2 != component3
+
+    palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
+
+    # fit svd model on last tick
+    num_components = component3 + 1
+    svd_model = TruncatedSVD(n_components=num_components)  # PCA gives different results
+    svd_model.fit(embeddings[-1])
+
+    # transform embeddings at requested ticks with svd model
+    transformations = []
+    for ei in embeddings:
+        transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
+
+    # fig
+    res = plt.figure(dpi=163 * 2)
+    ax = plt.axes(projection='3d')
+    ax.set_title(label)
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_zticklabels([])
+    ax.set_xlabel('Singular Dim 0', labelpad=-10)
+    ax.set_ylabel('Singular Dim 1', labelpad=-10)
+    ax.set_zlabel('Singular Dim 2', labelpad=-10)
+
+    # plot
+    for n in range(embeddings.shape[1]):
+        print('Plotting time-course for category', n)
+
+        # lines
+        x, y, z = zip(*[t[n] for t in transformations])
+        ax.plot(x, y, z, c=palette[n], lw=config.Fig.line_width)
+
+        # annotate
+        for tick in range(0, len(transformations) + 1, label_tick_interval):
+            x_pos, y_pos, z_pos = transformations[tick][n, :]
+            txt = ax.text(x_pos, y_pos, z_pos, f'{tick * steps_in_tick}', fontsize=6, color=palette[n])
             txt.set_path_effects([
                 patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
 
