@@ -1,3 +1,4 @@
+celluloid
 seaborn
 pyitlib
 attrs

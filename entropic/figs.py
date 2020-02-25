@@ -1,12 +1,12 @@
 from mpl_toolkits import mplot3d  # this is unused but needed for 3d plotting
 from matplotlib.lines import Line2D
 from typing import List, Tuple, Optional
+from celluloid import Camera
 import numpy as np
 from sklearn.decomposition import TruncatedSVD, PCA
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patheffects
-from math import gcd
 
 from entropic import config
 
@@ -141,7 +141,7 @@ def make_svd_across_time_3d_fig(embeddings: np.ndarray,
         transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
 
     # fig
-    res = plt.figure(dpi=163 * 2)
+    res = plt.figure(dpi=163 * 1)
     ax = plt.axes(projection='3d')
     ax.set_title(label)
     ax.set_xticklabels([])
@@ -160,13 +160,68 @@ def make_svd_across_time_3d_fig(embeddings: np.ndarray,
         ax.plot(x, y, z, c=palette[n], lw=config.Fig.line_width)
 
         # annotate
-        for tick in range(0, len(transformations) + 1, label_tick_interval):
+        for tick in range(0, len(transformations), label_tick_interval):
             x_pos, y_pos, z_pos = transformations[tick][n, :]
             txt = ax.text(x_pos, y_pos, z_pos, f'{tick * steps_in_tick}', fontsize=6, color=palette[n])
             txt.set_path_effects([
                 patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
 
     return res
+
+
+def make_svd_across_time_3d_animation(embeddings: np.ndarray,
+                                      component1: int,
+                                      component2: int,
+                                      component3: int,
+                                      label: str,
+                                      ):
+    """
+    Returns res showing evolution of embeddings in 2D space using PCA.
+    """
+
+    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
+
+    assert component1 != component2
+    assert component2 != component3
+
+    num_cats = embeddings.shape[1]
+    palette = np.array(sns.color_palette("hls", num_cats))
+
+    # fit svd model on last tick
+    num_components = component3 + 1
+    svd_model = TruncatedSVD(n_components=num_components)  # PCA gives different results
+    svd_model.fit(embeddings[-1])
+
+    # transform embeddings at requested ticks with svd model
+    transformations = []
+    for ei in embeddings:
+        transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
+
+    # fig
+    fig = plt.figure(dpi=163 * 2)
+    camera = Camera(fig)
+    ax = plt.axes(projection='3d')
+    ax.set_title(label)
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_zticklabels([])
+    ax.set_xlabel('Singular Dim 0', labelpad=-10)
+    ax.set_ylabel('Singular Dim 1', labelpad=-10)
+    ax.set_zlabel('Singular Dim 2', labelpad=-10)
+
+    # plot
+    for tick in range(1, len(transformations)):
+
+        # lines
+        for cat_id in range(num_cats):
+            color = palette[cat_id]
+            x, y, z = zip(*[transformation[cat_id] for transformation in transformations[:tick]])
+            plt.plot(x, y, z, c=color, lw=config.Fig.line_width)
+        print(f'snapping at tick={tick}')
+        camera.snap()
+
+    animation = camera.animate()
+    return animation
 
 
 def plot_singular_values(ys: List[np.ndarray],

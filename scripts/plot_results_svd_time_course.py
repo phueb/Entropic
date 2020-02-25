@@ -4,12 +4,13 @@ import yaml
 from entropic import config
 from entropic.params import param2default, param2requests
 from entropic.figs import make_svd_across_time_fig
+from entropic.figs import make_svd_across_time_3d_animation
 from entropic.figs import make_svd_across_time_3d_fig
 
 from ludwig.results import gen_param_paths
 
 
-LABEL_TICK_INTERVAL = 2
+LABEL_TICK_INTERVAL = 100
 PLOT_INDIVIDUAL_DYNAMICS = True
 
 
@@ -70,11 +71,22 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               steps_in_tick=steps_in_tick)
             fig.show()
 
-    time_course_avg = np.sum(big, axis=0) / num_jobs
+            # TODO
+            animation = make_svd_across_time_3d_animation(big[job_id],
+                                                          component1=0,
+                                                          component2=1,
+                                                          component3=2,
+                                                          label='Time course for a single simulation',
+                                                          )
+            animation.save('test.gif', writer='imagemagick')
+            raise SystemExit  # TODO debugging
+
+    # get average
+    rep_time_course_avg = np.sum(big, axis=0) / num_jobs
 
     # plot in 3d
     if num_fragments == 4:
-        fig = make_svd_across_time_3d_fig(time_course_avg,
+        fig = make_svd_across_time_3d_fig(rep_time_course_avg,
                                           component1=0,
                                           component2=1,
                                           component3=2,
@@ -83,7 +95,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                           steps_in_tick=steps_in_tick)
     # plot in 2d
     elif num_fragments == 2:
-        fig = make_svd_across_time_fig(time_course_avg,
+        fig = make_svd_across_time_fig(rep_time_course_avg,
                                        component1=0,
                                        component2=1,
                                        label='Average over jobs\n' + label,
