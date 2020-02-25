@@ -1,7 +1,7 @@
 
 
 param2requests = {
-    'period_probability': [0.05],
+    'period_probability': [0.1],
     'num_fragments': [4],
 }
 

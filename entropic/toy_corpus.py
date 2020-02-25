@@ -17,6 +17,7 @@ class ToyCorpus:
                  num_fragments: int = 2,  # number of sub-categories in xws
                  period_probability: float = 0.0,
                  alpha: float = 2.0,
+                 seed: int = 2,
                  ) -> None:
         self.doc_size = doc_size
         self.num_types = num_types
@@ -42,6 +43,8 @@ class ToyCorpus:
         print('Initialized ToyCorpus')
         print(f'Lowest theoretical pp ={self.fragment_size:>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
+
+        random.seed(seed)
 
     @cached_property
     def doc(self) -> str:
