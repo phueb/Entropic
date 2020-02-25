@@ -1,8 +1,9 @@
 
 
 param2requests = {
-    'period_probability': [0.0, 0.1],
+    'period_probability': [0.0],
     'num_fragments': [4],
+    'xws_in_slot_1_only': [False],  # TODO
 }
 
 
