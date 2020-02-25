@@ -12,6 +12,7 @@ from ludwig.results import gen_param_paths
 
 LABEL_TICK_INTERVAL = 100
 PLOT_INDIVIDUAL_DYNAMICS = True
+FPS = 24
 
 
 param2requests['period_probability'] = [0.1]
@@ -71,15 +72,20 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               steps_in_tick=steps_in_tick)
             fig.show()
 
-            # TODO
+            # animated version
             animation = make_svd_across_time_3d_animation(big[job_id],
                                                           component1=0,
                                                           component2=1,
                                                           component3=2,
-                                                          label='Time course for a single simulation',
+                                                          steps_in_tick=steps_in_tick,
                                                           )
-            animation.save('test.gif', writer='imagemagick')
-            raise SystemExit  # TODO debugging
+
+            # saving take a while - especially when DPI is large
+            label_no_new_lines = label.replace('\n', '-')
+            print('Saving animation...This may take a while.')
+            animation.save(f'svd_time_course_{job_id}_{label_no_new_lines}.gif',
+                           fps=FPS,
+                           )
 
     # get average
     rep_time_course_avg = np.sum(big, axis=0) / num_jobs

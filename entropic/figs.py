@@ -173,7 +173,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       component1: int,
                                       component2: int,
                                       component3: int,
-                                      label: str,
+                                      steps_in_tick: int,
                                       ):
     """
     Returns res showing evolution of embeddings in 2D space using PCA.
@@ -198,10 +198,10 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
         transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
 
     # fig
-    fig = plt.figure(dpi=163 * 2)
+    fig = plt.figure(dpi=163//2)
     camera = Camera(fig)
     ax = plt.axes(projection='3d')
-    ax.set_title(label)
+    ax.set_title('Progressive Differentiation')
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     ax.set_zticklabels([])
@@ -212,6 +212,9 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     # plot
     for tick in range(1, len(transformations)):
 
+        # add step
+        ax.text(0, 0, 0, f'step={tick * steps_in_tick}')
+
         # lines
         for cat_id in range(num_cats):
             color = palette[cat_id]
@@ -221,6 +224,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
         camera.snap()
 
     animation = camera.animate()
+
     return animation
 
 
