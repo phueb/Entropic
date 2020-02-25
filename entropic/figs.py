@@ -75,7 +75,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
                              component1: int,
                              component2: int,
                              label: str,
-                             num_ticks: int,
+                             steps_in_tick: int,
                              label_tick_interval: int = 10,
                              ) -> plt.Figure:
     """
@@ -86,7 +86,6 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
 
     palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
     model_ticks = [n for n, _ in enumerate(embeddings)]
-    equidistant_ticks = equidistant_elements(model_ticks, num_ticks)
 
     # fit svd model on last tick
     num_components = component2 + 1
@@ -95,7 +94,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
 
     # transform embeddings at requested ticks with pca model
     transformations = []
-    for ei in embeddings[equidistant_ticks]:
+    for ei in embeddings:
         transformations.append(svd_model.transform(ei)[:, [component1, component2]])
 
     # fig
@@ -115,7 +114,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
         # annotate
         for tick in range(0, len(transformations) + 1, label_tick_interval):
             x_pos, y_pos = transformations[tick][n, :]
-            txt = ax.text(x_pos, y_pos, f'{tick}', fontsize=8, color=palette[n])
+            txt = ax.text(x_pos, y_pos, f'{tick * steps_in_tick}', fontsize=8, color=palette[n])
             txt.set_path_effects([
                 patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
 
