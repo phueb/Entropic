@@ -1,8 +1,7 @@
 
 
 param2requests = {
-    'period_probability': [(0.02, 0.1), (0.1, 0.002)],
-    'delay': [100_000],
+    'period_probability': [(0.01, 0.01), (0.1, 0.1)],
 }
 
 
@@ -10,8 +9,8 @@ param2default = {
     # rnn
     'hidden_size': 128,  # 8, 32 are too low
     # toy corpus
-    'doc_size': 200_000,
-    'delay': 100_000,
+    'doc_size': 400_000,
+    'delay': 200_000,
     'num_xws': 512,
     'num_types': 1024,
     'num_fragments': 4,

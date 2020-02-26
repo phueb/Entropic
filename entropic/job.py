@@ -71,6 +71,8 @@ def main(param2val):
     xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
     p_xw0 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[0])  # this xw is in category 1
     p_xw1 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[1])  # this xw is in category 2
+    p_xw2 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[2])  # this xw is in category 3
+    p_xw3 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[3])  # this xw is in category 4
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -88,19 +90,19 @@ def main(param2val):
         'dp_0_1': [],
         'dp_1_1': [],
         'dp_1_0': [],
+        'dp_3_0': [],
+        'dp_3_1': [],
+        'dp_3_2': [],
+        'dp_3_3': [],
         'e1': [],
         'e2': [],
-        'sing-dim-1_0': [],  # xw 0 loading on sing dim 1
-        'sing-dim-2_0': [],  # xw 0 loading on sing dim 2
-        'sing-dim-1_1': [],  # xw 1 loading on sing dim 1
-        'sing-dim-2_1': [],  # xw 1 loading on sing dim 1
         'ba': [],
         'pp': [],
     }
     # train loop
     for step, batch in enumerate(prep.generate_batches()):
 
-        # TODO this determines whether phantom category emerges or not - why?
+        # remove y-words from slot 1
         if params.xws_in_slot_1_only:
             batch = batch[::params.num_fragments]  # get only windows where x is in first slot
             assert batch[0, 0].item() in xw_ids
@@ -126,20 +128,17 @@ def main(param2val):
             # compute dp between xw 1 and 0 and vice versa
             q_xw0 = output_probabilities_xws[0]
             q_xw1 = output_probabilities_xws[1]
+            q_xw2 = output_probabilities_xws[2]
+            q_xw3 = output_probabilities_xws[3]
             dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0)
             dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1)
             dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1)
             dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0)
 
-            # show that cat 1 and 2 representations converge along sing dim 1 together at first,
-            #  and then diverge along sing dim 2
-            u, s, v = np.linalg.svd(output_probabilities_xws, compute_uv=True)
-
-            # singular dim 2 should increase steadily when num_fragments=2
-            print(f'dim1 sv={s[0]:2.4f}')
-            print(f'dim2 sv={s[1]:2.4f}')
-            print(f'dim3 sv={s[2]:2.4f}')
-            print(f'dim4 sv={s[3]:2.4f}')
+            dp_3_0 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw0)
+            dp_3_1 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw1)
+            dp_3_2 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw2)
+            dp_3_3 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw3)
 
             # get only probabilities for y-words
             q_xw0_yws = q_xw0[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
@@ -148,14 +147,13 @@ def main(param2val):
             e1 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
             e2 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
 
-            # entropy should move from 9 to 8 if using num_fragments=2 and num_types=1024, because 2^8=1024/2
-            print(e1)
-            print(e2)
-
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
-            sim_mat = cosine_similarity(embeddings_xws)
-            ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
+            if config.Eval.calc_ba:
+                sim_mat = cosine_similarity(embeddings_xws)
+                ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
+            else:
+                ba = np.nan
 
             # console
             pp = torch.exp(xe).detach().cpu().numpy().item()
@@ -168,14 +166,14 @@ def main(param2val):
             name2col['dp_0_1'].append(dp_0_1)
             name2col['dp_1_1'].append(dp_1_1)
             name2col['dp_1_0'].append(dp_1_0)
+            name2col['dp_3_0'].append(dp_3_0)
+            name2col['dp_3_1'].append(dp_3_1)
+            name2col['dp_3_2'].append(dp_3_2)
+            name2col['dp_3_3'].append(dp_3_3)
             name2col['pp'].append(pp)
             name2col['ba'].append(ba)
             name2col['e1'].append(e1)
             name2col['e2'].append(e2)
-            name2col['sing-dim-1_0'].append(u[0::2, 0].mean())  # this is informative only when num_fragments=2
-            name2col['sing-dim-2_0'].append(u[0::2, 1].mean())
-            name2col['sing-dim-1_1'].append(u[1::2, 0].mean())
-            name2col['sing-dim-2_1'].append(u[1::2, 1].mean())
 
             assert embeddings_xws.shape[0] == output_probabilities_xws.shape[0]
 

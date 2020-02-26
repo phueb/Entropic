@@ -14,6 +14,7 @@ class Eval:
     verbose = False
     eval_thresholds = [[0.9999], [0.999], [0.99], [0.9]]
     eval_interval = 50
+    calc_ba = False
 
 
 class Model:
