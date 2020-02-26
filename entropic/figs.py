@@ -173,6 +173,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       component1: int,
                                       component2: int,
                                       component3: int,
+                                      label: str,
                                       steps_in_tick: int,
                                       job_id: int,
                                       ) -> None:
@@ -201,7 +202,6 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     # fig
     plt.figure(dpi=163)
     ax = plt.axes(projection='3d')
-    ax.set_title('Progressive Differentiation')
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     ax.set_zticklabels([])
@@ -225,7 +225,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
 
         # title
         title_pos = 1.0
-        ax.set_title(f'step={tick * steps_in_tick}')
+        ax.set_title(f'{label}\nstep={tick * steps_in_tick}')
         ax.title.set_y(title_pos)  # otherwise the Axes3D object will lower it over time
 
         # lines
@@ -235,7 +235,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
             plt.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
-        path = config.Dirs.images / f'job_id_{job_id}' / f'{tick}.png'
+        path = config.Dirs.images / f'job_id_{job_id:0>3}' / f'{tick:0>6}.png'
         if not path.parent.exists():
             path.parent.mkdir()
         print(f'Saving {path}')

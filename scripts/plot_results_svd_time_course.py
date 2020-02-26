@@ -10,12 +10,18 @@ from entropic.figs import make_svd_across_time_3d_fig
 from ludwig.results import gen_param_paths
 
 
-LABEL_TICK_INTERVAL = 100
+LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
 
 
-param2requests['period_probability'] = [0.0, 0.1]
+param2requests['period_probability'] = [0.1]
+
+"""
+Note:
+To convert images into a gif, in terminal:
+convert -delay 5 job_id_000/*.png test.gif
+"""
 
 
 def to_step(file_name):
@@ -25,7 +31,9 @@ def to_step(file_name):
 summary_data = []
 for param_path, label in gen_param_paths(config.Dirs.root.name,
                                          param2requests,
-                                         param2default):
+                                         param2default,
+                                         label_n=False,
+                                         label_params=['period_probability']):
     # num_jobs
     job_paths = list(param_path.glob(f'*num*'))
     num_jobs = len(job_paths)
@@ -77,6 +85,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               component1=0,
                                               component2=1,
                                               component3=2,
+                                              label=label,
                                               steps_in_tick=steps_in_tick,
                                               job_id=job_id,
                                               )

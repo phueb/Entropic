@@ -80,7 +80,6 @@ def main(param2val):
     else:
         raise AttributeError('Invalid arg to "optimizer')
 
-    # train loop
     eval_steps = []
     name2col = {
         'dp_0_0': [],
@@ -96,6 +95,7 @@ def main(param2val):
         'ba': [],
         'pp': [],
     }
+    # train loop
     for step, batch in enumerate(prep.generate_batches()):
 
         # TODO this determines whether phantom category emerges or not - why?
@@ -118,20 +118,20 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # get output representations for all words
-            x_all = np.array([[prep.store.w2id[xw]] for xw in toy_corpus.xws])
-            output_probabilities_all = softmax(rnn(torch.cuda.LongTensor(x_all))['logits'].detach().cpu().numpy())
+            x_xws = np.array([[prep.store.w2id[xw]] for xw in toy_corpus.xws])
+            output_probabilities_xws = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
 
             # compute dp between xw 1 and 0 and vice versa
-            q_xw0 = output_probabilities_all[0]
-            q_xw1 = output_probabilities_all[1]
+            q_xw0 = output_probabilities_xws[0]
+            q_xw1 = output_probabilities_xws[1]
             dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0)
             dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1)
             dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1)
             dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0)
 
-            # TODO show that cat 1 and 2 representations converge along sing dim 1 together at first,
+            # show that cat 1 and 2 representations converge along sing dim 1 together at first,
             #  and then diverge along sing dim 2
-            u, s, v = np.linalg.svd(output_probabilities_all, compute_uv=True)
+            u, s, v = np.linalg.svd(output_probabilities_xws, compute_uv=True)
 
             # singular dim 2 should increase steadily when num_fragments=2
             print(f'dim1 sv={s[0]:2.4f}')
@@ -175,9 +175,9 @@ def main(param2val):
             name2col['sing-dim-1_1'].append(u[1::2, 0].mean())
             name2col['sing-dim-2_1'].append(u[1::2, 1].mean())
 
-            # TODO save softmax probabilities to file
+            # save output probabilities for x-word to file for making SVD time-course animation
             out_path = save_path / f'output_probabilities_{step:0>9}.npy'
-            np.save(out_path, output_probabilities_all)
+            np.save(out_path, output_probabilities_xws)
 
         # TRAIN
         xe.backward()

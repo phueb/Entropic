@@ -62,6 +62,20 @@ This is indicated by the observation that the JS divergence between the two mutu
  <img src="images/dp_0_1.png" width="600">
 </div>
 
+### Pseudo Periods
+
+#### Without pseudo-periods
+
+<div align="center">
+ <img src="images/pp=0.0_train-on-yws=True-min.gif" width="600">
+</div>
+
+#### With pseudo-periods
+
+<div align="center">
+ <img src="images/pp=0.1_train-on-yws=True-min.gif" width="600">
+</div>
+
 ### Implications
 
 One previously unexplained finding training the RNN on artificial language sequences is that the RNN converges faster on the target categories if there are fewer of them.
