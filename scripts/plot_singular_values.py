@@ -15,7 +15,7 @@ NUM_TYPES = 1024  # this needs to be large to provide room for interesting effec
 NUM_XWS = 512
 NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
 ALPHA = 2.0
-PERIOD_PROBABILITIES = [0.0]  # TODO
+PERIOD_PROBABILITIES = [(0.0, 0.0)]
 NUM_SINGULAR_DIMS_PLOT = 8
 
 SHOW_HEATMAP = True

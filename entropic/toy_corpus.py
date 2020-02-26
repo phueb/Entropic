@@ -2,6 +2,7 @@ from cached_property import cached_property
 import random
 from itertools import cycle
 import numpy as np
+from typing import Tuple
 
 
 class ToyCorpus:
@@ -11,11 +12,11 @@ class ToyCorpus:
     """
 
     def __init__(self,
-                 doc_size: int = 100_000,
-                 num_types: int = 4096,
+                 doc_size: int = 200_000,
+                 num_types: int = 1024,
                  num_xws: int = 512,
-                 num_fragments: int = 2,  # number of sub-categories in xws
-                 period_probability: float = 0.0,
+                 num_fragments: int = 4,  # number of categories in xws
+                 period_probability: Tuple[float, float] = (0.1, 0.0),
                  alpha: float = 2.0,
                  delay: int = 50_000,
                  seed: int = 2,
@@ -59,7 +60,7 @@ class ToyCorpus:
     def doc(self) -> str:
         joint_outcomes = set()
 
-        # make
+        # make pseudo_periods
         pseudo_periods = []
         c = cycle(range(self.num_fragments))
         yw_fragments = [self.yws[offset::self.num_fragments] for offset in range(self.num_fragments)]
@@ -68,11 +69,6 @@ class ToyCorpus:
             i = next(c)
             pseudo_periods.append(yw_pop[i])
 
-        print('pseudo_periods')
-        print(pseudo_periods)
-        print(sum([1 if pp in self.xw2yws[self.xws[0]] else 0 for pp in pseudo_periods]))
-        print(sum([1 if pp in self.xw2yws[self.xws[1]] else 0 for pp in pseudo_periods]))
-
         # make cumulative weights that mimic power distribution
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
@@ -80,17 +76,19 @@ class ToyCorpus:
         res = ''
         for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words
 
-            # TODO
+            # corpus behaves differently before and after delay
             if n * 2 > self.delay:
                 xws = self.xws
+                period_probability = self.period_probability[1]
             else:
                 xws = self.xws_without_last_category
+                period_probability = self.period_probability[0]
 
             # sample xw randomly
             xw = random.choice(xws)
 
             # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
-            if random.random() < self.period_probability and xw not in self.eval_xws:
+            if random.random() < period_probability and xw not in self.eval_xws:
                 yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
 
             # sample yw consistent with xw category

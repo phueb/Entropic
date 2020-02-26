@@ -14,7 +14,7 @@ from ludwig.results import gen_param_paths
 LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
-REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
+REPRESENTATIONS_NAME = 'embeddings'  # "embeddings' or "output_probabilities"
 
 
 # param2requests['hidden_size'] = [32]
@@ -91,6 +91,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
             fig.show()
 
         if PLOT_INDIVIDUAL_ANIMATION:
+            # make path where to save images
             label_flat = label.replace('\n', '-')
             images_path = config.Dirs.images / f'{label_flat}_{job_id:0>3}'
             if not images_path.exists():
@@ -98,12 +99,17 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
             else:
                 shutil.rmtree(str(images_path))
                 images_path.mkdir()
+
+            # get tick at which delay occurs
+            delay_tick = int(num_ticks * (param2val['delay'] / param2val['doc_size']))
+
             make_svd_across_time_3d_animation(big[job_id],
                                               component1=0,
                                               component2=1,
                                               component3=2,
                                               label=label,
                                               steps_in_tick=steps_in_tick,
+                                              delay_tick=delay_tick,  # tick at which delay occurs
                                               images_path=images_path,
                                               )
 

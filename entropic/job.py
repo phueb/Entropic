@@ -25,7 +25,7 @@ class Params(object):
     num_xws = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
-    period_probability = attr.ib(validator=attr.validators.instance_of(float))
+    period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
     xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))

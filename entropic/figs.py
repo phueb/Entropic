@@ -176,6 +176,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       component3: int,
                                       label: str,
                                       steps_in_tick: int,
+                                      delay_tick: int,
                                       images_path: Path,
                                       ) -> None:
     """
@@ -215,7 +216,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     ax.set_zlim(bottom=np.min(np.asarray(transformations)[:, :, 2]), top=np.max(np.asarray(transformations)[:, :, 2]))
 
     angles = cycle(range(360))
-    start_angle = -90
+    start_angle = 90
 
     # plot
     for tick in range(1, len(transformations)):
@@ -238,6 +239,11 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
         # plot average location of all but last category
         xyz = np.expand_dims(transformations[tick][:-1].mean(0), axis=1)
         ax.scatter3D(*xyz, c=[palette[-1]], s=10)
+
+        # visually mark that delay tick occurs
+        if tick >= delay_tick:  # once shown, it stays
+            ax.set_title('DELAY', loc='right')
+            ax.title.set_y(1.0)  # otherwise the Axes3D object will lower it over time
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
         file_path = images_path / f'{tick:0>6}.png'
