@@ -13,6 +13,7 @@ from ludwig.results import gen_param_paths
 LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
+REPRESENTATIONS_NAME = 'embeddings'  # "embeddings' or "output_probabilities"  # TODO test
 
 
 param2requests['period_probability'] = [0.1]
@@ -39,7 +40,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
     num_jobs = len(job_paths)
 
     # num_ticks
-    npy_paths = list(param_path.glob(f'*num*/saves/output_probabilities*.npy'))
+    npy_paths = list(param_path.glob(f'*num*/saves/{REPRESENTATIONS_NAME}_*.npy'))
     step_set = set([to_step(p.name) for p in npy_paths])
     num_ticks = len(step_set)
 
@@ -48,9 +49,17 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
         param2val = yaml.load(f, Loader=yaml.FullLoader)
     num_fragments = param2val['num_fragments']
     num_types = param2val['num_types']
+    hidden_size = param2val['hidden_size']
+
+    if REPRESENTATIONS_NAME == 'output_probabilities':
+        representation_size = num_types
+    elif REPRESENTATIONS_NAME == 'embeddings':
+        representation_size = hidden_size
+    else:
+        raise AttributeError('Invalid arg to REPRESENTATIONS_NAME.')
 
     # init array to hold category representations averaged across jobs
-    big = np.zeros((num_jobs, num_ticks, num_fragments, num_types))
+    big = np.zeros((num_jobs, num_ticks, num_fragments, representation_size))
 
     # calc steps_in_tick
     max_step = max(step_set)
@@ -62,7 +71,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
     for job_id, job_path in enumerate(job_paths):
 
         # load collect all representations from one job into 4d array
-        for npy_path in sorted(job_path.glob('saves/output_probabilities*.npy')):
+        for npy_path in sorted(job_path.glob(f'saves/{REPRESENTATIONS_NAME}_*.npy')):
             r_job = np.load(npy_path)
             tick = to_step(npy_path.name) // steps_in_tick
             print(f'Reading {npy_path.name} tick={tick:>3}')

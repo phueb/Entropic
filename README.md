@@ -70,7 +70,7 @@ The animation below illustrates the differentiation of 4 categories by the RNN.
 Each category word is followed by mutually exclusive set of next-words.
 
 <div align="center">
- <img src="images/pp=0.0_train-on-yws=True-min.gif" width="600">
+ <img src="images/pp=0.0_output_probs.gif" width="600">
 </div>
 
 #### With pseudo-periods
@@ -81,7 +81,7 @@ Training on a corpus with pseudo-words included, changes the learning dynamics i
 Before the 4 categories differentiate, their representations __first converge onto a common reference point__.
 
 <div align="center">
- <img src="images/pp=0.1_train-on-yws=True-min.gif" width="600">
+ <img src="images/pp=0.1_output_probs.gif" width="600">
 </div>
 
 ### Implications

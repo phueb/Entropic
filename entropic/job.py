@@ -117,7 +117,7 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # get output representations for all words
+            # get output representations for all x-words
             x_xws = np.array([[prep.store.w2id[xw]] for xw in toy_corpus.xws])
             output_probabilities_xws = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
 
@@ -151,8 +151,8 @@ def main(param2val):
             print(e2)
 
             # ba
-            xw_reps = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
-            sim_mat = cosine_similarity(xw_reps)
+            embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
+            sim_mat = cosine_similarity(embeddings_xws)
             ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
 
             # console
@@ -175,9 +175,15 @@ def main(param2val):
             name2col['sing-dim-1_1'].append(u[1::2, 0].mean())
             name2col['sing-dim-2_1'].append(u[1::2, 1].mean())
 
+            assert embeddings_xws.shape[0] == output_probabilities_xws.shape[0]
+
             # save output probabilities for x-word to file for making SVD time-course animation
             out_path = save_path / f'output_probabilities_{step:0>9}.npy'
             np.save(out_path, output_probabilities_xws)
+
+            # save embeddings for x-word to file for making SVD time-course animation
+            out_path = save_path / f'embeddings_{step:0>9}.npy'
+            np.save(out_path, embeddings_xws)
 
         # TRAIN
         xe.backward()
