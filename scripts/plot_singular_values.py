@@ -13,9 +13,9 @@ from entropic.outcomes import get_outcomes
 DOC_SIZE = 500_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
-NUM_FRAGMENTS = 2  # number of x-word sub categories, or singular dimensions
+NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
 ALPHA = 2.0
-PERIOD_PROBABILITIES = [0.2, 0.0]  # TODO
+PERIOD_PROBABILITIES = [0.0]  # TODO
 NUM_SINGULAR_DIMS_PLOT = 8
 
 SHOW_HEATMAP = True

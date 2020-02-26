@@ -1,12 +1,13 @@
 from mpl_toolkits import mplot3d  # this is unused but needed for 3d plotting
 from matplotlib.lines import Line2D
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any, Dict
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patheffects
 from itertools import cycle
+from pathlib import Path
 
 from entropic import config
 
@@ -175,7 +176,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       component3: int,
                                       label: str,
                                       steps_in_tick: int,
-                                      job_id: int,
+                                      images_path: Path,
                                       ) -> None:
     """
     Saves figures, showing rotating 3d figure of SVD time course
@@ -214,7 +215,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     ax.set_zlim(bottom=np.min(np.asarray(transformations)[:, :, 2]), top=np.max(np.asarray(transformations)[:, :, 2]))
 
     angles = cycle(range(360))
-    start_angle = 0
+    start_angle = -90
 
     # plot
     for tick in range(1, len(transformations)):
@@ -235,16 +236,15 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
             plt.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
-        path = config.Dirs.images / f'job_id_{job_id:0>3}' / f'{tick:0>6}.png'
-        if not path.parent.exists():
-            path.parent.mkdir()
-        print(f'Saving {path}')
-        plt.savefig(path)
+        file_path = images_path / f'{tick:0>6}.png'
+        print(f'Saving {file_path}')
+        plt.savefig(file_path)
 
 
 def plot_singular_values(ys: List[np.ndarray],
                          max_s: int,
-                         pps: List[float],
+                         label_name: str,
+                         label_values: List[Any],
                          scaled: bool,
                          fontsize: int = 12,
                          figsize: Tuple[int] = (5, 5),
@@ -268,7 +268,11 @@ def plot_singular_values(ys: List[np.ndarray],
     colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6'])
     for n, y in enumerate(ys):
         color = next(colors)
-        ax.plot(x, y, label=f'period prob={pps[n]}', linewidth=2, color=color)
+        ax.plot(x,
+                y,
+                label=f'{label_name}={label_values[n]}',
+                linewidth=2,
+                color=color)
         if markers:
             ax.scatter(x, y)
     ax.legend(loc='upper right', frameon=False, fontsize=fontsize)

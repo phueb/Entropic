@@ -1,5 +1,6 @@
 import numpy as np
 import yaml
+import shutil
 
 from entropic import config
 from entropic.params import param2default, param2requests
@@ -13,15 +14,15 @@ from ludwig.results import gen_param_paths
 LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
-REPRESENTATIONS_NAME = 'embeddings'  # "embeddings' or "output_probabilities"  # TODO test
+REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
 
 
-param2requests['period_probability'] = [0.1]
+# param2requests['period_probability'] = [0.0]
 
 """
 Note:
 To convert images into a gif, in terminal:
-convert -delay 5 job_id_000/*.png test.gif
+convert -delay 5 FOLDER_NAME/*.png test.gif
 """
 
 
@@ -90,13 +91,20 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
             fig.show()
 
         if PLOT_INDIVIDUAL_ANIMATION:
+            label_flat = label.replace('\n', '-')
+            images_path = config.Dirs.images / f'{label_flat}_{job_id:0>3}'
+            if not images_path.exists():
+                images_path.mkdir()
+            else:
+                shutil.rmtree(str(images_path))
+                images_path.mkdir()
             make_svd_across_time_3d_animation(big[job_id],
                                               component1=0,
                                               component2=1,
                                               component3=2,
                                               label=label,
                                               steps_in_tick=steps_in_tick,
-                                              job_id=job_id,
+                                              images_path=images_path,
                                               )
 
     # get average

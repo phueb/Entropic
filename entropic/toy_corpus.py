@@ -17,6 +17,7 @@ class ToyCorpus:
                  num_fragments: int = 2,  # number of sub-categories in xws
                  period_probability: float = 0.0,
                  alpha: float = 2.0,
+                 delay: int = 50_000,
                  seed: int = 2,
                  ) -> None:
         self.doc_size = doc_size
@@ -25,6 +26,7 @@ class ToyCorpus:
         self.num_fragments = num_fragments
         self.period_probability = period_probability
         self.alpha = alpha
+        self.delay = delay
         self.num_yws = self.num_types - self.num_xws
 
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
@@ -35,13 +37,20 @@ class ToyCorpus:
         c = cycle(yw_fragments)
         self.xw2yws = {xw: next(c) for xw in self.xws}
 
-        self.fragment_size = self.num_yws // self.num_fragments
-
         # the number of legal joint outcomes is the total number divided by the fragment size
         self.num_possible = self.num_xws*self.num_yws / num_fragments
 
+        # set aside x-words belonging to last category, to be introduced after a delay
+        self.xws_without_last_category = [xw for xw in self.xws
+                                          if self.xw2yws[xw] != yw_fragments[-1]]
+        print(len(self.xws))
+        print(len(self.xws_without_last_category))
+
+        # x-words whose representations are used for evaluation
+        self.eval_xws = self.xws[:self.num_fragments]
+
         print('Initialized ToyCorpus')
-        print(f'Lowest theoretical pp ={self.fragment_size:>6,}')
+        print(f'Lowest theoretical pp ={self.num_yws // self.num_fragments:>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
 
         random.seed(seed)
@@ -71,11 +80,17 @@ class ToyCorpus:
         res = ''
         for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words
 
+            # TODO
+            if n * 2 > self.delay:
+                xws = self.xws
+            else:
+                xws = self.xws_without_last_category
+
             # sample xw randomly
-            xw = random.choice(self.xws)
+            xw = random.choice(xws)
 
             # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
-            if random.random() < self.period_probability and xw not in self.xws[:2]:
+            if random.random() < self.period_probability and xw not in self.eval_xws:
                 yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
 
             # sample yw consistent with xw category
