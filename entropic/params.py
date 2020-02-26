@@ -8,7 +8,7 @@ param2requests = {
 
 param2default = {
     # rnn
-    'hidden_size': 128,  # TODO how low?
+    'hidden_size': 128,  # 8, 32 are too low
     # toy corpus
     'doc_size': 200_000,
     'delay': 50_000,

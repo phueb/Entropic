@@ -235,6 +235,17 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
             x, y, z = zip(*[transformation[cat_id] for transformation in transformations[:tick]])
             plt.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
 
+        # TODO plot marker for average across first three category reps
+        x0, y0, z0 = zip(*[transformation[0] for transformation in transformations[:tick]])
+        x1, y1, z1 = zip(*[transformation[1] for transformation in transformations[:tick]])
+        x2, y2, z2 = zip(*[transformation[2] for transformation in transformations[:tick]])
+        x_avg = np.expand_dims(np.mean([x0, x1, x2]), axis=0)
+        y_avg = np.expand_dims(np.mean([y0, y1, y2]), axis=0)
+        z_avg = np.expand_dims(np.mean([z0, z1, z2]), axis=0)
+
+        print(x_avg, y_avg, z_avg)
+        plt.scatter(x_avg, y_avg, z_avg, c=[palette[-1]])  # TODO test
+
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
         file_path = images_path / f'{tick:0>6}.png'
         print(f'Saving {file_path}')

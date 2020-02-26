@@ -17,7 +17,7 @@ PLOT_INDIVIDUAL_ANIMATION = True
 REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
 
 
-# param2requests['period_probability'] = [0.0]
+# param2requests['hidden_size'] = [32]
 
 """
 Note:
