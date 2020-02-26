@@ -66,11 +66,19 @@ This is indicated by the observation that the JS divergence between the two mutu
 
 #### Without pseudo-periods
 
+The animation below illustrates the differentiation of 4 categories by the RNN. 
+Each category word is followed by mutually exclusive set of next-words.
+
 <div align="center">
  <img src="images/pp=0.0_train-on-yws=True-min.gif" width="600">
 </div>
 
 #### With pseudo-periods
+
+In another simulation, each category word co-occurred with a pseudo-period with probability=0.1.
+A pseudo-period is a word that indiscriminately follows words from any category.
+Training on a corpus with pseudo-words included, changes the learning dynamics in an important way:
+Before the 4 categories differentiate, their representations __first converge onto a common reference point__.
 
 <div align="center">
  <img src="images/pp=0.1_train-on-yws=True-min.gif" width="600">
