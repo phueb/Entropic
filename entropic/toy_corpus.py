@@ -2,7 +2,7 @@ from cached_property import cached_property
 import random
 from itertools import cycle
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 class ToyCorpus:
@@ -19,7 +19,7 @@ class ToyCorpus:
                  period_probability: Tuple[float, float] = (0.1, 0.0),
                  alpha: float = 2.0,
                  delay: int = 50_000,
-                 seed: int = 2,
+                 seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
         self.num_types = num_types
@@ -54,7 +54,8 @@ class ToyCorpus:
         print(f'Lowest theoretical pp ={self.num_yws // self.num_fragments:>6,}')
         print(f'Number of y-word types={self.num_yws:>6,}')
 
-        random.seed(seed)
+        if seed is not None:
+            random.seed(seed)
 
     @cached_property
     def doc(self) -> str:

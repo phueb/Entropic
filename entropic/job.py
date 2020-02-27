@@ -94,8 +94,10 @@ def main(param2val):
         'dp_3_1': [],
         'dp_3_2': [],
         'dp_3_3': [],
+        'e0': [],
         'e1': [],
         'e2': [],
+        'e3': [],
         'ba': [],
         'pp': [],
     }
@@ -143,9 +145,13 @@ def main(param2val):
             # get only probabilities for y-words
             q_xw0_yws = q_xw0[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
             q_xw1_yws = q_xw1[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
+            q_xw2_yws = q_xw2[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
+            q_xw3_yws = q_xw3[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
             # entropy of distribution over yws - should peak during early training - evidence of intermediate category
-            e1 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
-            e2 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
+            e0 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
+            e1 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
+            e2 = drv.entropy_pmf(q_xw2_yws / sum(q_xw2_yws))
+            e3 = drv.entropy_pmf(q_xw3_yws / sum(q_xw3_yws))
 
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -172,8 +178,10 @@ def main(param2val):
             name2col['dp_3_3'].append(dp_3_3)
             name2col['pp'].append(pp)
             name2col['ba'].append(ba)
+            name2col['e0'].append(e0)
             name2col['e1'].append(e1)
             name2col['e2'].append(e2)
+            name2col['e3'].append(e3)
 
             assert embeddings_xws.shape[0] == output_probabilities_xws.shape[0]
 
