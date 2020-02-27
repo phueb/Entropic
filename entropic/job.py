@@ -5,6 +5,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 from pyitlib import discrete_random_variable as drv
 from pathlib import Path
+from itertools import product
+
 
 from preppy import SlidingPrep
 
@@ -22,7 +24,7 @@ class Params(object):
     # toy corpus
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
     delay = attr.ib(validator=attr.validators.instance_of(int))
-    distractors_after_delay = attr.ib(validator=attr.validators.instance_of(bool))
+    reserve_all_dims = attr.ib(validator=attr.validators.instance_of(bool))
     num_xws = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
@@ -55,26 +57,26 @@ def main(param2val):
     save_path = Path(param2val['save_path'])
 
     # create toy input
-    toy_corpus = ToyCorpus(doc_size=params.doc_size,
-                           num_types=params.num_types,
-                           num_xws=params.num_xws,
-                           num_fragments=params.num_fragments,
-                           period_probability=params.period_probability,
-                           delay=params.delay,
-                           distractors_after_delay=params.distractors_after_delay,
-                           )
-    prep = SlidingPrep([toy_corpus.doc],
+    tc = ToyCorpus(doc_size=params.doc_size,
+                   delay=params.delay,
+                   num_types=params.num_types,
+                   num_xws=params.num_xws,
+                   num_fragments=params.num_fragments,
+                   period_probability=params.period_probability,
+                   reserve_all_dims=params.reserve_all_dims,
+                   )
+    prep = SlidingPrep([tc.doc],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.slide_size,
                        batch_size=params.batch_size,
                        context_size=1)
-
-    xw_ids = [prep.store.w2id[xw] for xw in toy_corpus.xws]
-    p_xw0 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[0])  # this xw is in category 1
-    p_xw1 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[1])  # this xw is in category 2
-    p_xw2 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[2])  # this xw is in category 3
-    p_xw3 = make_xw_true_out_probabilities(prep, prep.token_ids_array, toy_corpus.xws[3])  # this xw is in category 4
+    # make helper dicts using IDs assigned to x-words by Preppy
+    xw_ids = [prep.store.w2id[xw] for xw in tc.xws]
+    cat_id2xw_ids = {cat_id: [prep.store.w2id[xw] for xw in tc.cat_id2xws[cat_id]]
+                     for cat_id in range(params.num_fragments)}
+    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, prep.token_ids_array, xws=tc.cat_id2xws[cat_id])
+                for cat_id in range(params.num_fragments)}
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -87,22 +89,8 @@ def main(param2val):
         raise AttributeError('Invalid arg to "optimizer')
 
     eval_steps = []
-    name2col = {
-        'dp_0_0': [],
-        'dp_0_1': [],
-        'dp_1_1': [],
-        'dp_1_0': [],
-        'dp_3_0': [],
-        'dp_3_1': [],
-        'dp_3_2': [],
-        'dp_3_3': [],
-        'e0': [],
-        'e1': [],
-        'e2': [],
-        'e3': [],
-        'ba': [],
-        'pp': [],
-    }
+    name2col = {}
+
     # train loop
     for step, batch in enumerate(prep.generate_batches()):
 
@@ -126,40 +114,14 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # get output representations for all x-words
-            x_xws = np.array([[prep.store.w2id[xw]] for xw in toy_corpus.xws])
+            x_xws = np.array([[prep.store.w2id[xw]] for xw in tc.xws])
             output_probabilities_xws = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
-
-            # compute dp between xw 1 and 0 and vice versa
-            q_xw0 = output_probabilities_xws[0]
-            q_xw1 = output_probabilities_xws[1]
-            q_xw2 = output_probabilities_xws[2]
-            q_xw3 = output_probabilities_xws[3]
-            dp_0_0 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw0)
-            dp_0_1 = drv.divergence_jensenshannon_pmf(p_xw0, q_xw1)
-            dp_1_1 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw1)
-            dp_1_0 = drv.divergence_jensenshannon_pmf(p_xw1, q_xw0)
-
-            dp_3_0 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw0)
-            dp_3_1 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw1)
-            dp_3_2 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw2)
-            dp_3_3 = drv.divergence_jensenshannon_pmf(p_xw3, q_xw3)
-
-            # get only probabilities for y-words
-            q_xw0_yws = q_xw0[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
-            q_xw1_yws = q_xw1[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
-            q_xw2_yws = q_xw2[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
-            q_xw3_yws = q_xw3[[prep.store.w2id[yw] for yw in toy_corpus.yws]]
-            # entropy of distribution over yws - should peak during early training - evidence of intermediate category
-            e0 = drv.entropy_pmf(q_xw0_yws / sum(q_xw0_yws))
-            e1 = drv.entropy_pmf(q_xw1_yws / sum(q_xw1_yws))
-            e2 = drv.entropy_pmf(q_xw2_yws / sum(q_xw2_yws))
-            e3 = drv.entropy_pmf(q_xw3_yws / sum(q_xw3_yws))
 
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
             if config.Eval.calc_ba:
                 sim_mat = cosine_similarity(embeddings_xws)
-                ba = calc_cluster_score(sim_mat, toy_corpus.sim_mat_gold, 'ba')
+                ba = calc_cluster_score(sim_mat, tc.sim_mat_gold, 'ba')
             else:
                 ba = np.nan
 
@@ -168,22 +130,23 @@ def main(param2val):
             print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f}', flush=True)
             print()
 
-            # collect performance data
+            # collect dp between output-layer cat representations
             eval_steps.append(step)
-            name2col['dp_0_0'].append(dp_0_0)
-            name2col['dp_0_1'].append(dp_0_1)
-            name2col['dp_1_1'].append(dp_1_1)
-            name2col['dp_1_0'].append(dp_1_0)
-            name2col['dp_3_0'].append(dp_3_0)
-            name2col['dp_3_1'].append(dp_3_1)
-            name2col['dp_3_2'].append(dp_3_2)
-            name2col['dp_3_3'].append(dp_3_3)
-            name2col['pp'].append(pp)
-            name2col['ba'].append(ba)
-            name2col['e0'].append(e0)
-            name2col['e1'].append(e1)
-            name2col['e2'].append(e2)
-            name2col['e3'].append(e3)
+            for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
+                p_cat1 = cat_id2p[cat_id1]
+                q_cat2 = output_probabilities_xws[cat_id2xw_ids[cat_id2]].mean(0)
+                dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
+                name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
+
+            # collect pp + ba
+            name2col.setdefault('pp', []).append(pp)
+            name2col.setdefault('ba', []).append(ba)
+
+            # collect entropy of output-layer category representations
+            for cat_id in range(params.num_fragments):
+                q_cat = output_probabilities_xws[cat_id2xw_ids[cat_id]].mean(0)
+                e = drv.entropy_pmf(q_cat)
+                name2col.setdefault(f'e_cat{cat_id}', []).append(e)
 
             assert embeddings_xws.shape[0] == output_probabilities_xws.shape[0]
 

@@ -177,6 +177,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       label: str,
                                       steps_in_tick: int,
                                       delay_tick: int,
+                                      reserve_all_dims: bool,
                                       images_path: Path,
                                       plot_avg_location_first_three_cats: bool = False,
                                       ) -> None:
@@ -246,8 +247,8 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
             ax.scatter3D(*xyz, c=[palette[-1]], s=10)
 
         # visually mark that delay tick occurs
-        if tick >= delay_tick:  # once shown, it stays
-            ax.set_title('Category 4', loc='right')
+        if tick >= delay_tick and not reserve_all_dims:  # once shown, it stays
+            ax.set_title(f'Category {num_cats}', loc='right')
             ax.title.set_y(1.0)  # otherwise the Axes3D object will lower it over time
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
@@ -273,7 +274,7 @@ def plot_singular_values(ys: List[np.ndarray],
     ax.set_xlabel('Singular Dimension', fontsize=fontsize)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.tick_params(axis='both', which='both', top=False, right=False)
+    ax.grid(True, axis='x')
     x = np.arange(max_s) + 1  # num columns
     if label_all_x:
         ax.set_xticks(x)

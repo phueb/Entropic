@@ -11,12 +11,12 @@ from entropic.figs import plot_singular_values
 from entropic.outcomes import get_outcomes
 
 DOC_SIZE = 400_000
-DELAU = 200_000
+DELAY = 200_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
 NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
 ALPHA = 2.0
-PERIOD_PROBABILITIES = [(0.0, 0.0), (0.1, 0.1)]
+PERIOD_PROBABILITIES = [(0.1, 0.1), (0.0, 0.0)]
 NUM_S_DIMS = 8
 
 SHOW_HEATMAP = True

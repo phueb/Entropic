@@ -13,13 +13,13 @@ class ToyCorpus:
 
     def __init__(self,
                  doc_size: int = 400_000,
+                 delay: int = 200_000,
                  num_types: int = 1024,
                  num_xws: int = 512,
                  num_fragments: int = 4,  # number of categories in xws
                  period_probability: Tuple[float, float] = (0.1, 0.0),
                  alpha: float = 2.0,
-                 delay: int = 200_000,
-                 distractors_after_delay: bool = True,
+                 reserve_all_dims: bool = True,
                  seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
@@ -29,30 +29,31 @@ class ToyCorpus:
         self.period_probability = period_probability
         self.alpha = alpha
         self.delay = delay
-        self.distractors_after_delay = distractors_after_delay
+        self.reserve_all_dims = reserve_all_dims
         self.num_yws = self.num_types - self.num_xws
 
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
         self.yws = [f'y{i:0>6}' for i in range(self.num_yws)]
 
+        # assign x-words to categories
+        self.xw2cat_id = {xw: cat_id for xw, cat_id in zip(self.xws, cycle(range(self.num_fragments)))}
+        self.cat_id2xws = {frag_id: [xw for xw, cat_id in self.xw2cat_id.items() if cat_id == frag_id]
+                           for frag_id in range(self.num_fragments)}
+
         # map subsets of xws to mutually exclusive subsets/fragments of yws
         yw_fragments = [self.yws[offset::num_fragments] for offset in range(num_fragments)]
-        c = cycle(yw_fragments)
-        self.xw2yws = {xw: next(c) for xw in self.xws}
+        self.xw2yws = {xw: yw_fragments[self.xw2cat_id[xw]] for xw in self.xws}
+        # check
+        xw_fragment_size = self.num_xws // num_fragments
+        yw_fragment_size = self.num_yws // num_fragments
+        for xw, yws in self.xw2yws.items():
+            assert len(yws) == yw_fragment_size, (len(yws), yw_fragment_size)
+
+        self.xws_without_last_cat = [xw for xw in self.xws if xw not in self.cat_id2xws[self.num_fragments - 1]]
+        assert len(self.xws_without_last_cat) == self.num_xws - xw_fragment_size
 
         # the number of legal joint outcomes is the total number divided by the fragment size
         self.num_possible = self.num_xws*self.num_yws / num_fragments
-
-        # set aside x-words belonging to last category, to be introduced after a delay
-        self.xws_without_last_category = [xw for xw in self.xws
-                                          if self.xw2yws[xw] != yw_fragments[-1]]
-        self.xws_in_last_category = [xw for xw in self.xws if xw not in self.xws_without_last_category]
-
-        print(len(self.xws_without_last_category))
-        print(len(self.xws_in_last_category))
-
-        # x-words whose representations are used for evaluation
-        self.eval_xws = self.xws[:self.num_fragments]
 
         print('Initialized ToyCorpus')
         print(f'Lowest theoretical pp ={self.num_yws // self.num_fragments:>6,}')
@@ -83,20 +84,20 @@ class ToyCorpus:
 
             # corpus behaves differently before and after delay
             if n * 2 > self.delay:
-                if not self.distractors_after_delay:  # TODO what happens if ONLY cat4 words are presented?
-                    xws = self.xws_in_last_category
-                else:
-                    xws = self.xws
+                xws = self.xws
                 period_probability = self.period_probability[1]
             else:
-                xws = self.xws_without_last_category
+                if self.reserve_all_dims:  # TODO test
+                    xws = self.xws
+                else:
+                    xws = self.xws_without_last_cat
                 period_probability = self.period_probability[0]
 
             # sample xw randomly
             xw = random.choice(xws)
 
             # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
-            if random.random() < period_probability and xw not in self.eval_xws:
+            if random.random() < period_probability:
                 yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
 
             # sample yw consistent with xw category
@@ -106,9 +107,6 @@ class ToyCorpus:
             # collect
             res += f'{xw} {yw} '  # whitespace after each
             joint_outcomes.add((xw, yw))
-
-            # TODO debuggign
-            print(xw in self.xws_in_last_category)
 
         print(f'Number of unique joint outcomes={len(joint_outcomes):,}/{self.num_possible:,}')
         print(f'Coverage={len(joint_outcomes) / self.num_possible:.2f}')

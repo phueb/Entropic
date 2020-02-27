@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Union
+from typing import Union, List
 import numpy as np
 from bayes_opt import BayesianOptimization
 from functools import partial
@@ -98,20 +98,18 @@ def softmax(z):
 
 def make_xw_true_out_probabilities(prep: Union[PartitionedPrep, SlidingPrep],
                                    token_ids_array: np.ndarray,
-                                   xw: str,
+                                   xws: List[str],
                                    ) -> np.ndarray:
     """
     make the true next-word probability distribution for some x-word
     """
 
-    x, y, x_y = get_outcomes(prep, token_ids_array, [xw])  # outcomes where xw is in slot -2
+    x, y, x_y = get_outcomes(prep, token_ids_array, xws)  # outcomes where any of xws is in slot -2
     wid2f = Counter(y)
     res = np.asarray([wid2f[i] for i in range(prep.num_types)])
     res = res / res.sum()
 
-    # TODO is this correct? why does dp not drop lower?
-
-    print(f'"{xw}" occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
+    print(f'Provided x-word fragment occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
     assert np.sum(res).round(4).item() == 1.0, np.sum(res).round(4).item()
 
     return res
