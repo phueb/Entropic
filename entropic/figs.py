@@ -178,6 +178,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
                                       steps_in_tick: int,
                                       delay_tick: int,
                                       images_path: Path,
+                                      plot_avg_location_first_three_cats: bool = False,
                                       ) -> None:
     """
     Saves figures, showing rotating 3d figure of SVD time course
@@ -192,9 +193,12 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     palette = np.array(sns.color_palette("hls", num_cats))
 
     # fit svd model on last tick
+    # fitting on last tick is problematic when catastrophic interference occurs,
+    # because in that case the singular dimensions don't remain constant,
+    # so that singular dimensions at last tick do not correspond to those before catastrophic interference
     num_components = component3 + 1
     svd_model = TruncatedSVD(n_components=num_components)  # PCA gives different results
-    svd_model.fit(embeddings[-1])
+    svd_model.fit(embeddings[delay_tick - 2])
 
     # transform embeddings at requested ticks with svd model
     transformations = []
@@ -216,7 +220,7 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     ax.set_zlim(bottom=np.min(np.asarray(transformations)[:, :, 2]), top=np.max(np.asarray(transformations)[:, :, 2]))
 
     angles = cycle(range(360))
-    start_angle = 90
+    start_angle = 0
 
     # plot
     for tick in range(1, len(transformations)):
@@ -237,12 +241,13 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
             ax.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
 
         # plot average location of all but last category
-        xyz = np.expand_dims(transformations[tick][:-1].mean(0), axis=1)
-        ax.scatter3D(*xyz, c=[palette[-1]], s=10)
+        if plot_avg_location_first_three_cats:
+            xyz = np.expand_dims(transformations[tick][:-1].mean(0), axis=1)
+            ax.scatter3D(*xyz, c=[palette[-1]], s=10)
 
         # visually mark that delay tick occurs
         if tick >= delay_tick:  # once shown, it stays
-            ax.set_title('DELAY', loc='right')
+            ax.set_title('Category 4', loc='right')
             ax.title.set_y(1.0)  # otherwise the Axes3D object will lower it over time
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis

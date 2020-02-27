@@ -22,6 +22,7 @@ class Params(object):
     # toy corpus
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
     delay = attr.ib(validator=attr.validators.instance_of(int))
+    distractors_after_delay = attr.ib(validator=attr.validators.instance_of(bool))
     num_xws = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
@@ -60,6 +61,7 @@ def main(param2val):
                            num_fragments=params.num_fragments,
                            period_probability=params.period_probability,
                            delay=params.delay,
+                           distractors_after_delay=params.distractors_after_delay,
                            )
     prep = SlidingPrep([toy_corpus.doc],
                        reverse=False,

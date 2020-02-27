@@ -10,13 +10,14 @@ from entropic.toy_corpus import ToyCorpus
 from entropic.figs import plot_singular_values
 from entropic.outcomes import get_outcomes
 
-DOC_SIZE = 500_000
+DOC_SIZE = 400_000
+DELAU = 200_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
 NUM_XWS = 512
 NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
 ALPHA = 2.0
-PERIOD_PROBABILITIES = [(0.0, 0.0)]
-NUM_SINGULAR_DIMS_PLOT = 8
+PERIOD_PROBABILITIES = [(0.0, 0.0), (0.1, 0.1)]
+NUM_S_DIMS = 8
 
 SHOW_HEATMAP = True
 
@@ -25,6 +26,7 @@ s_list_scaled = []
 s_list_intact = []
 for pp in PERIOD_PROBABILITIES:
     toy_corpus = ToyCorpus(doc_size=DOC_SIZE,
+                           delay=DELAY,
                            num_types=NUM_TYPES,
                            num_xws=NUM_XWS,
                            num_fragments=NUM_FRAGMENTS,
@@ -67,10 +69,10 @@ for pp in PERIOD_PROBABILITIES:
     cf_mat_scaled = scale(cf_mat, axis=1, with_std=False, with_mean=True)  # subtracting mean from rows
     s_intact = np.linalg.svd(cf_mat_intact, compute_uv=False)
     s_scaled = np.linalg.svd(cf_mat_scaled, compute_uv=False)
-    s_list_intact.append(np.asarray(s_intact[:NUM_SINGULAR_DIMS_PLOT]))
-    s_list_scaled.append(np.asarray(s_scaled[:NUM_SINGULAR_DIMS_PLOT]))
+    s_list_intact.append(np.asarray(s_intact[:NUM_S_DIMS]))
+    s_list_scaled.append(np.asarray(s_scaled[:NUM_S_DIMS]))
 
 # difference between normalizing and no normalizing matters!
-plot_singular_values(s_list_intact, scaled=False, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
-plot_singular_values(s_list_scaled, scaled=True, max_s=NUM_SINGULAR_DIMS_PLOT, pps=PERIOD_PROBABILITIES)
+plot_singular_values(s_list_intact, scaled=bool(0), max_s=NUM_S_DIMS, label_name='pp', label_values=PERIOD_PROBABILITIES)
+plot_singular_values(s_list_scaled, scaled=bool(1), max_s=NUM_S_DIMS, label_name='pp', label_values=PERIOD_PROBABILITIES)
 

@@ -14,10 +14,11 @@ from ludwig.results import gen_param_paths
 LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
+PLOT_AVERAGE = False
 REPRESENTATIONS_NAME = 'embeddings'  # "embeddings' or "output_probabilities"
 
 
-# param2requests['hidden_size'] = [32]
+# param2requests['distractors_after_delay'] = [True]
 
 """
 Note:
@@ -113,26 +114,27 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               images_path=images_path,
                                               )
 
-    # get average
-    rep_time_course_avg = np.sum(big, axis=0) / num_jobs
+    if PLOT_AVERAGE:
+        # get average
+        rep_time_course_avg = np.sum(big, axis=0) / num_jobs
 
-    # plot in 3d
-    if num_fragments == 4:
-        fig = make_svd_across_time_3d_fig(rep_time_course_avg,
-                                          component1=0,
-                                          component2=1,
-                                          component3=2,
-                                          label='Average over jobs\n' + label,
-                                          label_tick_interval=LABEL_TICK_INTERVAL,
-                                          steps_in_tick=steps_in_tick)
-    # plot in 2d
-    elif num_fragments == 2:
-        fig = make_svd_across_time_fig(rep_time_course_avg,
-                                       component1=0,
-                                       component2=1,
-                                       label='Average over jobs\n' + label,
-                                       steps_in_tick=steps_in_tick)
-    else:
-        raise AttributeError('"num_fragments" is too large to plot')
+        # plot in 3d
+        if num_fragments == 4:
+            fig = make_svd_across_time_3d_fig(rep_time_course_avg,
+                                              component1=0,
+                                              component2=1,
+                                              component3=2,
+                                              label='Average over jobs\n' + label,
+                                              label_tick_interval=LABEL_TICK_INTERVAL,
+                                              steps_in_tick=steps_in_tick)
+        # plot in 2d
+        elif num_fragments == 2:
+            fig = make_svd_across_time_fig(rep_time_course_avg,
+                                           component1=0,
+                                           component2=1,
+                                           label='Average over jobs\n' + label,
+                                           steps_in_tick=steps_in_tick)
+        else:
+            raise AttributeError('"num_fragments" is too large to plot')
 
-    fig.show()
+        fig.show()

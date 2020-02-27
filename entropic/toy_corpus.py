@@ -12,13 +12,14 @@ class ToyCorpus:
     """
 
     def __init__(self,
-                 doc_size: int = 200_000,
+                 doc_size: int = 400_000,
                  num_types: int = 1024,
                  num_xws: int = 512,
                  num_fragments: int = 4,  # number of categories in xws
                  period_probability: Tuple[float, float] = (0.1, 0.0),
                  alpha: float = 2.0,
-                 delay: int = 50_000,
+                 delay: int = 200_000,
+                 distractors_after_delay: bool = True,
                  seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
@@ -28,6 +29,7 @@ class ToyCorpus:
         self.period_probability = period_probability
         self.alpha = alpha
         self.delay = delay
+        self.distractors_after_delay = distractors_after_delay
         self.num_yws = self.num_types - self.num_xws
 
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
@@ -44,8 +46,10 @@ class ToyCorpus:
         # set aside x-words belonging to last category, to be introduced after a delay
         self.xws_without_last_category = [xw for xw in self.xws
                                           if self.xw2yws[xw] != yw_fragments[-1]]
-        print(len(self.xws))
+        self.xws_in_last_category = [xw for xw in self.xws if xw not in self.xws_without_last_category]
+
         print(len(self.xws_without_last_category))
+        print(len(self.xws_in_last_category))
 
         # x-words whose representations are used for evaluation
         self.eval_xws = self.xws[:self.num_fragments]
@@ -79,7 +83,10 @@ class ToyCorpus:
 
             # corpus behaves differently before and after delay
             if n * 2 > self.delay:
-                xws = self.xws
+                if not self.distractors_after_delay:  # TODO what happens if ONLY cat4 words are presented?
+                    xws = self.xws_in_last_category
+                else:
+                    xws = self.xws
                 period_probability = self.period_probability[1]
             else:
                 xws = self.xws_without_last_category
@@ -99,6 +106,9 @@ class ToyCorpus:
             # collect
             res += f'{xw} {yw} '  # whitespace after each
             joint_outcomes.add((xw, yw))
+
+            # TODO debuggign
+            print(xw in self.xws_in_last_category)
 
         print(f'Number of unique joint outcomes={len(joint_outcomes):,}/{self.num_possible:,}')
         print(f'Coverage={len(joint_outcomes) / self.num_possible:.2f}')
