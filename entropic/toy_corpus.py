@@ -87,7 +87,7 @@ class ToyCorpus:
                 xws = self.xws
                 period_probability = self.period_probability[1]
             else:
-                if self.reserve_all_dims:  # TODO test
+                if self.reserve_all_dims:
                     xws = self.xws
                 else:
                     xws = self.xws_without_last_cat

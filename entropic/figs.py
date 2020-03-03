@@ -63,7 +63,7 @@ def add_double_legend(lines_list, labels1, labels2, y_offset=-0.3, fs=12):
     plt.gca().add_artist(leg2)  # order of legend creation matters here
 
 
-def make_svd_across_time_fig(embeddings: np.ndarray,
+def make_svd_across_time_fig(representations: np.ndarray,
                              component1: int,
                              component2: int,
                              label: str,
@@ -74,18 +74,18 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
     Returns res showing evolution of embeddings in 2D space using SVD.
     """
 
-    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
+    assert np.ndim(representations) == 3  # (ticks, words/categories, embedding dimensions)
 
-    palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
+    palette = np.array(sns.color_palette("hls", representations.shape[1]))
 
     # fit svd model on last tick
     num_components = component2 + 1
     svd_model = TruncatedSVD(n_components=num_components)
-    svd_model.fit(embeddings[-1])
+    svd_model.fit(representations[-1])
 
     # transform embeddings at requested ticks with pca model
     transformations = []
-    for ei in embeddings:
+    for ei in representations:
         transformations.append(svd_model.transform(ei)[:, [component1, component2]])
 
     # fig
@@ -96,7 +96,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
     ax.axvline(x=0, linestyle='--', c='grey', linewidth=1.0)
 
     # plot
-    for n in range(embeddings.shape[1]):
+    for n in range(representations.shape[1]):
 
         # lines
         x, y = zip(*[t[n] for t in transformations])
@@ -112,7 +112,7 @@ def make_svd_across_time_fig(embeddings: np.ndarray,
     return res
 
 
-def make_svd_across_time_3d_fig(embeddings: np.ndarray,
+def make_svd_across_time_3d_fig(representations: np.ndarray,
                                 component1: int,
                                 component2: int,
                                 component3: int,
@@ -124,21 +124,21 @@ def make_svd_across_time_3d_fig(embeddings: np.ndarray,
     Returns res showing evolution of embeddings in 2D space using PCA.
     """
 
-    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
+    assert np.ndim(representations) == 3  # (ticks, words/categories, embedding dimensions)
 
     assert component1 != component2
     assert component2 != component3
 
-    palette = np.array(sns.color_palette("hls", embeddings.shape[1]))
+    palette = np.array(sns.color_palette("hls", representations.shape[1]))
 
     # fit svd model on last tick
     num_components = component3 + 1
     svd_model = TruncatedSVD(n_components=num_components)  # PCA gives different results
-    svd_model.fit(embeddings[-1])
+    svd_model.fit(representations[-1])
 
     # transform embeddings at requested ticks with svd model
     transformations = []
-    for ei in embeddings:
+    for ei in representations:
         transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
 
     # fig
@@ -153,7 +153,7 @@ def make_svd_across_time_3d_fig(embeddings: np.ndarray,
     ax.set_zlabel('Singular Dim 2', labelpad=-10)
 
     # plot
-    for n in range(embeddings.shape[1]):
+    for n in range(representations.shape[1]):
         print('Plotting time-course for category', n)
 
         # lines
@@ -170,7 +170,7 @@ def make_svd_across_time_3d_fig(embeddings: np.ndarray,
     return res
 
 
-def make_svd_across_time_3d_animation(embeddings: np.ndarray,
+def make_svd_across_time_3d_animation(representations: np.ndarray,
                                       component1: int,
                                       component2: int,
                                       component3: int,
@@ -185,12 +185,12 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     Saves figures, showing rotating 3d figure of SVD time course
     """
 
-    assert np.ndim(embeddings) == 3  # (ticks, words/categories, embedding dimensions)
+    assert np.ndim(representations) == 3  # (ticks, words/categories, embedding dimensions)
 
     assert component1 != component2
     assert component2 != component3
 
-    num_cats = embeddings.shape[1]
+    num_cats = representations.shape[1]
     palette = np.array(sns.color_palette("hls", num_cats))
 
     # fit svd model on last tick
@@ -199,11 +199,11 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
     # so that singular dimensions at last tick do not correspond to those before catastrophic interference
     num_components = component3 + 1
     svd_model = TruncatedSVD(n_components=num_components)  # PCA gives different results
-    svd_model.fit(embeddings[delay_tick - 2])
+    svd_model.fit(representations[delay_tick - 2])
 
     # transform embeddings at requested ticks with svd model
     transformations = []
-    for ei in embeddings:
+    for ei in representations:
         transformations.append(svd_model.transform(ei)[:, [component1, component2, component3]])
 
     # fig
@@ -250,6 +250,67 @@ def make_svd_across_time_3d_animation(embeddings: np.ndarray,
         if tick >= delay_tick and not reserve_all_dims:  # once shown, it stays
             ax.set_title(f'Category {num_cats}', loc='right')
             ax.title.set_y(1.0)  # otherwise the Axes3D object will lower it over time
+
+        # save each fig individually, because celluloid.camera cannot deal with rotating axis
+        file_path = images_path / f'{tick:0>6}.png'
+        print(f'Saving {file_path}')
+        plt.savefig(file_path)
+
+
+def make_predictions_animation(outputs: np.ndarray,
+                               label: str,
+                               steps_in_tick: int,
+                               delay_tick: int,
+                               reserve_all_dims: bool,
+                               images_path: Path,
+                               ) -> None:
+    """
+    Saves figures, showing time course of predictions
+    """
+
+    assert np.ndim(outputs) == 3  # (ticks, words/categories, output dimension)
+
+    num_ticks = outputs.shape[0]
+    num_cats = outputs.shape[1]
+    num_types = outputs.shape[2]
+    palette = np.array(sns.color_palette("hls", num_cats))
+
+    # fig
+    fig, axarr = plt.subplots(num_cats, figsize=(14, 8), dpi=163)
+    cat_id2lines = {}
+
+    # plot
+    for tick in range(num_ticks):
+
+        plt.suptitle(f'{label}\nstep={tick * steps_in_tick}', y=1.0)
+
+        for cat_id in range(num_cats):
+
+            # axis
+            axarr[cat_id].spines['right'].set_visible(False)
+            axarr[cat_id].spines['top'].set_visible(False)
+            axarr[cat_id].set_xticks([])
+            axarr[cat_id].set_xticklabels([])
+            axarr[cat_id].set_xlabel('')
+            axarr[cat_id].set_ylabel('Out Probability')
+            axarr[cat_id].set_ylim(top=np.max(outputs))
+
+            # lines
+            color = palette[cat_id]
+            y = outputs[tick, cat_id]
+            try:
+                cat_id2lines[cat_id].remove()
+            except KeyError:
+                pass
+            lines = axarr[cat_id].scatter(np.arange(num_types), y, c=[color], s=1)
+            cat_id2lines[cat_id] = lines
+
+            # visually mark that delay tick occurs
+            if tick >= delay_tick and not reserve_all_dims and cat_id == num_cats - 1:  # once shown, it stays
+                axarr[cat_id].set_title(f'Category {num_cats}', loc='right')
+
+            # title
+            axarr[cat_id].set_title(f'cat={cat_id}')
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
         file_path = images_path / f'{tick:0>6}.png'
