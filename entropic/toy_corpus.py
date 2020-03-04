@@ -19,7 +19,7 @@ class ToyCorpus:
                  num_fragments: int = 4,  # number of categories in xws
                  period_probability: Tuple[float, float] = (0.1, 0.0),
                  alpha: float = 2.0,
-                 reserve_all_dims: bool = True,
+                 num_sentinels: int = 0,
                  seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
@@ -29,7 +29,7 @@ class ToyCorpus:
         self.period_probability = period_probability
         self.alpha = alpha
         self.delay = delay
-        self.reserve_all_dims = reserve_all_dims
+        self.num_sentinels = num_sentinels
         self.num_yws = self.num_types - self.num_xws
 
         self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
@@ -49,8 +49,10 @@ class ToyCorpus:
         for xw, yws in self.xw2yws.items():
             assert len(yws) == yw_fragment_size, (len(yws), yw_fragment_size)
 
-        self.xws_without_last_cat = [xw for xw in self.xws if xw not in self.cat_id2xws[self.num_fragments - 1]]
-        assert len(self.xws_without_last_cat) == self.num_xws - xw_fragment_size
+        assert self.num_sentinels <= xw_fragment_size, f'"num_sentinels" must be <= {xw_fragment_size}'
+
+        non_sentinels = self.cat_id2xws[self.num_fragments - 1][num_sentinels:]
+        self.xws_without_non_sentinels = [xw for xw in self.xws if xw not in non_sentinels]
 
         # the number of legal joint outcomes is the total number divided by the fragment size
         self.num_possible = self.num_xws*self.num_yws / num_fragments
@@ -75,9 +77,18 @@ class ToyCorpus:
             i = next(c)
             pseudo_periods.append(yw_pop[i])
 
-        # make cumulative weights that mimic power distribution
+        # make cumulative weights over y-words that mimic power distribution
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
+
+        # weights such that all x-word categories are equally probable - regardless of num_sentinels
+        weights_after_delay = [1 / self.num_xws] * self.num_xws
+        if self.num_sentinels > 0:
+            weights_before_delay = [1 / self.num_xws] * len(self.xws_without_non_sentinels)
+            tmp = 1 - sum(weights_before_delay[:-self.num_sentinels])
+            weights_before_delay[-self.num_sentinels:] = [tmp / self.num_sentinels] * self.num_sentinels
+        else:
+            weights_before_delay = [1 / len(self.xws_without_non_sentinels)] * len(self.xws_without_non_sentinels)
 
         res = ''
         for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words
@@ -85,16 +96,15 @@ class ToyCorpus:
             # corpus behaves differently before and after delay
             if n * 2 > self.delay:
                 xws = self.xws
+                weights = weights_after_delay
                 period_probability = self.period_probability[1]
             else:
-                if self.reserve_all_dims:
-                    xws = self.xws
-                else:
-                    xws = self.xws_without_last_cat
+                xws = self.xws_without_non_sentinels
+                weights = weights_before_delay
                 period_probability = self.period_probability[0]
 
             # sample xw randomly
-            xw = random.choice(xws)
+            [xw] = random.choices(xws, weights=weights, k=1)
 
             # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
             if random.random() < period_probability:

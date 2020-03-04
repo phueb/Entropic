@@ -9,7 +9,7 @@ from entropic.figs import make_predictions_animation
 from ludwig.results import gen_param_paths
 
 
-# param2requests['reserve_all_dims'] = [False, True]
+# param2requests['num_sentinels'] = [64]
 
 """
 Note:
@@ -43,7 +43,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
     num_fragments = param2val['num_fragments']
     num_types = param2val['num_types']
     hidden_size = param2val['hidden_size']
-    reserve_all_dims = param2val['reserve_all_dims']
+    num_sentinels = param2val['num_sentinels']
 
     # init array to hold category representations averaged across jobs
     big = np.zeros((num_jobs, num_ticks, num_fragments, num_types))
@@ -82,7 +82,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                    label=label,
                                    steps_in_tick=steps_in_tick,
                                    delay_tick=delay_tick,  # tick at which delay occurs
-                                   reserve_all_dims=reserve_all_dims,
+                                   num_sentinels=num_sentinels,
                                    images_path=images_path,
                                    )
 

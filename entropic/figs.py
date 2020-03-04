@@ -177,7 +177,7 @@ def make_svd_across_time_3d_animation(representations: np.ndarray,
                                       label: str,
                                       steps_in_tick: int,
                                       delay_tick: int,
-                                      reserve_all_dims: bool,
+                                      num_sentinels: int,
                                       images_path: Path,
                                       plot_avg_location_first_three_cats: bool = False,
                                       ) -> None:
@@ -247,7 +247,7 @@ def make_svd_across_time_3d_animation(representations: np.ndarray,
             ax.scatter3D(*xyz, c=[palette[-1]], s=10)
 
         # visually mark that delay tick occurs
-        if tick >= delay_tick and not reserve_all_dims:  # once shown, it stays
+        if tick >= delay_tick:  # once shown, it stays
             ax.set_title(f'Category {num_cats}', loc='right')
             ax.title.set_y(1.0)  # otherwise the Axes3D object will lower it over time
 
@@ -261,7 +261,7 @@ def make_predictions_animation(outputs: np.ndarray,
                                label: str,
                                steps_in_tick: int,
                                delay_tick: int,
-                               reserve_all_dims: bool,
+                               num_sentinels: int,
                                images_path: Path,
                                ) -> None:
     """
@@ -289,6 +289,7 @@ def make_predictions_animation(outputs: np.ndarray,
             # axis
             axarr[cat_id].spines['right'].set_visible(False)
             axarr[cat_id].spines['top'].set_visible(False)
+            axarr[cat_id].spines['bottom'].set_visible(False)
             axarr[cat_id].set_xticks([])
             axarr[cat_id].set_xticklabels([])
             axarr[cat_id].set_xlabel('')
@@ -306,7 +307,7 @@ def make_predictions_animation(outputs: np.ndarray,
             cat_id2lines[cat_id] = lines
 
             # visually mark that delay tick occurs
-            if tick >= delay_tick and not reserve_all_dims and cat_id == num_cats - 1:  # once shown, it stays
+            if tick >= delay_tick and cat_id == num_cats - 1:  # once shown, it stays
                 axarr[cat_id].set_title(f'Category {num_cats}', loc='right')
 
             # title

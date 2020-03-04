@@ -15,10 +15,10 @@ LABEL_TICK_INTERVAL = 10
 PLOT_INDIVIDUAL_STATIC_FIGURE = False
 PLOT_INDIVIDUAL_ANIMATION = True
 PLOT_AVERAGE = False
-REPRESENTATIONS_NAME = 'embeddings'  # "embeddings' or "output_probabilities"
+REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
 
+param2requests['num_sentinels'] = [1, 2]
 
-# param2requests['reserve_all_dims'] = [False, True]
 
 """
 Note:
@@ -52,7 +52,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
     num_fragments = param2val['num_fragments']
     num_types = param2val['num_types']
     hidden_size = param2val['hidden_size']
-    reserve_all_dims = param2val['reserve_all_dims']
+    num_sentinels = param2val['num_sentinels']
 
     if REPRESENTATIONS_NAME == 'output_probabilities':
         representation_size = num_types
@@ -112,7 +112,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                               label=label,
                                               steps_in_tick=steps_in_tick,
                                               delay_tick=delay_tick,  # tick at which delay occurs
-                                              reserve_all_dims=reserve_all_dims,
+                                              num_sentinels=num_sentinels,
                                               images_path=images_path,
                                               )
 
