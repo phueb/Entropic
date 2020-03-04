@@ -17,7 +17,7 @@ PLOT_INDIVIDUAL_ANIMATION = True
 PLOT_AVERAGE = False
 REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
 
-param2requests['num_sentinels'] = [1, 2]
+# param2requests['num_sentinels'] = []
 
 
 """

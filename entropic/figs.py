@@ -276,8 +276,11 @@ def make_predictions_animation(outputs: np.ndarray,
     palette = np.array(sns.color_palette("hls", num_cats))
 
     # fig
-    fig, axarr = plt.subplots(num_cats, figsize=(14, 8), dpi=163)
+    fig, axarr = plt.subplots(num_cats, dpi=163)
     cat_id2lines = {}
+    x = np.arange(num_types)
+    text = None
+    text_bbox = dict(boxstyle="round", ec=(1., 0.5, 0.5), fc=(1., 0.8, 0.8), )
 
     # plot
     for tick in range(num_ticks):
@@ -293,7 +296,7 @@ def make_predictions_animation(outputs: np.ndarray,
             axarr[cat_id].set_xticks([])
             axarr[cat_id].set_xticklabels([])
             axarr[cat_id].set_xlabel('')
-            axarr[cat_id].set_ylabel('Out Probability')
+            axarr[cat_id].set_ylabel('P(next word)', fontsize=8)
             axarr[cat_id].set_ylim(top=np.max(outputs))
 
             # lines
@@ -303,15 +306,24 @@ def make_predictions_animation(outputs: np.ndarray,
                 cat_id2lines[cat_id].remove()
             except KeyError:
                 pass
-            lines = axarr[cat_id].scatter(np.arange(num_types), y, c=[color], s=1)
+
+            lines = axarr[cat_id].scatter(x, y, c=[color], s=1)
             cat_id2lines[cat_id] = lines
 
-            # visually mark that delay tick occurs
-            if tick >= delay_tick and cat_id == num_cats - 1:  # once shown, it stays
-                axarr[cat_id].set_title(f'Category {num_cats}', loc='right')
+            # visually mark delay tick
+            if cat_id == num_cats - 1:
+                if tick < delay_tick:
+                    if text is not None:
+                        text.remove()
+                    text = axarr[cat_id].text(0, np.max(outputs) / 2, 'OFF', bbox=text_bbox)
+                else:
+                    if text is not None:
+                        text.remove()
+                        text = None
 
             # title
-            axarr[cat_id].set_title(f'cat={cat_id}')
+            axarr[cat_id].set_title(f'Category {cat_id + 1}', fontsize=8, loc='center')
+            axarr[cat_id].title.set_y(0.75)
 
         # save each fig individually, because celluloid.camera cannot deal with rotating axis
         file_path = images_path / f'{tick:0>6}.png'
