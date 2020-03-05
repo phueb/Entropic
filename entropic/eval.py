@@ -97,19 +97,19 @@ def softmax(z):
 
 
 def make_xw_true_out_probabilities(prep: Union[PartitionedPrep, SlidingPrep],
-                                   token_ids_array: np.ndarray,
-                                   xws: List[str],
+                                   x: List[str],
+                                   types: List[str],
                                    ) -> np.ndarray:
     """
     make the true next-word probability distribution for some x-word
     """
 
-    x, y, x_y = get_outcomes(prep, token_ids_array, xws)  # outcomes where any of xws is in slot -2
-    wid2f = Counter(y)
-    res = np.asarray([wid2f[i] for i in range(prep.num_types)])
+    cx, ry, cx_ry = get_outcomes(prep, x)  # outcomes where any of xws is in slot -2
+    w2f = Counter(ry)
+    res = np.asarray([w2f[w] for w in types])
     res = res / res.sum()
 
-    print(f'Provided x-word fragment occurs with {len(wid2f)} y-word types, and occurs {len(y)} times')
+    print(f'Provided x-word fragment occurs with {len(w2f)} y-word types, and occurs {len(ry)} times')
     assert np.sum(res).round(4).item() == 1.0, np.sum(res).round(4).item()
 
     return res

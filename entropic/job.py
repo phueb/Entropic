@@ -25,7 +25,6 @@ class Params(object):
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
     delay = attr.ib(validator=attr.validators.instance_of(int))
     num_sentinels = attr.ib(validator=attr.validators.instance_of(int))
-    num_xws = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
@@ -60,7 +59,6 @@ def main(param2val):
     tc = ToyCorpus(doc_size=params.doc_size,
                    delay=params.delay,
                    num_types=params.num_types,
-                   num_xws=params.num_xws,
                    num_fragments=params.num_fragments,
                    period_probability=params.period_probability,
                    num_sentinels=params.num_sentinels,
@@ -70,12 +68,12 @@ def main(param2val):
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.slide_size,
                        batch_size=params.batch_size,
-                       context_size=1)
+                       context_size=3)
     # make helper dicts using IDs assigned to x-words by Preppy
-    xw_ids = [prep.store.w2id[xw] for xw in tc.xws]
-    cat_id2xw_ids = {cat_id: [prep.store.w2id[xw] for xw in tc.cat_id2xws[cat_id]]
+    xw_ids = [prep.store.w2id[xw] for xw in tc.x]
+    cat_id2xw_ids = {cat_id: [tc.x.index(xw) for xw in tc.cat_id2x[cat_id]]
                      for cat_id in range(params.num_fragments)}
-    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, prep.token_ids_array, xws=tc.cat_id2xws[cat_id])
+    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, x=tc.cat_id2x[cat_id], types=tc.types)
                 for cat_id in range(params.num_fragments)}
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
@@ -100,7 +98,7 @@ def main(param2val):
             assert batch[0, 0].item() in xw_ids
 
         # prepare x, y
-        x, y = batch[:, 0, np.newaxis], batch[:, 1]
+        x, y = batch[:, :-1], batch[:, -1]
         inputs = torch.cuda.LongTensor(x)
         targets = torch.cuda.LongTensor(y)
 
@@ -114,8 +112,8 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # get output representations for all x-words
-            x_xws = np.array([[prep.store.w2id[xw]] for xw in tc.xws])
-            output_probabilities_xws = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
+            x_xws = np.array([[prep.store.w2id[xw]] for xw in tc.x])
+            q_x = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
 
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -134,7 +132,7 @@ def main(param2val):
             eval_steps.append(step)
             for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
                 p_cat1 = cat_id2p[cat_id1]
-                q_cat2 = output_probabilities_xws[cat_id2xw_ids[cat_id2]].mean(0)
+                q_cat2 = q_x[cat_id2xw_ids[cat_id2]].mean(0)
                 dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
                 name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
 
@@ -144,19 +142,21 @@ def main(param2val):
 
             # collect entropy of output-layer category representations
             for cat_id in range(params.num_fragments):
-                q_cat = output_probabilities_xws[cat_id2xw_ids[cat_id]].mean(0)
+                q_cat = q_x[cat_id2xw_ids[cat_id]].mean(0)
                 e = drv.entropy_pmf(q_cat)
                 name2col.setdefault(f'e_cat{cat_id}', []).append(e)
 
-            assert embeddings_xws.shape[0] == output_probabilities_xws.shape[0]
+            assert embeddings_xws.shape[0] == q_x.shape[0]
 
             # save output probabilities for x-word to file for making SVD time-course animation
             out_path = save_path / f'output_probabilities_{step:0>9}.npy'
-            np.save(out_path, output_probabilities_xws)
+            if out_path.exists():  # does not exist when running ludwig with --local
+                np.save(out_path, q_x)
 
             # save embeddings for x-word to file for making SVD time-course animation
             out_path = save_path / f'embeddings_{step:0>9}.npy'
-            np.save(out_path, embeddings_xws)
+            if out_path.exists():  # does not exist when running ludwig with --local
+                np.save(out_path, embeddings_xws)
 
         # TRAIN
         xe.backward()

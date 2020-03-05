@@ -15,51 +15,61 @@ class ToyCorpus:
                  doc_size: int = 400_000,
                  delay: int = 200_000,
                  num_types: int = 1024,
-                 num_xws: int = 512,
                  num_fragments: int = 4,  # number of categories in xws
-                 period_probability: Tuple[float, float] = (0.1, 0.0),
+                 period_probability: Tuple[float, float] = (0.0, 0.0),
                  alpha: float = 2.0,
                  num_sentinels: int = 0,
                  seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
         self.num_types = num_types
-        self.num_xws = num_xws
         self.num_fragments = num_fragments
         self.period_probability = period_probability
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
-        self.num_yws = self.num_types - self.num_xws
 
-        self.xws = [f'x{i:0>6}' for i in range(self.num_xws)]
-        self.yws = [f'y{i:0>6}' for i in range(self.num_yws)]
+        self.num_v = self.num_types // 4
+        self.num_w = self.num_types // 4
+        self.num_x = self.num_types // 4
+        self.num_y = self.num_types // 4
+
+        self.v = [f'v{i:0>6}' for i in range(self.num_v)]
+        self.w = [f'w{i:0>6}' for i in range(self.num_w)]
+        self.x = [f'x{i:0>6}' for i in range(self.num_x)]
+        self.y = [f'y{i:0>6}' for i in range(self.num_y)]
+
+        self.types = self.v + self.w + self.x + self.y
 
         # assign x-words to categories
-        self.xw2cat_id = {xw: cat_id for xw, cat_id in zip(self.xws, cycle(range(self.num_fragments)))}
-        self.cat_id2xws = {frag_id: [xw for xw, cat_id in self.xw2cat_id.items() if cat_id == frag_id]
-                           for frag_id in range(self.num_fragments)}
+        self.xi2cat_id = {xi: cat_id for xi, cat_id in zip(self.x, cycle(range(self.num_fragments)))}
+        self.cat_id2x = {frag_id: [xi for xi, cat_id in self.xi2cat_id.items() if cat_id == frag_id]
+                         for frag_id in range(self.num_fragments)}
 
-        # map subsets of xws to mutually exclusive subsets/fragments of yws
-        yw_fragments = [self.yws[offset::num_fragments] for offset in range(num_fragments)]
-        self.xw2yws = {xw: yw_fragments[self.xw2cat_id[xw]] for xw in self.xws}
+        # map subsets of xis to mutually exclusive subsets/fragments of y
+        w_fragments = [self.w[offset::num_fragments] for offset in range(num_fragments)]
+        y_fragments = [self.y[offset::num_fragments] for offset in range(num_fragments)]
+        self.xi2w = {xi: w_fragments[self.xi2cat_id[xi]] for xi in self.x}
+        self.xi2y = {xi: y_fragments[self.xi2cat_id[xi]] for xi in self.x}
+
         # check
-        xw_fragment_size = self.num_xws // num_fragments
-        yw_fragment_size = self.num_yws // num_fragments
-        for xw, yws in self.xw2yws.items():
-            assert len(yws) == yw_fragment_size, (len(yws), yw_fragment_size)
+        w_fragment_size = self.num_w // num_fragments
+        x_fragment_size = self.num_x // num_fragments
+        y_fragment_size = self.num_y // num_fragments
+        for xi, w in self.xi2w.items():
+            assert len(w) == w_fragment_size, (len(w), w_fragment_size)
+        for xi, y in self.xi2y.items():
+            assert len(y) == y_fragment_size, (len(y), y_fragment_size)
 
-        assert self.num_sentinels <= xw_fragment_size, f'"num_sentinels" must be <= {xw_fragment_size}'
+        assert self.num_sentinels <= x_fragment_size, f'"num_sentinels" must be <= {x_fragment_size}'
 
-        non_sentinels = self.cat_id2xws[self.num_fragments - 1][num_sentinels:]
-        self.xws_without_non_sentinels = [xw for xw in self.xws if xw not in non_sentinels]
+        non_sentinels = self.cat_id2x[self.num_fragments - 1][num_sentinels:]
+        self.x_without_non_sentinels = [xi for xi in self.x if xi not in non_sentinels]
 
         # the number of legal joint outcomes is the total number divided by the fragment size
-        self.num_possible = self.num_xws*self.num_yws / num_fragments
+        self.num_possible = self.num_x * self.num_y / num_fragments
 
         print('Initialized ToyCorpus')
-        print(f'Lowest theoretical pp ={self.num_yws // self.num_fragments:>6,}')
-        print(f'Number of y-word types={self.num_yws:>6,}')
 
         if seed is not None:
             random.seed(seed)
@@ -71,7 +81,7 @@ class ToyCorpus:
         # make pseudo_periods
         pseudo_periods = []
         c = cycle(range(self.num_fragments))
-        yw_fragments = [self.yws[offset::self.num_fragments] for offset in range(self.num_fragments)]
+        yw_fragments = [self.y[offset::self.num_fragments] for offset in range(self.num_fragments)]
         num_max = 8  # should be small - to ensure that joint entropy is smaller in partition 1
         for yw_pop in list(zip(*yw_fragments))[:num_max]:
             i = next(c)
@@ -82,41 +92,49 @@ class ToyCorpus:
         cum_weights = [l / logits[-1] for l in logits]
 
         # weights such that all x-word categories are equally probable - regardless of num_sentinels
-        weights_after_delay = [1 / self.num_xws] * self.num_xws
+        weights_after_delay = [1 / self.num_x] * self.num_x
         if self.num_sentinels > 0:
-            weights_before_delay = [1 / self.num_xws] * len(self.xws_without_non_sentinels)
+            weights_before_delay = [1 / self.num_x] * len(self.x_without_non_sentinels)
             tmp = 1 - sum(weights_before_delay[:-self.num_sentinels])
             weights_before_delay[-self.num_sentinels:] = [tmp / self.num_sentinels] * self.num_sentinels
         else:
-            weights_before_delay = [1 / len(self.xws_without_non_sentinels)] * len(self.xws_without_non_sentinels)
+            weights_before_delay = [1 / len(self.x_without_non_sentinels)] * len(self.x_without_non_sentinels)
 
         res = ''
-        for n in range(self.doc_size // 2):  # divide by 2 because each loop adds 2 words
+        num_words_in_window = 4
+        for n in range(self.doc_size // num_words_in_window):
 
             # corpus behaves differently before and after delay
-            if n * 2 > self.delay:
-                xws = self.xws
+            if n * num_words_in_window > self.delay:
+                x = self.x
                 weights = weights_after_delay
                 period_probability = self.period_probability[1]
             else:
-                xws = self.xws_without_non_sentinels
+                x = self.x_without_non_sentinels
                 weights = weights_before_delay
                 period_probability = self.period_probability[0]
 
-            # sample xw randomly
-            [xw] = random.choices(xws, weights=weights, k=1)
+            # sample xi randomly
+            [xi] = random.choices(x, weights=weights, k=1)
 
-            # sample yw that is consistent with ALL xw categories (e.g. PERIOD)
+            # sample vi randomly
+            vi = random.choice(self.v)
+
+            # sample wi consistent with xi
+            wi = random.choice(self.xi2w[xi])  # TODO add option to insert pseudo-period here too
+
+            wi = self.w[0]  # TODO debugging
+
+            # sample yi that is consistent with ALL xi categories (e.g. PERIOD)
             if random.random() < period_probability:
-                yw = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
-
-            # sample yw consistent with xw category
+                yi = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
+            # sample yi consistent with xi category
             else:
-                yw = random.choice(self.xw2yws[xw])
+                yi = random.choice(self.xi2y[xi])
 
             # collect
-            res += f'{xw} {yw} '  # whitespace after each
-            joint_outcomes.add((xw, yw))
+            res += f'{vi} {wi} {xi} {yi} '  # whitespace after each
+            joint_outcomes.add((vi, wi, xi, yi))
 
         print(f'Number of unique joint outcomes={len(joint_outcomes):,}/{self.num_possible:,}')
         print(f'Coverage={len(joint_outcomes) / self.num_possible:.2f}')
@@ -126,9 +144,9 @@ class ToyCorpus:
     @cached_property
     def sim_mat_gold(self) -> np.ndarray:
 
-        # every xw is related to every other xw, depending on num_fragments
-        res = np.zeros((self.num_xws, self.num_xws))
-        for row_id in range(self.num_xws):
+        # every xi is related to every other xi, depending on num_fragments
+        res = np.zeros((self.num_x, self.num_x))
+        for row_id in range(self.num_x):
             offset = row_id % self.num_fragments
             res[row_id, offset::self.num_fragments] += 1
 

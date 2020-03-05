@@ -276,7 +276,7 @@ def make_predictions_animation(outputs: np.ndarray,
     palette = np.array(sns.color_palette("hls", num_cats))
 
     # fig
-    fig, axarr = plt.subplots(num_cats, dpi=163)
+    fig, axarr = plt.subplots(num_cats, dpi=163)  # keep fig size small so that gif will animate
     cat_id2lines = {}
     x = np.arange(num_types)
     text = None

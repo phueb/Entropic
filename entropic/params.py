@@ -2,7 +2,7 @@
 
 param2requests = {
     'period_probability': [(0.0, 0.0)],
-    'num_sentinels': [0, 4, 64, 128]
+    'num_sentinels': [64, 32, 16, 0]
 }
 
 
@@ -12,7 +12,6 @@ param2default = {
     # toy corpus
     'doc_size': 400_000,
     'delay': 200_000,
-    'num_xws': 512,
     'num_types': 1024,
     'num_fragments': 4,
     'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)

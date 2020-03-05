@@ -13,7 +13,6 @@ from entropic.outcomes import get_outcomes
 DOC_SIZE = 400_000
 DELAY = 200_000
 NUM_TYPES = 1024  # this needs to be large to provide room for interesting effects
-NUM_XWS = 512
 NUM_FRAGMENTS = 4  # number of x-word sub categories, or singular dimensions
 ALPHA = 2.0
 PERIOD_PROBABILITIES = [(0.1, 0.1), (0.0, 0.0)]
@@ -28,7 +27,6 @@ for pp in PERIOD_PROBABILITIES:
     toy_corpus = ToyCorpus(doc_size=DOC_SIZE,
                            delay=DELAY,
                            num_types=NUM_TYPES,
-                           num_xws=NUM_XWS,
                            num_fragments=NUM_FRAGMENTS,
                            alpha=ALPHA,
                            period_probability=pp
@@ -39,28 +37,23 @@ for pp in PERIOD_PROBABILITIES:
                            num_parts=2,
                            num_iterations=[1, 1],
                            batch_size=64,
-                           context_size=1)
-    probes = [p for p in toy_corpus.xws if p in prep.store.w2id]
+                           context_size=3)
+    probes = [p for p in toy_corpus.x if p in prep.store.w2id]
 
-    # get outcomes - the word IDs that occur in the same 2-word window
-    x, y, x_y = get_outcomes(prep, prep.store.token_ids, probes)
-
-    # map word ID of x-words to IDs between [0, len(probes)]
-    # this makes creating a matrix with the right number of columns easier
-    x2x = {xi: n for n, xi in enumerate(np.unique(x))}
+    # get outcomes - the words that occur in the same 2-word window
+    cx, ry, cx_ry = get_outcomes(prep, probes)
 
     # make co-occurrence matrix
-    cf_mat = np.ones((prep.num_types, len(x2x))) * 1e-9
-    for xi, yi in zip(x, y):
-        cf_mat[yi, x2x[xi]] += 1
+    cf_mat = np.ones((toy_corpus.num_y, toy_corpus.num_x)) * 1e-9
+    for cxi, ryi in zip(cx, ry):
+        cf_mat[toy_corpus.y.index(ryi), toy_corpus.x.index(cxi)] += 1
 
     # make co-occurrence plot
     if SHOW_HEATMAP:
-        last_num_rows = NUM_TYPES - NUM_XWS  # other rows are just empty because of x-words not occurring with x-words
-        fig, ax = make_heatmap_fig(np.log(cf_mat[-last_num_rows:]))
-        ce = drv.entropy_conditional(x, y).item()
-        je = drv.entropy_joint(x_y).item()
-        ye = drv.entropy_joint(y).item()
+        fig, ax = make_heatmap_fig(np.log(cf_mat[-toy_corpus.num_y:]))
+        ce = drv.entropy_conditional(cx, ry).item()
+        je = drv.entropy_joint(cx_ry).item()
+        ye = drv.entropy_joint(ry).item()
         plt.title(f'Toy Corpus\nperiod prob={pp}\nH(x-word|y-word)={ce:.4f}\nH(x-word,y-word)={je:.4f}\nH(y-word)={ye:.4f}')
         plt.show()
 
