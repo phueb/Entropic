@@ -113,6 +113,9 @@ class Corpus:
             # sample wi consistent with xi
             wi = random.choice(self.xi2w[xi])  # TODO add option to insert pseudo-period here too
 
+            # TODO make wi noun-wide - this makes new examples grow from N, rather than N-fragment
+            # wi = random.choice(self.w)
+
             # sample yi that is consistent with ALL xi categories (e.g. PERIOD)
             if random.random() < period_probability:
                 yi = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]

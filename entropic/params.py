@@ -1,8 +1,8 @@
 
 
 param2requests = {
-    'period_probability': [(0.0, 0.0)],
-    'num_sentinels': [1, 2, 4, 8],
+    'period_probability': [(0.0, 0.0), (0.05, 0.05), (0.1, 0.1), (0.2, 0.2)],
+    'num_sentinels': [4],
 }
 
 
