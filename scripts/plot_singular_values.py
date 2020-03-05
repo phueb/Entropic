@@ -6,7 +6,7 @@ from sklearn.preprocessing import normalize, scale
 from preppy import PartitionedPrep
 
 from entropic.figs import make_heatmap_fig
-from entropic.toy_corpus import ToyCorpus
+from entropic.corpus import Corpus
 from entropic.figs import plot_singular_values
 from entropic.outcomes import get_outcomes
 
@@ -25,14 +25,14 @@ SHOW_HEATMAP = True
 s_list_scaled = []
 s_list_intact = []
 for ns in NUM_SENTINELS_LIST:
-    corpus = ToyCorpus(doc_size=DOC_SIZE,
-                       delay=DELAY,
-                       num_types=NUM_TYPES,
-                       num_fragments=NUM_FRAGMENTS,
-                       alpha=ALPHA,
-                       period_probability=PERIOD_PROBABILITY,
-                       num_sentinels=ns,
-                       )
+    corpus = Corpus(doc_size=DOC_SIZE,
+                    delay=DELAY,
+                    num_types=NUM_TYPES,
+                    num_fragments=NUM_FRAGMENTS,
+                    alpha=ALPHA,
+                    period_probability=PERIOD_PROBABILITY,
+                    num_sentinels=ns,
+                    )
     prep = PartitionedPrep([corpus.doc],
                            reverse=False,
                            num_types=None,
@@ -45,6 +45,11 @@ for ns in NUM_SENTINELS_LIST:
     # check that types in corpus and prep are identically ordered
     for t1, t2, in zip(prep.store.types, corpus.types):
         assert t1 == t2
+
+    # check that each x category occurs equally often
+    for cat_id in range(corpus.num_fragments):
+        num = len([w for w in prep.store.tokens if w in corpus.cat_id2x[cat_id]])
+        print(f'cat={cat_id+1} occurs {num:,} times')
 
     # get outcomes - the words that occur in the same 2-word window
     cx, ry, cx_ry = get_outcomes(prep, probes)

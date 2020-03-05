@@ -5,7 +5,7 @@ import numpy as np
 from typing import Tuple, Optional
 
 
-class ToyCorpus:
+class Corpus:
     """
     methods for making a document, a string of artificial words following the structure (xw, yw, xw, yw, ..).
     example document: "x1 y5 x34 y82 x93 y3 x45 y11".
@@ -64,6 +64,10 @@ class ToyCorpus:
             non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
         self.x_without_non_sentinels = [xi for xi in self.x if xi not in non_sentinels]
 
+        # cycle - ensures that each x occurs exactly equally often
+        self.x_cycle = cycle(self.x)
+        self.x_without_non_sentinels_cycle = cycle(self.x_without_non_sentinels)
+
         # the number of legal joint outcomes is the total number divided by the fragment size
         self.num_possible_x_y = self.num_x * self.num_y / num_fragments
 
@@ -94,14 +98,14 @@ class ToyCorpus:
 
             # corpus behaves differently before and after delay
             if n * self.num_words_in_window > self.delay:
-                x = self.x
+                x_cycle = self.x_cycle
                 period_probability = self.period_probability[1]
             else:
-                x = self.x_without_non_sentinels
+                x_cycle = self.x_without_non_sentinels_cycle
                 period_probability = self.period_probability[0]
 
             # sample xi randomly
-            xi = random.choice(x)
+            xi = next(x_cycle)
 
             # sample vi randomly
             vi = random.choice(self.v)

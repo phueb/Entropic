@@ -12,7 +12,7 @@ from preppy import SlidingPrep
 
 from entropic import config
 from entropic.eval import calc_cluster_score, make_xw_true_out_probabilities
-from entropic.toy_corpus import ToyCorpus
+from entropic.corpus import Corpus
 from entropic.rnn import RNN
 from entropic.eval import softmax
 
@@ -56,13 +56,13 @@ def main(param2val):
     save_path = Path(param2val['save_path'])
 
     # create toy input
-    corpus = ToyCorpus(doc_size=params.doc_size,
-                       delay=params.delay,
-                       num_types=params.num_types,
-                       num_fragments=params.num_fragments,
-                       period_probability=params.period_probability,
-                       num_sentinels=params.num_sentinels,
-                       )
+    corpus = Corpus(doc_size=params.doc_size,
+                    delay=params.delay,
+                    num_types=params.num_types,
+                    num_fragments=params.num_fragments,
+                    period_probability=params.period_probability,
+                    num_sentinels=params.num_sentinels,
+                    )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
@@ -135,11 +135,12 @@ def main(param2val):
 
             # collect dp between output-layer cat representations
             eval_steps.append(step)
-            for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
-                p_cat1 = cat_id2p[cat_id1]
-                q_cat2 = q_x[cat_id2xw_ids[cat_id2]].mean(0)
-                dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
-                name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
+            if config.Eval.calc_dp:
+                for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
+                    p_cat1 = cat_id2p[cat_id1]
+                    q_cat2 = q_x[cat_id2xw_ids[cat_id2]].mean(0)
+                    dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
+                    name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
 
             # collect pp + ba
             name2col.setdefault('pp', []).append(pp)
