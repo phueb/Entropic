@@ -91,15 +91,6 @@ class ToyCorpus:
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
 
-        # weights such that all x-word categories are equally probable - regardless of num_sentinels
-        weights_after_delay = [1 / self.num_x] * self.num_x
-        if self.num_sentinels > 0:
-            weights_before_delay = [1 / self.num_x] * len(self.x_without_non_sentinels)
-            tmp = 1 - sum(weights_before_delay[:-self.num_sentinels])
-            weights_before_delay[-self.num_sentinels:] = [tmp / self.num_sentinels] * self.num_sentinels
-        else:
-            weights_before_delay = [1 / len(self.x_without_non_sentinels)] * len(self.x_without_non_sentinels)
-
         res = ''
         num_words_in_window = 4
         for n in range(self.doc_size // num_words_in_window):
@@ -107,23 +98,19 @@ class ToyCorpus:
             # corpus behaves differently before and after delay
             if n * num_words_in_window > self.delay:
                 x = self.x
-                weights = weights_after_delay
                 period_probability = self.period_probability[1]
             else:
                 x = self.x_without_non_sentinels
-                weights = weights_before_delay
                 period_probability = self.period_probability[0]
 
             # sample xi randomly
-            [xi] = random.choices(x, weights=weights, k=1)
+            xi = random.choice(x)
 
             # sample vi randomly
             vi = random.choice(self.v)
 
             # sample wi consistent with xi
             wi = random.choice(self.xi2w[xi])  # TODO add option to insert pseudo-period here too
-
-            wi = self.w[0]  # TODO debugging
 
             # sample yi that is consistent with ALL xi categories (e.g. PERIOD)
             if random.random() < period_probability:

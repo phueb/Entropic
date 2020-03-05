@@ -150,12 +150,12 @@ def main(param2val):
 
             # save output probabilities for x-word to file for making SVD time-course animation
             out_path = save_path / f'output_probabilities_{step:0>9}.npy'
-            if out_path.exists():  # does not exist when running ludwig with --local
+            if save_path.exists():  # does not exist when running ludwig with --local
                 np.save(out_path, q_x)
 
             # save embeddings for x-word to file for making SVD time-course animation
             out_path = save_path / f'embeddings_{step:0>9}.npy'
-            if out_path.exists():  # does not exist when running ludwig with --local
+            if save_path.exists():  # does not exist when running ludwig with --local
                 np.save(out_path, embeddings_xws)
 
         # TRAIN
