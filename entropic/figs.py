@@ -261,7 +261,7 @@ def make_predictions_animation(outputs: np.ndarray,
                                label: str,
                                steps_in_tick: int,
                                delay_tick: int,
-                               num_sentinels: int,
+                               num_fragments: int,
                                images_path: Path,
                                ) -> None:
     """
@@ -279,8 +279,13 @@ def make_predictions_animation(outputs: np.ndarray,
     fig, axarr = plt.subplots(num_cats, dpi=163)  # keep fig size small so that gif will animate
     cat_id2lines = {}
     x = np.arange(num_types)
-    text = None
+    cat_id2text = {cat_id: None for cat_id in range(num_fragments)}
     text_bbox = dict(boxstyle="round", ec=(1., 0.5, 0.5), fc=(1., 0.8, 0.8), )
+
+    # make a vertical line to visually separate v, w, x, y
+    for cat_id in range(num_cats):
+        for boundary in range(0, num_types, num_types // num_fragments):
+            axarr[cat_id].axvline(x=boundary, linestyle=':', c='grey', lw=1)
 
     # plot
     for tick in range(num_ticks):
@@ -299,7 +304,7 @@ def make_predictions_animation(outputs: np.ndarray,
             axarr[cat_id].set_ylabel('P(next word)', fontsize=8)
             axarr[cat_id].set_ylim(top=np.max(outputs))
 
-            # lines
+            # remove previous points
             color = palette[cat_id]
             y = outputs[tick, cat_id]
             try:
@@ -307,19 +312,20 @@ def make_predictions_animation(outputs: np.ndarray,
             except KeyError:
                 pass
 
-            lines = axarr[cat_id].scatter(x, y, c=[color], s=1)
-            cat_id2lines[cat_id] = lines
+            # draw points
+            points = axarr[cat_id].scatter(x, y, c=[color], s=1)
+            cat_id2lines[cat_id] = points
 
             # visually mark delay tick
-            if cat_id == num_cats - 1:
-                if tick < delay_tick:
-                    if text is not None:
-                        text.remove()
-                    text = axarr[cat_id].text(0, np.max(outputs) / 2, 'OFF', bbox=text_bbox)
-                else:
-                    if text is not None:
-                        text.remove()
-                        text = None
+            text = cat_id2text[cat_id]
+            if tick < delay_tick:
+                if text is not None:
+                    text.remove()
+                cat_id2text[cat_id] = axarr[cat_id].text(0, np.max(outputs) / 2, 'OFF', bbox=text_bbox)
+            else:
+                if text is not None:
+                    text.remove()
+                    cat_id2text[cat_id] = None
 
             # title
             axarr[cat_id].set_title(f'Category {cat_id + 1}', fontsize=8, loc='center')

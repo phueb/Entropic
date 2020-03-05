@@ -2,7 +2,7 @@
 
 param2requests = {
     'period_probability': [(0.0, 0.0)],
-    'num_sentinels': [64, 32, 16, 0]
+    'num_sentinels': [4, 8, 16, 32]
 }
 
 
@@ -12,7 +12,7 @@ param2default = {
     # toy corpus
     'doc_size': 400_000,
     'delay': 200_000,
-    'num_types': 1024,
+    'num_types': 512,
     'num_fragments': 4,
     'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)
     'num_sentinels': 0,  # number of examples of last x-word category before delay

@@ -12,13 +12,13 @@ class ToyCorpus:
     """
 
     def __init__(self,
-                 doc_size: int = 400_000,
-                 delay: int = 200_000,
-                 num_types: int = 1024,
-                 num_fragments: int = 4,  # number of categories in xws
-                 period_probability: Tuple[float, float] = (0.0, 0.0),
+                 doc_size: int,
+                 delay: int,
+                 num_types: int,
+                 num_fragments: int,
+                 period_probability: Tuple[float, float],
+                 num_sentinels: int,
                  alpha: float = 2.0,
-                 num_sentinels: int = 0,
                  seed: Optional[int] = None,
                  ) -> None:
         self.doc_size = doc_size
@@ -29,10 +29,12 @@ class ToyCorpus:
         self.delay = delay
         self.num_sentinels = num_sentinels
 
-        self.num_v = self.num_types // 4
-        self.num_w = self.num_types // 4
-        self.num_x = self.num_types // 4
-        self.num_y = self.num_types // 4
+        self.num_words_in_window = 4
+
+        self.num_v = self.num_types // self.num_words_in_window
+        self.num_w = self.num_types // self.num_words_in_window
+        self.num_x = self.num_types // self.num_words_in_window
+        self.num_y = self.num_types // self.num_words_in_window
 
         self.v = [f'v{i:0>6}' for i in range(self.num_v)]
         self.w = [f'w{i:0>6}' for i in range(self.num_w)]
@@ -40,6 +42,7 @@ class ToyCorpus:
         self.y = [f'y{i:0>6}' for i in range(self.num_y)]
 
         self.types = self.v + self.w + self.x + self.y
+        assert len(self.types) == num_types
 
         # assign x-words to categories
         self.xi2cat_id = {xi: cat_id for xi, cat_id in zip(self.x, cycle(range(self.num_fragments)))}
@@ -53,21 +56,16 @@ class ToyCorpus:
         self.xi2y = {xi: y_fragments[self.xi2cat_id[xi]] for xi in self.x}
 
         # check
-        w_fragment_size = self.num_w // num_fragments
         x_fragment_size = self.num_x // num_fragments
-        y_fragment_size = self.num_y // num_fragments
-        for xi, w in self.xi2w.items():
-            assert len(w) == w_fragment_size, (len(w), w_fragment_size)
-        for xi, y in self.xi2y.items():
-            assert len(y) == y_fragment_size, (len(y), y_fragment_size)
+        assert 0 < self.num_sentinels <= x_fragment_size, f'Check that 0 < "num_sentinels"  <= {x_fragment_size}'
 
-        assert self.num_sentinels <= x_fragment_size, f'"num_sentinels" must be <= {x_fragment_size}'
-
-        non_sentinels = self.cat_id2x[self.num_fragments - 1][num_sentinels:]
+        non_sentinels = []
+        for cat_id in range(self.num_fragments):
+            non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
         self.x_without_non_sentinels = [xi for xi in self.x if xi not in non_sentinels]
 
         # the number of legal joint outcomes is the total number divided by the fragment size
-        self.num_possible = self.num_x * self.num_y / num_fragments
+        self.num_possible_x_y = self.num_x * self.num_y / num_fragments
 
         print('Initialized ToyCorpus')
 
@@ -76,7 +74,7 @@ class ToyCorpus:
 
     @cached_property
     def doc(self) -> str:
-        joint_outcomes = set()
+        joint_x_y_outcomes = set()
 
         # make pseudo_periods
         pseudo_periods = []
@@ -92,11 +90,10 @@ class ToyCorpus:
         cum_weights = [l / logits[-1] for l in logits]
 
         res = ''
-        num_words_in_window = 4
-        for n in range(self.doc_size // num_words_in_window):
+        for n in range(self.doc_size // self.num_words_in_window):
 
             # corpus behaves differently before and after delay
-            if n * num_words_in_window > self.delay:
+            if n * self.num_words_in_window > self.delay:
                 x = self.x
                 period_probability = self.period_probability[1]
             else:
@@ -121,10 +118,10 @@ class ToyCorpus:
 
             # collect
             res += f'{vi} {wi} {xi} {yi} '  # whitespace after each
-            joint_outcomes.add((vi, wi, xi, yi))
+            joint_x_y_outcomes.add((xi, yi))
 
-        print(f'Number of unique joint outcomes={len(joint_outcomes):,}/{self.num_possible:,}')
-        print(f'Coverage={len(joint_outcomes) / self.num_possible:.2f}')
+        print(f'Number of unique joint (x,y) outcomes={len(joint_x_y_outcomes):,}/{self.num_possible_x_y:,}')
+        print(f'Coverage={len(joint_x_y_outcomes) / self.num_possible_x_y:.2f}')
 
         return res
 

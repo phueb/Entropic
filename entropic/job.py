@@ -56,24 +56,29 @@ def main(param2val):
     save_path = Path(param2val['save_path'])
 
     # create toy input
-    tc = ToyCorpus(doc_size=params.doc_size,
-                   delay=params.delay,
-                   num_types=params.num_types,
-                   num_fragments=params.num_fragments,
-                   period_probability=params.period_probability,
-                   num_sentinels=params.num_sentinels,
-                   )
-    prep = SlidingPrep([tc.doc],
+    corpus = ToyCorpus(doc_size=params.doc_size,
+                       delay=params.delay,
+                       num_types=params.num_types,
+                       num_fragments=params.num_fragments,
+                       period_probability=params.period_probability,
+                       num_sentinels=params.num_sentinels,
+                       )
+    prep = SlidingPrep([corpus.doc],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.slide_size,
                        batch_size=params.batch_size,
-                       context_size=3)
+                       context_size=corpus.num_words_in_window-1)
+
+    # check that types in corpus and prep are identically ordered
+    for t1, t2, in zip(prep.store.types, corpus.types):
+        assert t1 == t2
+
     # make helper dicts using IDs assigned to x-words by Preppy
-    xw_ids = [prep.store.w2id[xw] for xw in tc.x]
-    cat_id2xw_ids = {cat_id: [tc.x.index(xw) for xw in tc.cat_id2x[cat_id]]
+    xw_ids = [prep.store.w2id[xw] for xw in corpus.x]
+    cat_id2xw_ids = {cat_id: [corpus.x.index(xw) for xw in corpus.cat_id2x[cat_id]]
                      for cat_id in range(params.num_fragments)}
-    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, x=tc.cat_id2x[cat_id], types=tc.types)
+    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, x=corpus.cat_id2x[cat_id], types=corpus.types)
                 for cat_id in range(params.num_fragments)}
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
@@ -112,14 +117,14 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # get output representations for all x-words
-            x_xws = np.array([[prep.store.w2id[xw]] for xw in tc.x])
+            x_xws = np.array([[prep.store.w2id[xw]] for xw in corpus.x])
             q_x = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
 
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
             if config.Eval.calc_ba:
                 sim_mat = cosine_similarity(embeddings_xws)
-                ba = calc_cluster_score(sim_mat, tc.sim_mat_gold, 'ba')
+                ba = calc_cluster_score(sim_mat, corpus.sim_mat_gold, 'ba')
             else:
                 ba = np.nan
 

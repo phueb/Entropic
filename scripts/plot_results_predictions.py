@@ -82,7 +82,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                    label=label,
                                    steps_in_tick=steps_in_tick,
                                    delay_tick=delay_tick,  # tick at which delay occurs
-                                   num_sentinels=num_sentinels,
+                                   num_fragments=num_fragments,
                                    images_path=images_path,
                                    )
 
