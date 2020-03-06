@@ -31,6 +31,9 @@ This explains where the extra interference comes from when training in reverse a
 Because differentiation starts higher up in the tree, this affects a larger number of learned representations.
 Rather than only having to re-organize nouns, the RNN is force to re-organize many more words, when a new noun is encountered.
 
+<div align="center">
+ <img src="images/future-proofing1.png" width="600">
+</div>
 
 ### Learning Dynamics
 

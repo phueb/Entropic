@@ -11,6 +11,7 @@ from ludwig.results import gen_param_paths
 LABEL_PARAMS = []  # must be a list
 NAME = 'ba'
 LEGEND = True
+LABELS = iter(['periods=early', 'periods=late'])
 
 # param2requests['period_probability'] = [(0.05, 0.0), (0.0, 0.05)]
 
@@ -29,6 +30,10 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
         dfs.append(df)
     param_df = frame = pd.concat(dfs, axis=1)
     print(param_df)
+
+    # TODO remove
+    if LABELS:
+        label = next(LABELS)
 
     # summarize data
     num_reps = param_df.shape[1]
