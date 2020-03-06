@@ -383,7 +383,7 @@ def plot_summary(summary_data,
                  legend: bool = True,
                  ):
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=163)
     plt.title(title, fontsize=config.Fig.title_label_fs)
     ax.set_xlabel('Training Time [step]', fontsize=config.Fig.axis_fs)
     y_label = {'ba': 'balanced accuracy',
@@ -397,8 +397,8 @@ def plot_summary(summary_data,
     for x, y, me, label, n in summary_data:
         color = next(colors)
         ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
-        ax.plot(x, y, label=label, color=color)
-        ax.scatter(x, y, color=color)
+        ax.plot(x, y, label=label, color=color, lw=2)
+        # ax.scatter(x, y, color=color)
     if vline is not None:
         ax.axvline(x=vline, linestyle=':', color='grey', zorder=1)
 

@@ -9,8 +9,10 @@ from ludwig.results import gen_param_paths
 
 
 LABEL_PARAMS = []  # must be a list
-NAME = 'dp_0_1'
-LEGEND = False
+NAME = 'ba'
+LEGEND = True
+
+# param2requests['period_probability'] = [(0.05, 0.0), (0.0, 0.05)]
 
 # collect data
 summary_data = []
