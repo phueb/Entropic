@@ -8,12 +8,14 @@ from entropic.params import param2default, param2requests
 from ludwig.results import gen_param_paths
 
 
-LABEL_PARAMS = []  # must be a list
+LABEL_PARAMS = ['period_probability']  # must be a list
 NAME = 'ba'
 LEGEND = True
-LABELS = iter(['periods=early', 'periods=late'])
+LABELS = []
 
-# param2requests['period_probability'] = [(0.05, 0.0), (0.0, 0.05)]
+# param2requests['period_probability'] = [(0.05, 0.0)]
+
+labels = iter(LABELS)
 
 # collect data
 summary_data = []
@@ -31,9 +33,9 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
     param_df = frame = pd.concat(dfs, axis=1)
     print(param_df)
 
-    # TODO remove
+    # custom labels
     if LABELS:
-        label = next(LABELS)
+        label = next(labels)
 
     # summarize data
     num_reps = param_df.shape[1]

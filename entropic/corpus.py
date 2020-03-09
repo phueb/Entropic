@@ -17,6 +17,7 @@ class Corpus:
                  num_types: int,
                  num_fragments: int,
                  period_probability: Tuple[float, float],
+                 novel_v_and_w: bool,
                  num_sentinels: int,
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
@@ -25,6 +26,7 @@ class Corpus:
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.period_probability = period_probability
+        self.novel_v_and_w = novel_v_and_w
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
@@ -49,11 +51,16 @@ class Corpus:
         self.cat_id2x = {frag_id: [xi for xi, cat_id in self.xi2cat_id.items() if cat_id == frag_id]
                          for frag_id in range(self.num_fragments)}
 
-        # map subsets of xis to mutually exclusive subsets/fragments of y
+        # map subsets of xis to mutually exclusive subsets/fragments
+        v_fragments = [self.v[offset::num_fragments] for offset in range(num_fragments)]
         w_fragments = [self.w[offset::num_fragments] for offset in range(num_fragments)]
         y_fragments = [self.y[offset::num_fragments] for offset in range(num_fragments)]
+        self.xi2v = {xi: v_fragments[self.xi2cat_id[xi]] for xi in self.x}
         self.xi2w = {xi: w_fragments[self.xi2cat_id[xi]] for xi in self.x}
         self.xi2y = {xi: y_fragments[self.xi2cat_id[xi]] for xi in self.x}
+
+        self.xi2vi = {xi: vi for xi, vi in zip(self.x, self.v)}
+        self.xi2wi = {xi: wi for xi, wi in zip(self.x, self.w)}
 
         # check
         x_fragment_size = self.num_x // num_fragments
@@ -104,17 +111,20 @@ class Corpus:
                 x_cycle = self.x_without_non_sentinels_cycle
                 period_probability = self.period_probability[0]
 
-            # sample xi randomly
+            # sample xi systematically
             xi = next(x_cycle)
 
-            # sample vi randomly
-            vi = random.choice(self.v)
 
-            # sample wi consistent with xi
-            wi = random.choice(self.xi2w[xi])  # TODO add option to insert pseudo-period here too
+            # TODO add option to use wi that is specific to a single xi only - and because a specific xi ay never be seen, its specific wi is never sen and perfectly undifferentiated
 
-            # TODO make wi noun-wide - this makes new examples grow from N, rather than N-fragment
-            # wi = random.choice(self.w)
+            # sample vi
+            vi = random.choice(self.v)  # TODO perhaps this also needs to be made specific to xi when novel_v_and_w is True
+
+            # sample wi
+            if self.novel_v_and_w:
+                wi = self.xi2wi[xi]
+            else:
+                wi = random.choice(self.xi2w[xi])
 
             # sample yi that is consistent with ALL xi categories (e.g. PERIOD)
             if random.random() < period_probability:

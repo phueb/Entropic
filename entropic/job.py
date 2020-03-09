@@ -28,6 +28,7 @@ class Params(object):
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
+    novel_v_and_w = attr.ib(validator=attr.validators.instance_of(bool))
     # training
     xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -62,6 +63,7 @@ def main(param2val):
                     num_fragments=params.num_fragments,
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
+                    novel_v_and_w=params.novel_v_and_w,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
@@ -156,12 +158,12 @@ def main(param2val):
 
             # save output probabilities for x-word to file for making SVD time-course animation
             out_path = save_path / f'output_probabilities_{step:0>9}.npy'
-            if save_path.exists():  # does not exist when running ludwig with --local
+            if save_path.exists() and config.Eval.save_npy:  # does not exist when running ludwig with --local
                 np.save(out_path, q_x)
 
             # save embeddings for x-word to file for making SVD time-course animation
             out_path = save_path / f'embeddings_{step:0>9}.npy'
-            if save_path.exists():  # does not exist when running ludwig with --local
+            if save_path.exists() and config.Eval.save_npy:  # does not exist when running ludwig with --local
                 np.save(out_path, embeddings_xws)
 
         # TRAIN
