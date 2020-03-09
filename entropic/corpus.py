@@ -17,8 +17,9 @@ class Corpus:
                  num_types: int,
                  num_fragments: int,
                  period_probability: Tuple[float, float],
-                 novel_v_and_w: bool,
                  num_sentinels: int,
+                 sample_w: str,
+                 sample_v: str = 'superordinate',
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
@@ -26,7 +27,8 @@ class Corpus:
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.period_probability = period_probability
-        self.novel_v_and_w = novel_v_and_w
+        self.sample_w = sample_w
+        self.sample_v = sample_v
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
@@ -114,19 +116,27 @@ class Corpus:
             # sample xi systematically
             xi = next(x_cycle)
 
-
-            # TODO add option to use wi that is specific to a single xi only - and because a specific xi ay never be seen, its specific wi is never sen and perfectly undifferentiated
-
             # sample vi
-            vi = random.choice(self.v)  # TODO perhaps this also needs to be made specific to xi when novel_v_and_w is True
+            if self.sample_v == 'item':
+                vi = self.xi2vi[xi]
+            elif self.sample_v == 'target-category':
+                vi = random.choice(self.xi2v[xi])
+            elif self.sample_v == 'superordinate':
+                vi = random.choice(self.v)
+            else:
+                raise AttributeError('Invalid arg to "sample_v".')
 
             # sample wi
-            if self.novel_v_and_w:
+            if self.sample_w == 'item':
                 wi = self.xi2wi[xi]
-            else:
+            elif self.sample_w == 'target-category':
                 wi = random.choice(self.xi2w[xi])
+            elif self.sample_w == 'superordinate':
+                wi = random.choice(self.w)
+            else:
+                raise AttributeError('Invalid arg to "sample_w".')
 
-            # sample yi that is consistent with ALL xi categories (e.g. PERIOD)
+            # sample yi that is consistent with all x categories (e.g. PERIOD)
             if random.random() < period_probability:
                 yi = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
             # sample yi consistent with xi category

@@ -28,7 +28,7 @@ class Params(object):
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
-    novel_v_and_w = attr.ib(validator=attr.validators.instance_of(bool))
+    sample_w = attr.ib(validator=attr.validators.instance_of(str))
     # training
     xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -63,7 +63,7 @@ def main(param2val):
                     num_fragments=params.num_fragments,
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
-                    novel_v_and_w=params.novel_v_and_w,
+                    sample_w=params.sample_w,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,

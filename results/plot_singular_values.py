@@ -37,7 +37,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     num_fragments=params.num_fragments,
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
-                    novel_v_and_w=params.novel_v_and_w,
+                    sample_w=params.sample_w,
                     )
     prep = PartitionedPrep([corpus.doc],
                            reverse=False,

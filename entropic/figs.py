@@ -383,7 +383,8 @@ def plot_singular_values(ys: List[np.ndarray],
 def plot_summary(summary_data,
                  y_label,
                  title: str = '',
-                 vline: Optional[int] = None,
+                 v_line: Optional[int] = None,
+                 h_line: Optional[int] = 1.0,
                  legend: bool = True,
                  ):
 
@@ -405,8 +406,10 @@ def plot_summary(summary_data,
         ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
         ax.plot(x, y, label=label, color=color, lw=2)
         # ax.scatter(x, y, color=color)
-    if vline is not None:
-        ax.axvline(x=vline, linestyle=':', color='grey', zorder=1)
+    if v_line is not None:
+        ax.axvline(x=v_line, linestyle=':', color='grey', zorder=1)
+    if h_line is not None:
+        ax.axhline(y=h_line, linestyle=':', color='grey', zorder=1)
 
     if legend:
         plt.legend(bbox_to_anchor=(1.0, 1.0), borderaxespad=1.0,
