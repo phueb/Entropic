@@ -15,7 +15,7 @@ param2requests = {
     # 'sample_v': ['target-category', 'superordinate', 'item'],
     # 'sample_w': ['target-category', 'superordinate', 'item'],
     'sample_v': ['item'],
-    'sample_w': ['target-category', 'superordinate'],
+    'sample_w': ['superordinate', 'target-category'],
 
 }
 
@@ -24,8 +24,8 @@ param2default = {
     # rnn
     'hidden_size': 64,  # 8, 32 are too low
     # toy corpus
-    'doc_size': 400_000,
-    'delay': 200_000,
+    'doc_size': 10_000,
+    'delay': 5_000,
     'num_types': 128,
     'num_fragments': 4,
     'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)
@@ -33,7 +33,6 @@ param2default = {
     'sample_w': 'target-category',
     'sample_v': 'target-category',
     # training
-    'xws_in_slot_1_only': False,  # when False, 'phantom category' is only visible with period prob > 0
     'slide_size': 64,
     'optimizer': 'adagrad',
     'batch_size': 64,

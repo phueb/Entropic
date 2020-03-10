@@ -11,7 +11,7 @@ from itertools import product
 from preppy import SlidingPrep
 
 from entropic import config
-from entropic.eval import calc_cluster_score, make_xw_true_out_probabilities
+from entropic.eval import calc_ba, make_xw_true_out_probabilities
 from entropic.corpus import Corpus
 from entropic.rnn import RNN
 from entropic.eval import softmax
@@ -31,7 +31,6 @@ class Params(object):
     sample_w = attr.ib(validator=attr.validators.instance_of(str))
     sample_v = attr.ib(validator=attr.validators.instance_of(str))
     # training
-    xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -79,7 +78,6 @@ def main(param2val):
         assert t1 == t2
 
     # make helper dicts using IDs assigned to x-words by Preppy
-    xw_ids = [prep.store.w2id[xw] for xw in corpus.x]
     cat_id2xw_ids = {cat_id: [corpus.x.index(xw) for xw in corpus.cat_id2x[cat_id]]
                      for cat_id in range(params.num_fragments)}
     cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, x=corpus.cat_id2x[cat_id], types=corpus.types)
@@ -100,11 +98,6 @@ def main(param2val):
 
     # train loop
     for step, batch in enumerate(prep.generate_batches()):
-
-        # remove y-words from slot 1
-        if params.xws_in_slot_1_only:
-            batch = batch[::params.num_fragments]  # get only windows where x is in first slot
-            assert batch[0, 0].item() in xw_ids
 
         # prepare x, y
         x, y = batch[:, :-1], batch[:, -1]
@@ -130,18 +123,15 @@ def main(param2val):
             q_x = softmax(rnn(torch.cuda.LongTensor(x_x))['logits'].detach().cpu().numpy())
             q_y = softmax(rnn(torch.cuda.LongTensor(x_y))['logits'].detach().cpu().numpy())
 
-            # ba
-            embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
-            if config.Eval.calc_ba:
-                sim_mat = cosine_similarity(embeddings_xws)
-                ba = calc_cluster_score(sim_mat, corpus.sim_mat_gold, 'ba')
-            else:
-                ba = np.nan
-
-            # console
-            pp = torch.exp(xe).detach().cpu().numpy().item()
-            print(f'step={step:>6,}/{prep.num_mbs:>6,}: xe={xe:.1f} pp={pp:.1f} ba={ba:.4f}', flush=True)
-            print()
+            # collect ba for all slots
+            for slot, words in zip(['v', 'w', 'x', 'y'],
+                                   [corpus.v, corpus.w, corpus.x, corpus.y]):
+                word_ids = [prep.store.w2id[w] for w in words]
+                embeddings = rnn.embed.weight.detach().cpu().numpy()[word_ids]
+                sim_mat = cosine_similarity(embeddings)
+                ba = calc_ba(sim_mat, corpus.sim_mat_gold)
+                print(f'ba_{slot}={ba:.2f}')
+                name2col.setdefault(f'ba_{slot}', []).append(ba)
 
             # collect dp between output-layer cat representations
             eval_steps.append(step)
@@ -152,9 +142,13 @@ def main(param2val):
                     dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
                     name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
 
-            # collect pp + ba
+            # collect pp
+            pp = torch.exp(xe).detach().cpu().numpy().item()
             name2col.setdefault('pp', []).append(pp)
-            name2col.setdefault('ba', []).append(ba)
+
+            # console
+            print(f'step={step:>6,}/{prep.num_mbs:>6,}: pp={pp:.1f}', flush=True)
+            print()
 
             # collect entropy of output-layer category representations
             for cat_id in range(params.num_fragments):
@@ -162,19 +156,21 @@ def main(param2val):
                 e = drv.entropy_pmf(q_cat)
                 name2col.setdefault(f'e_cat{cat_id}', []).append(e)
 
-            assert embeddings_xws.shape[0] == q_x.shape[0]
-
             # save output probabilities to file (for making animations)
             if save_path.exists() and config.Eval.save_output_probabilities:  # does not exist when "ludwig -l"
                 np.save(save_path / f'output_probabilities_v_{step:0>9}.npy', q_v)
                 np.save(save_path / f'output_probabilities_w_{step:0>9}.npy', q_w)
                 np.save(save_path / f'output_probabilities_x_{step:0>9}.npy', q_x)
-                # np.save(save_path / f'output_probabilities_y_{step:0>9}.npy', q_y)
+                np.save(save_path / f'output_probabilities_y_{step:0>9}.npy', q_y)
 
             # save embeddings for x-word to file (for making animations)
             out_path = save_path / f'embeddings_{step:0>9}.npy'
             if save_path.exists() and config.Eval.save_embeddings:  # does not exist when "ludwig -l"
-                np.save(out_path, embeddings_xws)
+                for slot, words in zip(['v', 'w', 'x', 'y'],
+                                       [corpus.v, corpus.w, corpus.x, corpus.y]):
+                    word_ids = [prep.store.w2id[w] for w in words]
+                    embeddings = rnn.embed.weight.detach().cpu().numpy()[word_ids]
+                    np.save(out_path, embeddings)
 
         # TRAIN
         xe.backward()

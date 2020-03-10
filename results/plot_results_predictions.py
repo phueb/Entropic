@@ -73,7 +73,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
 
         # make path where to save images
         label_flat = label.replace('\n', '-')
-        images_path = config.Dirs.images / f'{label_flat}_{job_id:0>3}'
+        images_path = config.Dirs.images / f'{label_flat}_{job_id:0>3}_{SLOT}'
         if not images_path.exists():
             images_path.mkdir()
         else:

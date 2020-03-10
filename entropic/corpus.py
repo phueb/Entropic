@@ -73,10 +73,6 @@ class Corpus:
             non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
         self.x_without_non_sentinels = [xi for xi in self.x if xi not in non_sentinels]
 
-        # cycle - ensures that each x occurs exactly equally often
-        self.x_cycle = cycle(self.x)
-        self.x_without_non_sentinels_cycle = cycle(self.x_without_non_sentinels)
-
         # the number of legal joint outcomes is the total number divided by the fragment size
         self.num_possible_x_y = self.num_x * self.num_y / num_fragments
 
@@ -107,14 +103,14 @@ class Corpus:
 
             # corpus behaves differently before and after delay
             if n * self.num_words_in_window > self.delay:
-                x_cycle = self.x_cycle
+                x_population = self.x
                 period_probability = self.period_probability[1]
             else:
-                x_cycle = self.x_without_non_sentinels_cycle
+                x_population = self.x_without_non_sentinels
                 period_probability = self.period_probability[0]
 
             # sample xi systematically
-            xi = next(x_cycle)
+            xi = random.choice(x_population)  # do not sample from itertools.cycle because of predictable structure
 
             # sample vi
             if self.sample_v == 'item':
