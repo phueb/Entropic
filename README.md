@@ -13,10 +13,29 @@ Infants learn lexical subcategory structure in an online fashion, that is, from 
 Non-stationary is problematic, if positing lexical category acquisition as an RNN-like mechanism predicting upcoming words.
 Having been exposed to one category structure during early training, the RNN cannot incorporate new examples,
  without re-organizing existing knowledge (also known as interference). 
-For example, how does the RNN learn new semantic sub-divisions of the noun category, 
+ 
+There are at least two important research questions:
+- 1.  How does the RNN learn new semantic sub-divisions of the noun category, 
   when it has already committed to a particular noun category structure given a set of early training examples?
+- 2. How does the RNN integrate novel nouns into an existing encoding of the noun sub-category structure?
 
-### How to minimize interference?
+### Inductive bias
+
+To answer the two questions above, researchers have to understand how the RNN assigns semantic (sub-) category information 
+from the supervisory signal to the words in the input.
+ Knowing nothing about human language, the RNN is maximally uncertain (entropic) about how to distribute the semantic category signal,
+ and thus distributes the signal as thinly as possible across words in the input.
+This is problematic if the semantic category signal originates not in the interaction between multiple words,
+ but in a single word, such as the choice of noun. 
+While a human may know how to assign semantic category signal to specific words, 
+the RNN does not know to do this initially, and must learn this assignment as part of training.
+
+
+### Sentence boundaries as inductive bias
+
+Sentence boundaries, like periods, when left in the training data, 
+can provide some inductive bias for concentrating semantic category information in the learned representations of nouns,
+as opposed to members of other lexical categories which may be correlated with semantic category information but are not its primary source.
 
 The period abstracts the noun-category, making it coherent, pulling nouns together in representational space. 
 But it also makes the left-contexts of nouns useful predictors of the noun category. 
@@ -59,12 +78,8 @@ Before the 4 categories differentiate, their representations __first converge on
 
 ### Implications
 
-One previously unexplained finding training the RNN on artificial language sequences is that the RNN converges faster on the target categories if there are fewer of them.
-Using the principle of maximum entropy and knowledge of temporarily stable "phantom" categories, this can be explained as follows:
-The fewer target categories the RNN is tasked to learn, the fewer temporarily stable "phantom" states must be traversed during training.
-
-
-Moreover, "phantom" categories may help researchers understand how to train RNN language models that remain in a more uncommitted/undifferentiated state longer.
+Knowing how lexical semantic category signal is distributed across words in the RNN's input,
+ can help researchers develop inductive biases to distribute the semantic category signal in a way that is consistent with how humans  do it.
 Staying uncommitted longer during early training should help category learning in situations where the input distribution is non-stationary,
 such as training on child-directed speech in the order in which it is actually experienced by children on a developmental time-scale (1-6 first years of life).
 

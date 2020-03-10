@@ -384,6 +384,7 @@ def plot_singular_values(ys: List[np.ndarray],
 def plot_summary(summary_data,
                  y_label,
                  title: str = '',
+                 y_lims: Tuple[float] = (0.5, 1.0),
                  v_line: Optional[int] = None,
                  h_line: Optional[int] = 1.0,
                  legend: bool = True,
@@ -392,13 +393,11 @@ def plot_summary(summary_data,
     fig, ax = plt.subplots(figsize=(8, 5), dpi=163)
     plt.title(title, fontsize=config.Fig.title_label_fs)
     ax.set_xlabel('Training Time [step]', fontsize=config.Fig.axis_fs)
-    y_label = {'ba': 'Balanced accuracy',
-               'dp_0_1': 'JS-Divergence [bits]\n'
-                         'between\n'
-                         'true category 1 and learned category 2 out probabilities'}[y_label]
+
     ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=config.Fig.axis_fs)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ax.set_ylim(y_lims)
 
     #
     colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9', 'C10', 'C11'])

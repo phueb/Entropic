@@ -9,12 +9,10 @@ from ludwig.results import gen_param_paths
 
 
 LABEL_PARAMS = []  # must be a list
-NAME = 'ba'
+Y_LABEL = 'Categorization [Balanced accuracy]'
+SLOT = 'v'
 LEGEND = True
 LABELS = []
-
-# param2requests['sample_v'].remove('superordinate')
-# param2requests['sample_w'].remove('superordinate')
 
 
 labels = iter(LABELS)
@@ -27,7 +25,7 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
                                       label_params=LABEL_PARAMS):
     # param_df
     dfs = []
-    for df_p in param_p.glob(f'*num*/{NAME}.csv'):
+    for df_p in param_p.glob(f'*num*/ba_{SLOT}.csv'):
         print('Reading {}'.format(df_p.name))
         df = pd.read_csv(df_p, index_col=0)
         df.index.name = 'epoch'
@@ -55,7 +53,8 @@ if not summary_data:
 
 # plot
 fig = plot_summary(summary_data,
-                   y_label=NAME,
+                   y_label=Y_LABEL,
                    legend=LEGEND,
+                   title=f'slot={SLOT}'
                    )
 fig.show()

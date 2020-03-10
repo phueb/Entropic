@@ -12,10 +12,10 @@ which occur more often than non-sentinels
 
 param2requests = {
     # 'period_probability': [(0.05, 0.00), (0.00, 0.05), (0.00, 0.00), (0.05, 0.05)],
-    # 'sample_v': ['target-category', 'superordinate', 'item'],
-    # 'sample_w': ['target-category', 'superordinate', 'item'],
-    'sample_v': ['item'],
-    'sample_w': ['superordinate', 'target-category'],
+    'sample_v': ['target-category', 'superordinate', 'item'],
+    'sample_w': ['target-category', 'superordinate', 'item'],
+    # 'sample_v': ['item'],
+    # 'sample_w': ['superordinate', 'target-category'],
 
 }
 
@@ -24,8 +24,8 @@ param2default = {
     # rnn
     'hidden_size': 64,  # 8, 32 are too low
     # toy corpus
-    'doc_size': 10_000,
-    'delay': 5_000,
+    'doc_size': 400_000,
+    'delay': 200_000,
     'num_types': 128,
     'num_fragments': 4,
     'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)
