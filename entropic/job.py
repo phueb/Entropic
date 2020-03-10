@@ -29,6 +29,7 @@ class Params(object):
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_w = attr.ib(validator=attr.validators.instance_of(str))
+    sample_v = attr.ib(validator=attr.validators.instance_of(str))
     # training
     xws_in_slot_1_only = attr.ib(validator=attr.validators.instance_of(bool))
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -64,6 +65,7 @@ def main(param2val):
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
                     sample_w=params.sample_w,
+                    sample_v=params.sample_v,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
@@ -118,9 +120,15 @@ def main(param2val):
         # EVAL
         if step % config.Eval.eval_interval == 0:
 
-            # get output representations for all x-words
-            x_xws = np.array([[prep.store.w2id[xw]] for xw in corpus.x])
-            q_x = softmax(rnn(torch.cuda.LongTensor(x_xws))['logits'].detach().cpu().numpy())
+            # get output representations
+            x_v = np.array([[prep.store.w2id[vi]] for vi in corpus.v])
+            x_w = np.array([[prep.store.w2id[wi]] for wi in corpus.w])
+            x_x = np.array([[prep.store.w2id[xi]] for xi in corpus.x])
+            x_y = np.array([[prep.store.w2id[yi]] for yi in corpus.y])
+            q_v = softmax(rnn(torch.cuda.LongTensor(x_v))['logits'].detach().cpu().numpy())
+            q_w = softmax(rnn(torch.cuda.LongTensor(x_w))['logits'].detach().cpu().numpy())
+            q_x = softmax(rnn(torch.cuda.LongTensor(x_x))['logits'].detach().cpu().numpy())
+            q_y = softmax(rnn(torch.cuda.LongTensor(x_y))['logits'].detach().cpu().numpy())
 
             # ba
             embeddings_xws = rnn.embed.weight.detach().cpu().numpy()[xw_ids]
@@ -156,14 +164,16 @@ def main(param2val):
 
             assert embeddings_xws.shape[0] == q_x.shape[0]
 
-            # save output probabilities for x-word to file for making SVD time-course animation
-            out_path = save_path / f'output_probabilities_{step:0>9}.npy'
-            if save_path.exists() and config.Eval.save_npy:  # does not exist when running ludwig with --local
-                np.save(out_path, q_x)
+            # save output probabilities to file (for making animations)
+            if save_path.exists() and config.Eval.save_output_probabilities:  # does not exist when "ludwig -l"
+                np.save(save_path / f'output_probabilities_v_{step:0>9}.npy', q_v)
+                np.save(save_path / f'output_probabilities_w_{step:0>9}.npy', q_w)
+                np.save(save_path / f'output_probabilities_x_{step:0>9}.npy', q_x)
+                # np.save(save_path / f'output_probabilities_y_{step:0>9}.npy', q_y)
 
-            # save embeddings for x-word to file for making SVD time-course animation
+            # save embeddings for x-word to file (for making animations)
             out_path = save_path / f'embeddings_{step:0>9}.npy'
-            if save_path.exists() and config.Eval.save_npy:  # does not exist when running ludwig with --local
+            if save_path.exists() and config.Eval.save_embeddings:  # does not exist when "ludwig -l"
                 np.save(out_path, embeddings_xws)
 
         # TRAIN

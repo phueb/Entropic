@@ -16,7 +16,8 @@ class Eval:
     eval_interval = 100
     calc_ba = True
     calc_dp = False
-    save_npy = False
+    save_output_probabilities = True
+    save_embeddings = False
 
 
 class Model:
@@ -26,7 +27,7 @@ class Model:
 class Fig:
     title_label_fs = 8
     axis_fs = 12
-    leg_fs = 12
+    leg_fs = 8
     fig_size = (6, 6)
     dpi = 163
     line_width = 2

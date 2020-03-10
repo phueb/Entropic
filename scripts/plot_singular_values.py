@@ -18,9 +18,11 @@ SHOW_HEATMAP = True
 NUM_S_DIMS = 8
 
 
-LN = 'period_probability'
-LVS = [(0.05, 0.05), (0.00, 0.00)]
-param2requests[LN] = LVS
+LN = None
+LVS = None  # [(0.00, 0.00)]
+
+if LN is not None and LVS is not None:
+    param2requests[LN] = LVS
 
 
 s_list_scaled = []
@@ -38,6 +40,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
                     sample_w=params.sample_w,
+                    sample_v=params.sample_v,
                     )
     prep = PartitionedPrep([corpus.doc],
                            reverse=False,

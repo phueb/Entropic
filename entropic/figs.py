@@ -258,6 +258,7 @@ def make_svd_across_time_3d_animation(representations: np.ndarray,
 
 
 def make_predictions_animation(outputs: np.ndarray,
+                               slot: str,
                                label: str,
                                steps_in_tick: int,
                                delay_tick: int,
@@ -290,7 +291,7 @@ def make_predictions_animation(outputs: np.ndarray,
     # plot
     for tick in range(num_ticks):
 
-        plt.suptitle(f'{label}\nstep={tick * steps_in_tick}', y=1.0)
+        plt.suptitle(f'slot={slot}\n{label}\nstep={tick * steps_in_tick}', y=1.0, fontsize=8)
 
         for cat_id in range(num_cats):
 
@@ -361,7 +362,7 @@ def plot_singular_values(ys: List[np.ndarray],
         ax.set_xticklabels(x)
 
     # plot
-    colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6'])
+    colors = iter(['C0', 'C1', 'C3', 'C2', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10'])
     for n, y in enumerate(ys):
         color = next(colors)
         if label_name is None or label_values is None:
@@ -388,7 +389,7 @@ def plot_summary(summary_data,
                  legend: bool = True,
                  ):
 
-    fig, ax = plt.subplots(figsize=(8, 4), dpi=163)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=163)
     plt.title(title, fontsize=config.Fig.title_label_fs)
     ax.set_xlabel('Training Time [step]', fontsize=config.Fig.axis_fs)
     y_label = {'ba': 'Balanced accuracy',
@@ -400,7 +401,7 @@ def plot_summary(summary_data,
     ax.spines['top'].set_visible(False)
 
     #
-    colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6'])
+    colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9', 'C10', 'C11'])
     for x, y, me, label, n in summary_data:
         color = next(colors)
         ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
@@ -412,7 +413,11 @@ def plot_summary(summary_data,
         ax.axhline(y=h_line, linestyle=':', color='grey', zorder=1)
 
     if legend:
-        plt.legend(bbox_to_anchor=(1.0, 1.0), borderaxespad=1.0,
-                   fontsize=config.Fig.leg_fs, frameon=False, loc='upper left', ncol=1)
+        plt.legend(bbox_to_anchor=(1.0, 1.0),
+                   borderaxespad=1.0,
+                   fontsize=config.Fig.leg_fs,
+                   frameon=False,
+                   loc='upper left',
+                   ncol=1)
 
     return fig

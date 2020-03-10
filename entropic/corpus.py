@@ -19,7 +19,7 @@ class Corpus:
                  period_probability: Tuple[float, float],
                  num_sentinels: int,
                  sample_w: str,
-                 sample_v: str = 'superordinate',
+                 sample_v: str,
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:

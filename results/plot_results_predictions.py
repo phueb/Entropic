@@ -1,3 +1,9 @@
+"""
+Note:
+To convert images into a gif, in terminal:
+convert -delay 5 FOLDER_NAME/*.png test.gif
+"""
+
 import numpy as np
 import yaml
 import shutil
@@ -9,13 +15,10 @@ from entropic.figs import make_predictions_animation
 from ludwig.results import gen_param_paths
 
 
-# param2requests['num_sentinels'] = [64]
+SLOT = 'w'
+LABEL_PARAMS = []  # any additional params to put into label
 
-"""
-Note:
-To convert images into a gif, in terminal:
-convert -delay 5 FOLDER_NAME/*.png test.gif
-"""
+# param2requests['num_sentinels'] = [64]
 
 
 def to_step(file_name):
@@ -27,13 +30,15 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                          param2requests,
                                          param2default,
                                          label_n=False,
-                                         label_params=['period_probability']):
+                                         label_params=LABEL_PARAMS):
     # num_jobs
     job_paths = list(param_path.glob(f'*num*'))
     num_jobs = len(job_paths)
 
     # num_ticks
-    npy_paths = list(param_path.glob(f'*num*/saves/output_probabilities_*.npy'))
+    npy_paths = list(param_path.glob(f'*num*/saves/output_probabilities_{SLOT}_*.npy'))
+    if not npy_paths:
+        raise SystemExit('Did not find any .npy files')
     step_set = set([to_step(p.name) for p in npy_paths])
     num_ticks = len(step_set)
 
@@ -57,8 +62,8 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
     # get a 3d array for each job and collect in 4d array
     for job_id, job_path in enumerate(job_paths):
 
-        # load collect all representations from one job into 4d array
-        for npy_path in sorted(job_path.glob(f'saves/output_probabilities_*.npy')):
+        # collect all representations from one job into 4d array
+        for npy_path in sorted(job_path.glob(f'saves/output_probabilities_{SLOT}_*.npy')):
             r_job = np.load(npy_path)
             tick = to_step(npy_path.name) // steps_in_tick
             print(f'Reading {npy_path.name} tick={tick:>3}')
@@ -80,6 +85,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
 
         make_predictions_animation(big[job_id],
                                    label=label,
+                                   slot=SLOT,
                                    steps_in_tick=steps_in_tick,
                                    delay_tick=delay_tick,  # tick at which delay occurs
                                    num_fragments=num_fragments,

@@ -8,12 +8,14 @@ from entropic.params import param2default, param2requests
 from ludwig.results import gen_param_paths
 
 
-LABEL_PARAMS = ['period_probability']  # must be a list
+LABEL_PARAMS = []  # must be a list
 NAME = 'ba'
 LEGEND = True
 LABELS = []
 
-# param2requests['period_probability'] = [(0.05, 0.0)]
+# param2requests['sample_v'].remove('superordinate')
+# param2requests['sample_w'].remove('superordinate')
+
 
 labels = iter(LABELS)
 
