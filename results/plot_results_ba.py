@@ -14,7 +14,7 @@ Y_LABEL = 'Categorization [Balanced accuracy]'
 SLOT = 'x'
 LEGEND = True
 LABELS = []
-TOLERANCE = 0.05
+TOLERANCE = 0.01
 
 
 def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
@@ -27,6 +27,10 @@ def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
         val1, val2, val3 = res[[i, i+1, i+2]]
         if (val1 - tolerance) > val2 < (val3 - tolerance):
             res[i+1] = np.mean([val1, val3])
+            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+        # in case dip is at end
+        elif (val2 - tolerance) > val3:
+            res[i+2] = val2
             print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
     return res.tolist()
 
@@ -45,11 +49,10 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
         print('Reading {}'.format(df_p.name))
         df = pd.read_csv(df_p, index_col=0)
         df.index.name = 'step'
+        # remove dips
+        df = df.apply(correct_artifacts, result_type='expand')
         dfs.append(df)
     param_df = frame = pd.concat(dfs, axis=1)
-
-    # remove dips
-    param_df = param_df.apply(correct_artifacts, axis=1, result_type='expand')
 
     # custom labels
     if LABELS:
