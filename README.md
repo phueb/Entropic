@@ -15,9 +15,9 @@ Having been exposed to one category structure during early training, the RNN can
  without re-organizing existing knowledge (also known as interference). 
  
 There are at least two important research questions:
-- 1.  How does the RNN learn new semantic sub-divisions of the noun category, 
+1.  How does the RNN learn new semantic sub-divisions of the noun category, 
   when it has already committed to a particular noun category structure given a set of early training examples?
-- 2. How does the RNN integrate novel nouns into an existing encoding of the noun sub-category structure?
+2. How does the RNN integrate novel nouns into an existing encoding of the noun sub-category structure?
 
 ### Inductive bias
 

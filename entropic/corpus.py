@@ -7,8 +7,7 @@ from typing import Tuple, Optional
 
 class Corpus:
     """
-    methods for making a document, a string of artificial words following the structure (xw, yw, xw, yw, ..).
-    example document: "x1 y5 x34 y82 x93 y3 x45 y11".
+    methods for making a document, a string of artificial words following the structure (V, W, X, Y).
     """
 
     def __init__(self,

@@ -1,5 +1,6 @@
 import pandas as pd
 from scipy import stats
+import numpy as np
 
 from entropic.figs import plot_summary
 from entropic import config
@@ -10,9 +11,24 @@ from ludwig.results import gen_param_paths
 
 LABEL_PARAMS = []  # must be a list
 Y_LABEL = 'Categorization [Balanced accuracy]'
-SLOT = 'v'
+SLOT = 'x'
 LEGEND = True
 LABELS = []
+TOLERANCE = 0.05
+
+
+def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
+    """
+    correct y when y drops more than tolerance.
+    this is necessary because computation of balanced accuracy occasionally results in unwanted negative spikes
+    """
+    res = np.asarray(y)
+    for i in range(len(res) - 2):
+        val1, val2, val3 = res[[i, i+1, i+2]]
+        if (val1 - tolerance) > val2 < (val3 - tolerance):
+            res[i+1] = np.mean([val1, val3])
+            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+    return res.tolist()
 
 
 labels = iter(LABELS)
@@ -28,10 +44,12 @@ for param_p, label in gen_param_paths(config.Dirs.root.name,
     for df_p in param_p.glob(f'*num*/ba_{SLOT}.csv'):
         print('Reading {}'.format(df_p.name))
         df = pd.read_csv(df_p, index_col=0)
-        df.index.name = 'epoch'
+        df.index.name = 'step'
         dfs.append(df)
     param_df = frame = pd.concat(dfs, axis=1)
-    print(param_df)
+
+    # remove dips
+    param_df = param_df.apply(correct_artifacts, axis=1, result_type='expand')
 
     # custom labels
     if LABELS:
