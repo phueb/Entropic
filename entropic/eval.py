@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Union, List
+from typing import Union, List, Tuple
 import numpy as np
 from bayes_opt import BayesianOptimization
 from functools import partial
@@ -8,7 +8,6 @@ import warnings
 from preppy import PartitionedPrep, SlidingPrep
 
 from entropic import config
-from entropic.outcomes import get_outcomes
 
 
 def calc_ba(sim_mat, gold_mat):
@@ -61,15 +60,15 @@ def softmax(z):
     return res
 
 
-def make_xw_true_out_probabilities(prep: Union[PartitionedPrep, SlidingPrep],
-                                   x: List[str],
-                                   types: List[str],
-                                   ) -> np.ndarray:
+def make_p_cat(prep: Union[PartitionedPrep, SlidingPrep],
+               x: List[str],
+               types: List[str],
+               ) -> np.ndarray:
     """
     make the true next-word probability distribution for some x-word
     """
-
-    cx, ry, cx_ry = get_outcomes(prep, x)  # outcomes where any of xws is in slot -2
+    x_windows = get_windows(prep, x)  # windows with x in slot -2
+    cx, ry, cx_ry = get_outcomes(prep, x_windows)
     w2f = Counter(ry)
     res = np.asarray([w2f[w] for w in types])
     res = res / res.sum()
@@ -77,4 +76,25 @@ def make_xw_true_out_probabilities(prep: Union[PartitionedPrep, SlidingPrep],
     print(f'Provided x-word fragment occurs with {len(w2f)} y-word types, and occurs {len(ry)} times')
     assert np.sum(res).round(4).item() == 1.0, np.sum(res).round(4).item()
 
+    return res
+
+
+def get_outcomes(prep: PartitionedPrep,
+                 windows: np.ndarray,
+                 ) -> Tuple[List[str], List[str], np.ndarray]:
+
+    # outcomes
+    cx = [prep.store.types[i] for i in windows[:, -2]]  # intersection of all words in center with x words
+    ry = [prep.store.types[i] for i in windows[:, -1]]  # intersection of all words in right with y words
+    cx_ry = np.vstack((cx, ry))  # joint outcome hast to be array to play nicely with drv.entropy_joint
+
+    return cx, ry, cx_ry
+
+
+def get_windows(prep: Union[PartitionedPrep, SlidingPrep],
+                words: List[str],
+                col_id: int = -2,  # windows with probe in position -2
+                ) -> np.ndarray:
+    row_ids = np.isin(prep.reordered_windows[:, col_id], [prep.store.w2id[w] for w in words])
+    res = prep.reordered_windows[row_ids]
     return res

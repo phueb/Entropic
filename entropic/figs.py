@@ -384,17 +384,18 @@ def plot_singular_values(ys: List[np.ndarray],
 def plot_summary(summary_data,
                  y_label,
                  title: str = '',
-                 y_lims: Tuple[float] = (0.5, 1.0),
+                 y_lims: Tuple[float] = (0.5, 1.05),
                  v_line: Optional[int] = None,
-                 h_line: Optional[int] = 1.0,
+                 h_line: Optional[int] = None,
                  legend: bool = True,
+                 ax_fontsize: int = 10,
                  ):
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=163)
     plt.title(title, fontsize=config.Fig.title_label_fs)
-    ax.set_xlabel('Training Time [step]', fontsize=config.Fig.axis_fs)
+    ax.set_xlabel('Training Time [step]', fontsize=ax_fontsize)
 
-    ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=config.Fig.axis_fs)
+    ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=ax_fontsize)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_ylim(y_lims)
@@ -414,7 +415,7 @@ def plot_summary(summary_data,
     if legend:
         plt.legend(bbox_to_anchor=(1.0, 1.0),
                    borderaxespad=1.0,
-                   fontsize=config.Fig.leg_fs,
+                   fontsize=9,
                    frameon=False,
                    loc='upper left',
                    ncol=1)

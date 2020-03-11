@@ -33,16 +33,17 @@ class Corpus:
         self.num_sentinels = num_sentinels
 
         self.num_words_in_window = 4
+        self.slots = ['v', 'w', 'x', 'y']
 
         self.num_v = self.num_types // self.num_words_in_window
         self.num_w = self.num_types // self.num_words_in_window
         self.num_x = self.num_types // self.num_words_in_window
         self.num_y = self.num_types // self.num_words_in_window
 
-        self.v = [f'v{i:0>6}' for i in range(self.num_v)]
-        self.w = [f'w{i:0>6}' for i in range(self.num_w)]
-        self.x = [f'x{i:0>6}' for i in range(self.num_x)]
-        self.y = [f'y{i:0>6}' for i in range(self.num_y)]
+        self.v = [f'{self.slots[0]}{i:0>6}' for i in range(self.num_v)]
+        self.w = [f'{self.slots[1]}{i:0>6}' for i in range(self.num_w)]
+        self.x = [f'{self.slots[2]}{i:0>6}' for i in range(self.num_x)]
+        self.y = [f'{self.slots[3]}{i:0>6}' for i in range(self.num_y)]
 
         self.types = self.v + self.w + self.x + self.y
         assert len(self.types) == num_types

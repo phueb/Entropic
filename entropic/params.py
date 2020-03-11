@@ -19,6 +19,10 @@ param2requests = {
 
 }
 
+param2debug = {
+    'sample_v': 'superordinate',
+    'sample_w': 'superordinate',
+}
 
 param2default = {
     # rnn

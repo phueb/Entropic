@@ -9,7 +9,7 @@ from ludwig.results import gen_all_param2vals
 from entropic.figs import make_heatmap_fig
 from entropic.corpus import Corpus
 from entropic.figs import plot_singular_values
-from entropic.outcomes import get_outcomes
+from entropic.eval import get_outcomes, get_windows
 from entropic.job import Params
 from entropic.params import param2requests, param2default
 
@@ -49,7 +49,9 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                            num_iterations=[1, 1],
                            batch_size=64,
                            context_size=corpus.num_words_in_window - 1)
-    probes = [p for p in corpus.x if p in prep.store.w2id]
+
+    # check
+    assert len([p for p in corpus.x if p in prep.store.w2id]) == corpus.num_x
 
     # check that types in corpus and prep are identically ordered
     for t1, t2, in zip(prep.store.types, corpus.types):
@@ -60,9 +62,9 @@ for param2val in gen_all_param2vals(param2requests, param2default):
         num = len([w for w in prep.store.tokens if w in corpus.cat_id2x[cat_id]])
         print(f'cat={cat_id+1} occurs {num:,} times')
 
-    # get outcomes - the words that occur in the same 2-word window
-    cx, ry, cx_ry = get_outcomes(prep, probes)
-    print(probes)
+    # get outcomes - the words that occur in the last 2 slots of probe windows
+    x_windows = get_windows(prep, corpus.x)
+    cx, ry, cx_ry = get_outcomes(prep, x_windows)
 
     # make co-occurrence matrix
     cf_mat = np.ones((corpus.num_y, corpus.num_x))

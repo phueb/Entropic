@@ -11,10 +11,10 @@ from ludwig.results import gen_param_paths
 
 LABEL_PARAMS = []  # must be a list
 Y_LABEL = 'Categorization [Balanced accuracy]'
-SLOT = 'x'
+SLOTS = ['v', 'w', 'x', 'y']
 LEGEND = True
 LABELS = []
-TOLERANCE = 0.01
+TOLERANCE = 0.04
 
 
 def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
@@ -35,47 +35,49 @@ def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
     return res.tolist()
 
 
-labels = iter(LABELS)
+for slot in SLOTS:
 
-# collect data
-summary_data = []
-for param_p, label in gen_param_paths(config.Dirs.root.name,
-                                      param2requests,
-                                      param2default,
-                                      label_params=LABEL_PARAMS):
-    # param_df
-    dfs = []
-    for df_p in param_p.glob(f'*num*/ba_{SLOT}.csv'):
-        print('Reading {}'.format(df_p.name))
-        df = pd.read_csv(df_p, index_col=0)
-        df.index.name = 'step'
-        # remove dips
-        df = df.apply(correct_artifacts, result_type='expand')
-        dfs.append(df)
-    param_df = frame = pd.concat(dfs, axis=1)
+    labels = iter(LABELS)
 
-    # custom labels
-    if LABELS:
-        label = next(labels)
+    # collect data
+    summary_data = []
+    for param_p, label in gen_param_paths(config.Dirs.root.name,
+                                          param2requests,
+                                          param2default,
+                                          label_params=LABEL_PARAMS):
+        # param_df
+        dfs = []
+        for df_p in param_p.glob(f'*num*/ba_{slot}.csv'):
+            print('Reading {}'.format(df_p.name))
+            df = pd.read_csv(df_p, index_col=0)
+            df.index.name = 'step'
+            # remove dips
+            df = df.apply(correct_artifacts, result_type='expand')
+            dfs.append(df)
+        param_df = frame = pd.concat(dfs, axis=1)
 
-    # summarize data
-    num_reps = param_df.shape[1]
-    summary_data.append((param_df.index.values,
-                         param_df.mean(axis=1).values,
-                         param_df.sem(axis=1).values * stats.t.ppf(1 - 0.05 / 2, num_reps - 1),
-                         label,
-                         num_reps))
-    print('--------------------- END {}\n\n'.format(param_p.name))
+        # custom labels
+        if LABELS:
+            label = next(labels)
 
-# sort data
-summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
-if not summary_data:
-    raise SystemExit('No data found')
+        # summarize data
+        num_reps = param_df.shape[1]
+        summary_data.append((param_df.index.values,
+                             param_df.mean(axis=1).values,
+                             param_df.sem(axis=1).values * stats.t.ppf(1 - 0.05 / 2, num_reps - 1),
+                             label,
+                             num_reps))
+        print('--------------------- END {}\n\n'.format(param_p.name))
 
-# plot
-fig = plot_summary(summary_data,
-                   y_label=Y_LABEL,
-                   legend=LEGEND,
-                   title=f'slot={SLOT}'
-                   )
-fig.show()
+    # sort data
+    summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
+    if not summary_data:
+        raise SystemExit('No data found')
+
+    # plot
+    fig = plot_summary(summary_data,
+                       y_label=Y_LABEL,
+                       legend=LEGEND,
+                       title=f'slot={slot}'
+                       )
+    fig.show()

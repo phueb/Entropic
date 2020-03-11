@@ -11,10 +11,10 @@ from itertools import product
 from preppy import SlidingPrep
 
 from entropic import config
-from entropic.eval import calc_ba, make_xw_true_out_probabilities
+from entropic.eval import calc_ba, make_p_cat
 from entropic.corpus import Corpus
 from entropic.rnn import RNN
-from entropic.eval import softmax
+from entropic.eval import softmax, get_windows
 
 
 @attr.s
@@ -77,11 +77,12 @@ def main(param2val):
     for t1, t2, in zip(prep.store.types, corpus.types):
         assert t1 == t2
 
+    # check that ll x words are in prep.store
+    assert len([p for p in corpus.x if p in prep.store.w2id]) == corpus.num_x
+
     # make helper dicts using IDs assigned to x-words by Preppy
     cat_id2xw_ids = {cat_id: [corpus.x.index(xw) for xw in corpus.cat_id2x[cat_id]]
                      for cat_id in range(params.num_fragments)}
-    cat_id2p = {cat_id: make_xw_true_out_probabilities(prep, x=corpus.cat_id2x[cat_id], types=corpus.types)
-                for cat_id in range(params.num_fragments)}
 
     rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
 
@@ -124,20 +125,36 @@ def main(param2val):
             q_y = softmax(rnn(torch.cuda.LongTensor(x_y))['logits'].detach().cpu().numpy())
 
             # collect ba for all slots
-            for slot, words in zip(['v', 'w', 'x', 'y'],
-                                   [corpus.v, corpus.w, corpus.x, corpus.y]):
-                word_ids = [prep.store.w2id[w] for w in words]
-                embeddings = rnn.embed.weight.detach().cpu().numpy()[word_ids]
-                sim_mat = cosine_similarity(embeddings)
-                ba = calc_ba(sim_mat, corpus.sim_mat_gold)
-                print(f'ba_{slot}={ba:.2f}')
-                name2col.setdefault(f'ba_{slot}', []).append(ba)
 
-            # collect dp between output-layer cat representations
+            for slot, words in zip(corpus.slots,
+                                   [corpus.v, corpus.w, corpus.x, corpus.y]):
+                slot_id = corpus.slots.index(slot)
+                print(f'slot={slot}')
+
+                for num_left in range(slot_id + 1):
+                    context_size = num_left + 1
+                    print(f'\tcontext_size={context_size}')
+
+                    embeddings = []
+                    for w in words:
+                        # get windows for word
+                        windows = get_windows(prep, [w], col_id=slot_id)
+                        x = np.unique(windows, axis=0)[:, slot_id-num_left:slot_id+1]
+                        # get embedding for word
+                        inputs = torch.cuda.LongTensor(x)
+                        embedding = rnn(inputs)['last_encodings'].detach().cpu().numpy().mean(axis=0)
+                        embeddings.append(embedding)
+
+                    sim_mat = cosine_similarity(np.vstack(embeddings))
+                    ba = calc_ba(sim_mat, corpus.sim_mat_gold)
+                    print(f'\t\tba={ba:.2f}')
+                    name2col.setdefault(f'ba_{slot}_context-size={context_size}', []).append(ba)
+
+            # collect dp between output-layer X sub-category representations
             eval_steps.append(step)
             if config.Eval.calc_dp:
                 for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
-                    p_cat1 = cat_id2p[cat_id1]
+                    p_cat1 = make_p_cat(prep, x=corpus.cat_id2x[cat_id1], types=corpus.types)
                     q_cat2 = q_x[cat_id2xw_ids[cat_id2]].mean(0)
                     dp = drv.divergence_jensenshannon_pmf(p_cat1, q_cat2)
                     name2col.setdefault(f'dp_cat{cat_id1}_vs_cat{cat_id2}', []).append(dp)
@@ -166,7 +183,7 @@ def main(param2val):
             # save embeddings for x-word to file (for making animations)
             out_path = save_path / f'embeddings_{step:0>9}.npy'
             if save_path.exists() and config.Eval.save_embeddings:  # does not exist when "ludwig -l"
-                for slot, words in zip(['v', 'w', 'x', 'y'],
+                for slot, words in zip(corpus.slots,
                                        [corpus.v, corpus.w, corpus.x, corpus.y]):
                     word_ids = [prep.store.w2id[w] for w in words]
                     embeddings = rnn.embed.weight.detach().cpu().numpy()[word_ids]
