@@ -2,12 +2,12 @@ from cached_property import cached_property
 import random
 from itertools import cycle
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 
 class Corpus:
     """
-    methods for making a document, a string of artificial words following the structure (V, W, X, Y).
+    methods for making a document, a string of artificial words following the structure (A, X, B, Y).
     """
 
     def __init__(self,
@@ -17,8 +17,8 @@ class Corpus:
                  num_fragments: int,
                  period_probability: Tuple[float, float],
                  num_sentinels: int,
-                 sample_w: str,
-                 sample_v: str,
+                 sample_b: Tuple[str, str],
+                 sample_a: Tuple[str, str],
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
@@ -26,26 +26,26 @@ class Corpus:
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.period_probability = period_probability
-        self.sample_w = sample_w
-        self.sample_v = sample_v
+        self.sample_b = sample_b
+        self.sample_a = sample_a
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
 
         self.num_words_in_window = 4
-        self.slots = ['v', 'w', 'x', 'y']
+        self.slots = ['a', 'x', 'b', 'y']
 
-        self.num_v = self.num_types // self.num_words_in_window
-        self.num_w = self.num_types // self.num_words_in_window
+        self.num_a = self.num_types // self.num_words_in_window
         self.num_x = self.num_types // self.num_words_in_window
+        self.num_b = self.num_types // self.num_words_in_window
         self.num_y = self.num_types // self.num_words_in_window
 
-        self.v = [f'{self.slots[0]}{i:0>6}' for i in range(self.num_v)]
-        self.w = [f'{self.slots[1]}{i:0>6}' for i in range(self.num_w)]
-        self.x = [f'{self.slots[2]}{i:0>6}' for i in range(self.num_x)]
+        self.a = [f'{self.slots[0]}{i:0>6}' for i in range(self.num_a)]
+        self.x = [f'{self.slots[1]}{i:0>6}' for i in range(self.num_x)]
+        self.b = [f'{self.slots[2]}{i:0>6}' for i in range(self.num_b)]
         self.y = [f'{self.slots[3]}{i:0>6}' for i in range(self.num_y)]
 
-        self.types = self.v + self.w + self.x + self.y
+        self.types = self.a + self.b + self.x + self.y  # order alphabetically
         assert len(self.types) == num_types
 
         # assign x-words to categories
@@ -54,15 +54,15 @@ class Corpus:
                          for frag_id in range(self.num_fragments)}
 
         # map subsets of xis to mutually exclusive subsets/fragments
-        v_fragments = [self.v[offset::num_fragments] for offset in range(num_fragments)]
-        w_fragments = [self.w[offset::num_fragments] for offset in range(num_fragments)]
+        a_fragments = [self.a[offset::num_fragments] for offset in range(num_fragments)]
+        b_fragments = [self.b[offset::num_fragments] for offset in range(num_fragments)]
         y_fragments = [self.y[offset::num_fragments] for offset in range(num_fragments)]
-        self.xi2v = {xi: v_fragments[self.xi2cat_id[xi]] for xi in self.x}
-        self.xi2w = {xi: w_fragments[self.xi2cat_id[xi]] for xi in self.x}
+        self.xi2a = {xi: a_fragments[self.xi2cat_id[xi]] for xi in self.x}
+        self.xi2b = {xi: b_fragments[self.xi2cat_id[xi]] for xi in self.x}
         self.xi2y = {xi: y_fragments[self.xi2cat_id[xi]] for xi in self.x}
 
-        self.xi2vi = {xi: vi for xi, vi in zip(self.x, self.v)}
-        self.xi2wi = {xi: wi for xi, wi in zip(self.x, self.w)}
+        self.xi2ai = {xi: ai for xi, ai in zip(self.x, self.a)}
+        self.xi2bi = {xi: bi for xi, bi in zip(self.x, self.b)}
 
         # check
         x_fragment_size = self.num_x // num_fragments
@@ -71,20 +71,72 @@ class Corpus:
         non_sentinels = []
         for cat_id in range(self.num_fragments):
             non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
-        self.x_without_non_sentinels = [xi for xi in self.x if xi not in non_sentinels]
+        self.x1 = [xi for xi in self.x if xi not in non_sentinels]  # during delay
+        self.x2 = self.x                                            # after delay
+        print('num x1', len(self.x1))
+        print('num x2', len(self.x2))
 
-        # the number of legal joint outcomes is the total number divided by the fragment size
-        self.num_possible_x_y = self.num_x * self.num_y / num_fragments
-
-        print('Initialized ToyCorpus')
 
         if seed is not None:
             random.seed(seed)
 
     @cached_property
     def doc(self) -> str:
-        joint_x_y_outcomes = set()
 
+        doc_size1 = self.delay
+        doc_size2 = self.doc_size - self.delay
+
+        doc1 = self.make_doc(self.x1, doc_size1, self.period_probability[0], self.sample_a[0], self.sample_b[0])
+        doc2 = self.make_doc(self.x2, doc_size2, self.period_probability[1], self.sample_a[1], self.sample_b[1])
+        return doc1 + doc2
+
+    def make_doc(self,
+                 x: List[str],
+                 doc_size: int,
+                 period_probability: float,
+                 sample_a: str,
+                 sample_b: str,
+                 ) -> str:
+
+        res = ''
+        for n in range(doc_size // self.num_words_in_window):
+
+            # sample xi
+            xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
+
+            # sample ai
+            if sample_a == 'item':
+                ai = self.xi2ai[xi]
+            elif sample_a == 'target-category':
+                ai = random.choice(self.xi2a[xi])
+            elif sample_a == 'superordinate':
+                ai = random.choice(self.a)
+            else:
+                raise AttributeError('Invalid arg to "sample_a".')
+
+            # sample bi
+            if sample_b == 'item':
+                bi = self.xi2bi[xi]
+            elif sample_b == 'target-category':
+                bi = random.choice(self.xi2b[xi])
+            elif sample_b == 'superordinate':
+                bi = random.choice(self.b)
+            else:
+                raise AttributeError('Invalid arg to "sample_b".')
+
+            # sample yi
+            if random.random() < period_probability:
+                yi = random.choice(self.random_periods)
+            else:
+                yi = random.choice(self.xi2y[xi])
+
+            # collect
+            res += f'{ai} {xi} {bi} {yi} '  # whitespace after each
+
+        return res
+
+    @cached_property
+    def random_periods(self) -> List[str]:
         # make pseudo_periods
         pseudo_periods = []
         c = cycle(range(self.num_fragments))
@@ -98,54 +150,7 @@ class Corpus:
         logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
         cum_weights = [l / logits[-1] for l in logits]
 
-        res = ''
-        for n in range(self.doc_size // self.num_words_in_window):
-
-            # corpus behaves differently before and after delay
-            if n * self.num_words_in_window > self.delay:
-                x_population = self.x
-                period_probability = self.period_probability[1]
-            else:
-                x_population = self.x_without_non_sentinels
-                period_probability = self.period_probability[0]
-
-            # sample xi systematically
-            xi = random.choice(x_population)  # do not sample from itertools.cycle because of predictable structure
-
-            # sample vi
-            if self.sample_v == 'item':
-                vi = self.xi2vi[xi]
-            elif self.sample_v == 'target-category':
-                vi = random.choice(self.xi2v[xi])
-            elif self.sample_v == 'superordinate':
-                vi = random.choice(self.v)
-            else:
-                raise AttributeError('Invalid arg to "sample_v".')
-
-            # sample wi
-            if self.sample_w == 'item':
-                wi = self.xi2wi[xi]
-            elif self.sample_w == 'target-category':
-                wi = random.choice(self.xi2w[xi])
-            elif self.sample_w == 'superordinate':
-                wi = random.choice(self.w)
-            else:
-                raise AttributeError('Invalid arg to "sample_w".')
-
-            # sample yi that is consistent with all x categories (e.g. PERIOD)
-            if random.random() < period_probability:
-                yi = random.choices(pseudo_periods, cum_weights=cum_weights, k=1)[0]
-            # sample yi consistent with xi category
-            else:
-                yi = random.choice(self.xi2y[xi])
-
-            # collect
-            res += f'{vi} {wi} {xi} {yi} '  # whitespace after each
-            joint_x_y_outcomes.add((xi, yi))
-
-        print(f'Number of unique joint (x,y) outcomes={len(joint_x_y_outcomes):,}/{self.num_possible_x_y:,}')
-        print(f'Coverage={len(joint_x_y_outcomes) / self.num_possible_x_y:.2f}')
-
+        res = random.choices(pseudo_periods, cum_weights=cum_weights, k=1000)  # simulate a distribution
         return res
 
     @cached_property

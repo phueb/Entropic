@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import scale
 
-from preppy import PartitionedPrep
+from preppy import SlidingPrep
 from ludwig.results import gen_all_param2vals
 
 from entropic.figs import make_heatmap_fig
@@ -39,16 +39,15 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     num_fragments=params.num_fragments,
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
-                    sample_w=params.sample_w,
-                    sample_v=params.sample_v,
+                    sample_b=params.sample_b,
+                    sample_a=params.sample_a,
                     )
-    prep = PartitionedPrep([corpus.doc],
-                           reverse=False,
-                           num_types=None,
-                           num_parts=2,
-                           num_iterations=[1, 1],
-                           batch_size=64,
-                           context_size=corpus.num_words_in_window - 1)
+    prep = SlidingPrep([corpus.doc],
+                       reverse=False,
+                       num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
+                       slide_size=params.slide_size,
+                       batch_size=params.batch_size,
+                       context_size=corpus.num_words_in_window - 1)
 
     # check
     assert len([p for p in corpus.x if p in prep.store.w2id]) == corpus.num_x
@@ -63,7 +62,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
         print(f'cat={cat_id+1} occurs {num:,} times')
 
     # get outcomes - the words that occur in the last 2 slots of probe windows
-    x_windows = get_windows(prep, corpus.x)
+    x_windows = get_windows(prep, corpus.x, col_id=-3)
     cx, ry, cx_ry = get_outcomes(prep, x_windows)
 
     # make co-occurrence matrix

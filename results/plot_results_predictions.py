@@ -15,7 +15,7 @@ from entropic.figs import make_predictions_animation
 from ludwig.results import gen_param_paths
 
 
-SLOT = 'w'
+SLOT = 'b'
 LABEL_PARAMS = []  # any additional params to put into label
 
 # param2requests['num_sentinels'] = [64]

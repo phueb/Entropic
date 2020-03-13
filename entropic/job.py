@@ -28,8 +28,8 @@ class Params(object):
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
-    sample_w = attr.ib(validator=attr.validators.instance_of(str))
-    sample_v = attr.ib(validator=attr.validators.instance_of(str))
+    sample_b = attr.ib(validator=attr.validators.instance_of(tuple))
+    sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
     slide_size = attr.ib(validator=attr.validators.instance_of(int))
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
@@ -63,8 +63,8 @@ def main(param2val):
                     num_fragments=params.num_fragments,
                     period_probability=params.period_probability,
                     num_sentinels=params.num_sentinels,
-                    sample_w=params.sample_w,
-                    sample_v=params.sample_v,
+                    sample_b=params.sample_b,
+                    sample_a=params.sample_a,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
@@ -115,8 +115,8 @@ def main(param2val):
         if step % config.Eval.eval_interval == 0:
 
             # get output representations
-            x_v = np.array([[prep.store.w2id[vi]] for vi in corpus.v])
-            x_w = np.array([[prep.store.w2id[wi]] for wi in corpus.w])
+            x_v = np.array([[prep.store.w2id[ai]] for ai in corpus.a])
+            x_w = np.array([[prep.store.w2id[bi]] for bi in corpus.b])
             x_x = np.array([[prep.store.w2id[xi]] for xi in corpus.x])
             x_y = np.array([[prep.store.w2id[yi]] for yi in corpus.y])
             q_v = softmax(rnn(torch.cuda.LongTensor(x_v))['logits'].detach().cpu().numpy())
@@ -125,15 +125,14 @@ def main(param2val):
             q_y = softmax(rnn(torch.cuda.LongTensor(x_y))['logits'].detach().cpu().numpy())
 
             # collect ba for all slots
-
             for slot, words in zip(corpus.slots,
-                                   [corpus.v, corpus.w, corpus.x, corpus.y]):
+                                   [corpus.a, corpus.x, corpus.b, corpus.y]):
                 slot_id = corpus.slots.index(slot)
                 print(f'slot={slot}')
 
                 for num_left in range(slot_id + 1):
                     context_size = num_left + 1
-                    print(f'\tcontext_size={context_size}')
+                    print(f'\tcs={context_size}')
 
                     embeddings = []
                     for w in words:
@@ -184,7 +183,7 @@ def main(param2val):
             out_path = save_path / f'embeddings_{step:0>9}.npy'
             if save_path.exists() and config.Eval.save_embeddings:  # does not exist when "ludwig -l"
                 for slot, words in zip(corpus.slots,
-                                       [corpus.v, corpus.w, corpus.x, corpus.y]):
+                                       [corpus.a, corpus.b, corpus.x, corpus.y]):
                     word_ids = [prep.store.w2id[w] for w in words]
                     embeddings = rnn.embed.weight.detach().cpu().numpy()[word_ids]
                     np.save(out_path, embeddings)

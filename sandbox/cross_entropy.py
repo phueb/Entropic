@@ -11,7 +11,6 @@ q = q / q.sum()
 # print(drv.entropy_cross_pmf(p, p, base=np.exp(1)))
 
 
-# is there more error when W word cues the superordinate category or the target category?
 e = 1e-12
 p_ = np.clip([1.0, 0.0, 0.0, 0.0, 0.00, 0.00, 0.00, 0.00], 0, 1-e) + e
 q1 = np.clip([0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25], 0, 1-e) + e

@@ -283,7 +283,7 @@ def make_predictions_animation(outputs: np.ndarray,
     cat_id2text = {cat_id: None for cat_id in range(num_fragments)}
     text_bbox = dict(boxstyle="round", ec=(1., 0.5, 0.5), fc=(1., 0.8, 0.8), )
 
-    # make a vertical line to visually separate v, w, x, y
+    # make a vertical line to visually separate A, X, B, Y
     for cat_id in range(num_cats):
         for boundary in range(0, num_types, num_types // num_fragments):
             axarr[cat_id].axvline(x=boundary, linestyle=':', c='grey', lw=1)
@@ -384,7 +384,7 @@ def plot_singular_values(ys: List[np.ndarray],
 def plot_summary(summary_data,
                  y_label,
                  title: str = '',
-                 y_lims: Tuple[float] = (0.5, 1.05),
+                 y_lims: Optional[Tuple[float, float]] = (0.5, 1.05),
                  v_line: Optional[int] = None,
                  h_line: Optional[int] = None,
                  legend: bool = True,
@@ -398,12 +398,12 @@ def plot_summary(summary_data,
     ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=ax_fontsize)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.set_ylim(y_lims)
+    if y_lims is not None:
+        ax.set_ylim(y_lims)
 
-    #
-    colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9', 'C10', 'C11'])
-    for x, y, me, label, n in summary_data:
-        color = next(colors)
+    # colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9', 'C10', 'C11'])
+    for x, y, me, label, color, n in summary_data:
+        # color = next(colors)
         ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
         ax.plot(x, y, label=label, color=color, lw=2)
         # ax.scatter(x, y, color=color)

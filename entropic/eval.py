@@ -79,12 +79,12 @@ def make_p_cat(prep: Union[PartitionedPrep, SlidingPrep],
     return res
 
 
-def get_outcomes(prep: PartitionedPrep,
+def get_outcomes(prep: Union[PartitionedPrep, SlidingPrep],
                  windows: np.ndarray,
                  ) -> Tuple[List[str], List[str], np.ndarray]:
 
     # outcomes
-    cx = [prep.store.types[i] for i in windows[:, -2]]  # intersection of all words in center with x words
+    cx = [prep.store.types[i] for i in windows[:, -3]]  # intersection of all words in center with x words
     ry = [prep.store.types[i] for i in windows[:, -1]]  # intersection of all words in right with y words
     cx_ry = np.vstack((cx, ry))  # joint outcome hast to be array to play nicely with drv.entropy_joint
 
@@ -93,7 +93,7 @@ def get_outcomes(prep: PartitionedPrep,
 
 def get_windows(prep: Union[PartitionedPrep, SlidingPrep],
                 words: List[str],
-                col_id: int = -2,  # windows with probe in position -2
+                col_id: int = -3,  # windows with probe in position -3
                 ) -> np.ndarray:
     row_ids = np.isin(prep.reordered_windows[:, col_id], [prep.store.w2id[w] for w in words])
     res = prep.reordered_windows[row_ids]
