@@ -11,16 +11,14 @@ which occur more often than non-sentinels
 """
 
 param2requests = {
-    # 'period_probability': [(0.05, 0.00), (0.00, 0.05), (0.00, 0.00), (0.05, 0.05)],
-    # 'sample_a': [('superordinate', 'superordinate')],
-    'sample_b': [('superordinate', 'item'), ('superordinate', 'superordinate'),
-                 ('item', 'item'), ('item', 'superordinate')],
+    'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+    'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
 
 }
 
 param2debug = {
-    'sample_a': 'superordinate',
-    'sample_b': 'superordinate',
+    'sample_a': 'super',
+    'sample_b': 'super',
 }
 
 param2default = {
@@ -33,8 +31,8 @@ param2default = {
     'num_fragments': 4,
     'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)
     'num_sentinels': 4,  # number of examples of each x-word category seen before delay
-    'sample_a': ('superordinate', 'superordinate'),
-    'sample_b': ('superordinate', 'superordinate'),
+    'sample_a': ('super', 'super'),
+    'sample_b': ('super', 'super'),
     # training
     'slide_size': 64,
     'optimizer': 'adagrad',

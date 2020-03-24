@@ -107,9 +107,9 @@ class Corpus:
             # sample ai
             if sample_a == 'item':
                 ai = self.xi2ai[xi]
-            elif sample_a == 'target-category':
+            elif sample_a == 'sub':
                 ai = random.choice(self.xi2a[xi])
-            elif sample_a == 'superordinate':
+            elif sample_a == 'super':
                 ai = random.choice(self.a)
             else:
                 raise AttributeError('Invalid arg to "sample_a".')
@@ -117,9 +117,9 @@ class Corpus:
             # sample bi
             if sample_b == 'item':
                 bi = self.xi2bi[xi]
-            elif sample_b == 'target-category':
+            elif sample_b == 'sub':
                 bi = random.choice(self.xi2b[xi])
-            elif sample_b == 'superordinate':
+            elif sample_b == 'super':
                 bi = random.choice(self.b)
             else:
                 raise AttributeError('Invalid arg to "sample_b".')

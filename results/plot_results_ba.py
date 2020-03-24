@@ -1,8 +1,7 @@
 import pandas as pd
 from scipy import stats
-import numpy as np
 
-from entropic.figs import plot_summary
+from entropic.figs import plot_summary, correct_artifacts
 from entropic import config
 from entropic.params import param2default, param2requests
 
@@ -11,29 +10,35 @@ from ludwig.results import gen_param_paths
 
 LABEL_PARAMS = []  # must be a list
 ADDITIONAL_TITLE = ''
-SLOTS = ['x']
+SLOTS = ['a']
 CONTEXT_SIZE = 1
 LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
 
+STUDY = '1b'
 
-def correct_artifacts(y: pd.Series, tolerance: float = TOLERANCE):
-    """
-    correct y when y drops more than tolerance.
-    this is necessary because computation of balanced accuracy occasionally results in unwanted negative spikes
-    """
-    res = np.asarray(y)
-    for i in range(len(res) - 2):
-        val1, val2, val3 = res[[i, i+1, i+2]]
-        if (val1 - tolerance) > val2 < (val3 - tolerance):
-            res[i+1] = np.mean([val1, val3])
-            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
-        # in case dip is at end
-        elif (val2 - tolerance) > val3:
-            res[i+2] = val2
-            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
-    return res.tolist()
+
+if STUDY == '1a':
+    del param2requests
+    param2requests = {'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+                      'sample_b': [('super', 'super')],
+                      }
+elif STUDY == '1b':
+    del param2requests
+    param2requests = {'sample_a': [('super', 'super')],
+                      'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+                      }
+elif STUDY == '2a':
+    del param2requests
+    param2requests = {'sample_a': [('super', 'item'), ('super', 'super'), ('item', 'item'), ('item', 'super')],
+                      'sample_b': [('super', 'super')],
+                      }
+elif STUDY == '2b':
+    del param2requests
+    param2requests = {'sample_a': [('super', 'super')],
+                      'sample_b': [('super', 'item'), ('super', 'super'),  ('item', 'item'), ('item', 'super')],
+                      }
 
 
 for slot in SLOTS:
@@ -58,13 +63,15 @@ for slot in SLOTS:
             dfs.append(df)
         param_df = frame = pd.concat(dfs, axis=1)
 
+        print(param_df)
+
         # custom labels
         if LABELS:
             label = next(labels)
 
         label = label.replace('sample_', '')
 
-        color = f'C{color_id}'  # TODO make colors consistent with label, not performance
+        color = f'C{color_id}'  # make colors consistent with label, not best ba
         color_id += 1
 
         # summarize data
@@ -75,8 +82,6 @@ for slot in SLOTS:
                              label,
                              color,
                              num_reps))
-
-
 
     # sort data
     summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)

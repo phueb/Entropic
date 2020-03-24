@@ -1,3 +1,4 @@
+import pandas as pd
 from mpl_toolkits import mplot3d  # this is unused but needed for 3d plotting
 from matplotlib.lines import Line2D
 from typing import List, Tuple, Optional, Any, Dict
@@ -421,3 +422,21 @@ def plot_summary(summary_data,
                    ncol=1)
 
     return fig
+
+
+def correct_artifacts(y: pd.Series, tolerance: float = 0.04):
+    """
+    correct y when y drops more than tolerance.
+    this is necessary because computation of balanced accuracy occasionally results in unwanted negative spikes
+    """
+    res = np.asarray(y)
+    for i in range(len(res) - 2):
+        val1, val2, val3 = res[[i, i+1, i+2]]
+        if (val1 - tolerance) > val2 < (val3 - tolerance):
+            res[i+1] = np.mean([val1, val3])
+            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+        # in case dip is at end
+        elif (val2 - tolerance) > val3:
+            res[i+2] = val2
+            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+    return res.tolist()
