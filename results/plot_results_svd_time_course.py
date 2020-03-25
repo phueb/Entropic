@@ -36,7 +36,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
                                          param2requests,
                                          param2default,
                                          label_n=False,
-                                         label_params=['period_probability']):
+                                         label_params=['starvation']):
     # num_jobs
     job_paths = list(param_path.glob(f'*num*'))
     num_jobs = len(job_paths)

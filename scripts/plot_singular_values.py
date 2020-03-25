@@ -37,7 +37,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     delay=params.delay,
                     num_types=params.num_types,
                     num_fragments=params.num_fragments,
-                    period_probability=params.period_probability,
+                    starvation=params.starvation,
                     num_sentinels=params.num_sentinels,
                     sample_b=params.sample_b,
                     sample_a=params.sample_a,

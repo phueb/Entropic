@@ -10,13 +10,13 @@ from ludwig.results import gen_param_paths
 
 LABEL_PARAMS = []  # must be a list
 ADDITIONAL_TITLE = ''
-SLOTS = ['a']
+SLOTS = ['x']
 CONTEXT_SIZE = 1
 LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
 
-STUDY = '1b'
+STUDY = '2a'
 
 
 if STUDY == '1a':

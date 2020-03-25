@@ -27,7 +27,7 @@ class Params(object):
     num_sentinels = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
-    period_probability = attr.ib(validator=attr.validators.instance_of(tuple))
+    starvation = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_b = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
@@ -61,7 +61,7 @@ def main(param2val):
                     delay=params.delay,
                     num_types=params.num_types,
                     num_fragments=params.num_fragments,
-                    period_probability=params.period_probability,
+                    starvation=params.starvation,
                     num_sentinels=params.num_sentinels,
                     sample_b=params.sample_b,
                     sample_a=params.sample_a,

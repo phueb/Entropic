@@ -8,11 +8,16 @@ equivalently: compare (0.05, 0.0) vs (0.0, 0.0)
 Notes:
 all words occur approximately equally in  corpus, except sentinels,
 which occur more often than non-sentinels
+
+starvation: (see gradient starvation in  Combes et al., 2018)
+the probability that Yi is a semantically uninformative symbol (kind of like a period)
 """
 
 param2requests = {
-    'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
-    'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+    'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
+                [('super', 'item'), ('item', 'super')],
+    'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
+                [('super', 'item'), ('item', 'super')],
 
 }
 
@@ -29,7 +34,7 @@ param2default = {
     'delay': 50_000,
     'num_types': 128,
     'num_fragments': 4,
-    'period_probability': (0.0, 0.0),  # (prob before delay, prob after delay)
+    'starvation': (0.0, 0.0),  # (prob before delay, prob after delay)
     'num_sentinels': 4,  # number of examples of each x-word category seen before delay
     'sample_a': ('super', 'super'),
     'sample_b': ('super', 'super'),

@@ -15,7 +15,7 @@ class Corpus:
                  delay: int,
                  num_types: int,
                  num_fragments: int,
-                 period_probability: Tuple[float, float],
+                 starvation: Tuple[float, float],
                  num_sentinels: int,
                  sample_b: Tuple[str, str],
                  sample_a: Tuple[str, str],
@@ -25,7 +25,7 @@ class Corpus:
         self.doc_size = doc_size
         self.num_types = num_types
         self.num_fragments = num_fragments
-        self.period_probability = period_probability
+        self.starvation = starvation
         self.sample_b = sample_b
         self.sample_a = sample_a
         self.alpha = alpha
@@ -86,14 +86,14 @@ class Corpus:
         doc_size1 = self.delay
         doc_size2 = self.doc_size - self.delay
 
-        doc1 = self.make_doc(self.x1, doc_size1, self.period_probability[0], self.sample_a[0], self.sample_b[0])
-        doc2 = self.make_doc(self.x2, doc_size2, self.period_probability[1], self.sample_a[1], self.sample_b[1])
+        doc1 = self.make_doc(self.x1, doc_size1, self.starvation[0], self.sample_a[0], self.sample_b[0])
+        doc2 = self.make_doc(self.x2, doc_size2, self.starvation[1], self.sample_a[1], self.sample_b[1])
         return doc1 + doc2
 
     def make_doc(self,
                  x: List[str],
                  doc_size: int,
-                 period_probability: float,
+                 starvation: float,
                  sample_a: str,
                  sample_b: str,
                  ) -> str:
@@ -125,7 +125,7 @@ class Corpus:
                 raise AttributeError('Invalid arg to "sample_b".')
 
             # sample yi
-            if random.random() < period_probability:
+            if random.random() < starvation:
                 yi = random.choice(self.random_periods)
             else:
                 yi = random.choice(self.xi2y[xi])
@@ -137,20 +137,19 @@ class Corpus:
 
     @cached_property
     def random_periods(self) -> List[str]:
-        # make pseudo_periods
-        pseudo_periods = []
+        periods = []
         c = cycle(range(self.num_fragments))
         yw_fragments = [self.y[offset::self.num_fragments] for offset in range(self.num_fragments)]
         num_max = 8  # should be small - to ensure that joint entropy is smaller in partition 1
         for yw_pop in list(zip(*yw_fragments))[:num_max]:
             i = next(c)
-            pseudo_periods.append(yw_pop[i])
+            periods.append(yw_pop[i])
 
         # make cumulative weights over y-words that mimic power distribution
-        logits = [(xi + 1) ** self.alpha for xi in range(len(pseudo_periods))]
+        logits = [(xi + 1) ** self.alpha for xi in range(len(periods))]
         cum_weights = [l / logits[-1] for l in logits]
 
-        res = random.choices(pseudo_periods, cum_weights=cum_weights, k=1000)  # simulate a distribution
+        res = random.choices(periods, cum_weights=cum_weights, k=1000)  # simulate a distribution
         return res
 
     @cached_property
