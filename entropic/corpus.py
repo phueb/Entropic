@@ -105,6 +105,9 @@ class Corpus:
             xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
 
             # sample ai
+            # TODO make a condition in which Ai is non-compositional, "BRIGHT person thinks"
+            #  essentially, pick an Ai that is incongruent or not in the correct semantic category
+            #  that would be part 3 of paper 3
             if sample_a == 'item':
                 ai = self.xi2ai[xi]
             elif sample_a == 'sub':

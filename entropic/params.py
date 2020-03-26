@@ -30,7 +30,7 @@ param2default = {
     # rnn
     'hidden_size': 64,  # 8, 32 are too low
     # toy corpus
-    'doc_size': 200_000,
+    'doc_size': 100_000,
     'delay': 50_000,
     'num_types': 128,
     'num_fragments': 4,
@@ -40,7 +40,7 @@ param2default = {
     'sample_b': ('super', 'super'),
     # training
     'slide_size': 64,
-    'optimizer': 'adagrad',
+    'optimizer': 'sgd',
+    'lr': 0.5,  # 0.01 for adagrad, 0.5 for sgd
     'batch_size': 64,
-    'lr': 0.01,
 }
