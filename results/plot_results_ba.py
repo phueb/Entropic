@@ -16,7 +16,8 @@ LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
 
-STUDY = '1a'  # '1a'
+STUDY = '2b'  # '1a'
+SIMPLIFY = True
 
 
 if STUDY == '1a':
@@ -36,6 +37,17 @@ elif STUDY == '2b':
     param2requests = {'sample_b': [('super', 'item'), ('super', 'super'),  ('item', 'item'), ('item', 'super')],
                       }
 
+if SIMPLIFY:  # show only most important results
+    try:
+        param2requests['sample_a'].remove(('super', 'item'))
+        param2requests['sample_a'].remove(('item', 'item'))
+    except KeyError as e:
+        print(e)
+    try:
+        param2requests['sample_b'].remove(('super', 'item'))
+        param2requests['sample_b'].remove(('item', 'item'))
+    except KeyError as e:
+        print(e)
 
 for slot in SLOTS:
 
@@ -55,7 +67,7 @@ for slot in SLOTS:
             df = pd.read_csv(df_p, index_col=0)
             df.index.name = 'step'
             # remove dips
-            df = df.apply(correct_artifacts, result_type='expand')
+            df = df.apply(correct_artifacts, result_type='expand', tolerance=TOLERANCE)
             dfs.append(df)
         param_df = frame = pd.concat(dfs, axis=1)
 
@@ -86,6 +98,6 @@ for slot in SLOTS:
     fig = plot_summary(summary_data,
                        y_label='Categorization [Balanced accuracy]',
                        legend=LEGEND,
-                       title=f'slot={slot}\ncontext-size={CONTEXT_SIZE}\n{ADDITIONAL_TITLE}',
+                       title=f'study={STUDY}\nslot={slot}\ncontext-size={CONTEXT_SIZE}\n{ADDITIONAL_TITLE}',
                        )
     fig.show()

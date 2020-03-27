@@ -127,6 +127,10 @@ def main(param2val):
             # collect ba for all slots
             for slot, words in zip(corpus.slots,
                                    [corpus.a, corpus.x, corpus.b, corpus.y]):
+
+                if slot == 'y':
+                    continue  # speed up eval
+
                 slot_id = corpus.slots.index(slot)
                 print(f'slot={slot}')
 

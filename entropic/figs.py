@@ -424,7 +424,7 @@ def plot_summary(summary_data,
     return fig
 
 
-def correct_artifacts(y: pd.Series, tolerance: float = 0.04):
+def correct_artifacts(y: pd.Series, tolerance: float = 1.0, strong_correction=False):
     """
     correct y when y drops more than tolerance.
     this is necessary because computation of balanced accuracy occasionally results in unwanted negative spikes
@@ -435,8 +435,8 @@ def correct_artifacts(y: pd.Series, tolerance: float = 0.04):
         if (val1 - tolerance) > val2 < (val3 - tolerance):
             res[i+1] = np.mean([val1, val3])
             print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
-        # in case dip is at end
-        elif (val2 - tolerance) > val3:
+        # in case dip is at end - but also distorts ba at other time points
+        elif (val2 - tolerance) > val3 and strong_correction:
             res[i+2] = val2
-            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+            print('Adjusting with strong correction')
     return res.tolist()
