@@ -45,7 +45,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
-                       slide_size=params.slide_size,
+                       slide_size=params.batch_size,
                        batch_size=params.batch_size,
                        context_size=corpus.num_words_in_window - 1)
 

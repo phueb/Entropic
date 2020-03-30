@@ -39,8 +39,7 @@ param2default = {
     'sample_a': ('super', 'super'),
     'sample_b': ('super', 'super'),
     # training
-    'slide_size': 64,
     'optimizer': 'sgd',
     'lr': 0.5,  # 0.01 for adagrad, 0.5 for sgd
-    'batch_size': 64,
+    'batch_size': 128, # TODO test was 64
 }

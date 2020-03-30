@@ -41,12 +41,12 @@ if SIMPLIFY:  # show only most important results
     try:
         param2requests['sample_a'].remove(('super', 'item'))
         param2requests['sample_a'].remove(('item', 'item'))
-    except KeyError as e:
+    except (KeyError, ValueError) as e:
         print(e)
     try:
         param2requests['sample_b'].remove(('super', 'item'))
         param2requests['sample_b'].remove(('item', 'item'))
-    except KeyError as e:
+    except (KeyError, ValueError) as e:
         print(e)
 
 for slot in SLOTS:

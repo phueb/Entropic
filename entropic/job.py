@@ -31,7 +31,6 @@ class Params(object):
     sample_b = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
-    slide_size = attr.ib(validator=attr.validators.instance_of(int))
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
     lr = attr.ib(validator=attr.validators.instance_of(float))
@@ -69,7 +68,7 @@ def main(param2val):
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
-                       slide_size=params.slide_size,
+                       slide_size=params.batch_size,
                        batch_size=params.batch_size,
                        context_size=corpus.num_words_in_window-1)
 
