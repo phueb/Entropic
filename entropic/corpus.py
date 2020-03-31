@@ -19,18 +19,31 @@ class Corpus:
                  num_sentinels: int,
                  sample_b: Tuple[str, str],
                  sample_a: Tuple[str, str],
+                 incongruent_a: Tuple[float, float],
+                 incongruent_b: Tuple[float, float],
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
+
+        assert 0.0 <= incongruent_a[0] <= 1.0
+        assert 0.0 <= incongruent_a[1] <= 1.0
+        assert 0.0 <= incongruent_b[0] <= 1.0
+        assert 0.0 <= incongruent_b[1] <= 1.0
+
         self.doc_size = doc_size
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.starvation = starvation
         self.sample_b = sample_b
         self.sample_a = sample_a
+        self.incongruent_a = incongruent_a
+        self.incongruent_b = incongruent_b
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
+
+        self.incongruent_a = incongruent_a
+        self.incongruent_b = incongruent_b
 
         self.num_words_in_window = 4
         self.slots = ['a', 'x', 'b', 'y']
@@ -86,8 +99,12 @@ class Corpus:
         doc_size1 = self.delay
         doc_size2 = self.doc_size - self.delay
 
-        doc1 = self.make_doc(self.x1, doc_size1, self.starvation[0], self.sample_a[0], self.sample_b[0])
-        doc2 = self.make_doc(self.x2, doc_size2, self.starvation[1], self.sample_a[1], self.sample_b[1])
+        # TODO test incongruent probability
+        ia1, ia2 = self.incongruent_a
+        ib1, ib2 = self.incongruent_b
+
+        doc1 = self.make_doc(self.x1, doc_size1, self.starvation[0], self.sample_a[0], self.sample_b[0], ia1, ib1)
+        doc2 = self.make_doc(self.x2, doc_size2, self.starvation[1], self.sample_a[1], self.sample_b[1], ia2, ib2)
         return doc1 + doc2
 
     def make_doc(self,
@@ -96,6 +113,8 @@ class Corpus:
                  starvation: float,
                  sample_a: str,
                  sample_b: str,
+                 incongruent_a: float,
+                 incongruent_b: float,
                  ) -> str:
 
         res = ''
@@ -105,9 +124,6 @@ class Corpus:
             xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
 
             # sample ai
-            # TODO make a condition in which Ai is non-compositional, "BRIGHT person thinks"
-            #  essentially, pick an Ai that is incongruent or not in the correct semantic category
-            #  that would be part 3 of paper 3
             if sample_a == 'item':
                 ai = self.xi2ai[xi]
             elif sample_a == 'sub':
@@ -116,6 +132,12 @@ class Corpus:
                 ai = random.choice(self.a)
             else:
                 raise AttributeError('Invalid arg to "sample_a".')
+
+            # TODO make a condition in which Ai is incongruent due to different sense, "BRIGHT person thinks"
+            #  essentially, pick an Ai that is incongruent or not in the correct semantic category
+            #  that would be part 3 of paper 3
+            if random.random() < incongruent_a:
+                ai = random.choice([ai for ai in self.a if ai not in self.xi2a[xi]])
 
             # sample bi
             if sample_b == 'item':

@@ -15,8 +15,9 @@ CONTEXT_SIZE = 2
 LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
+SORT_BY_PERFORMANCE = True
 
-STUDY = '2b'  # '1a'
+STUDY = '3a'  # '1a'
 SIMPLIFY = True
 
 
@@ -37,7 +38,13 @@ elif STUDY == '2b':
     param2requests = {'sample_b': [('super', 'item'), ('super', 'super'),  ('item', 'item'), ('item', 'super')],
                       }
 
-if SIMPLIFY:  # show only most important results
+elif STUDY == '3a':
+    del param2requests
+    param2requests = {'sample_a': [('super', 'item'), ('item', 'item')],
+                      'incongruent_a': [(0.0, 0.1)],
+                      }
+
+if SIMPLIFY and '2' in str(STUDY):  # show only most important results
     try:
         param2requests['sample_a'].remove(('super', 'item'))
         param2requests['sample_a'].remove(('item', 'item'))
@@ -53,13 +60,17 @@ for slot in SLOTS:
 
     labels = iter(LABELS)
 
+    print(param2default)
+    print()
+    print(param2requests)
+
     # collect data
     summary_data = []
     color_id = 0
-    for param_p, label in gen_param_paths(config.Dirs.root.name,
-                                          param2requests,
-                                          param2default,
-                                          label_params=LABEL_PARAMS):
+    for param_p, label in sorted(gen_param_paths(config.Dirs.root.name,
+                                                 param2requests,
+                                                 param2default,
+                                                 label_params=LABEL_PARAMS)):
         # param_df
         dfs = []
         for df_p in param_p.glob(f'*num*/ba_{slot}_context-size={CONTEXT_SIZE}.csv'):
@@ -89,10 +100,12 @@ for slot in SLOTS:
                              color,
                              num_reps))
 
-    # sort data
-    summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
     if not summary_data:
         raise SystemExit('No data found')
+
+    # sort data
+    if SORT_BY_PERFORMANCE:
+        summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
 
     # plot
     fig = plot_summary(summary_data,

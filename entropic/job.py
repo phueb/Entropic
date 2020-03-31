@@ -30,6 +30,8 @@ class Params(object):
     starvation = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_b = attr.ib(validator=attr.validators.instance_of(tuple))
     sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
+    incongruent_a = attr.ib(validator=attr.validators.instance_of(tuple))
+    incongruent_b = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -64,6 +66,8 @@ def main(param2val):
                     num_sentinels=params.num_sentinels,
                     sample_b=params.sample_b,
                     sample_a=params.sample_a,
+                    incongruent_a=params.incongruent_a,
+                    incongruent_b=params.incongruent_b,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,

@@ -14,10 +14,14 @@ the probability that Yi is a semantically uninformative symbol (kind of like a p
 """
 
 param2requests = {
-    'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
-                [('super', 'item'), ('item', 'super')],
-    'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
-                [('super', 'item'), ('item', 'super')],
+    # 'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
+    #             [('super', 'item'), ('item', 'super')],
+    # 'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
+    #             [('super', 'item'), ('item', 'super')],
+
+
+    'sample_a': [('super', 'item'), ('item', 'item')],
+    'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.0, 0.1), (0.1, 0.0)]
 
 }
 
@@ -38,8 +42,10 @@ param2default = {
     'num_sentinels': 4,  # number of examples of each x-word category seen before delay
     'sample_a': ('super', 'super'),
     'sample_b': ('super', 'super'),
+    'incongruent_a': (0.0, 0.0),  # probability that Ai is category incongruent
+    'incongruent_b': (0.0, 0.0),
     # training
     'optimizer': 'sgd',
     'lr': 0.5,  # 0.01 for adagrad, 0.5 for sgd
-    'batch_size': 128, # TODO test was 64
+    'batch_size': 128,
 }
