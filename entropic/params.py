@@ -20,14 +20,18 @@ param2requests = {
     #             [('super', 'item'), ('item', 'super')],
 
 
-    'sample_a': [('super', 'item'), ('item', 'item')],
-    'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.0, 0.1), (0.1, 0.0)]
+    'sample_a': [('item', 'super'), ('super', 'item'), ('item', 'item')],
+    'incongruent_a': [(0.1, 0.1)],
+    # 'size_a': [(1.1, 0.1), (0.1, 1.1), (1.1, 1.1)],
+
+
+    'num_sentinels': [8]
 
 }
 
 param2debug = {
-    'sample_a': 'super',
-    'sample_b': 'super',
+    'size_a': (1.1, 1.0),
+    'num_sentinels': 8,
 }
 
 param2default = {
@@ -44,8 +48,10 @@ param2default = {
     'sample_b': ('super', 'super'),
     'incongruent_a': (0.0, 0.0),  # probability that Ai is category incongruent
     'incongruent_b': (0.0, 0.0),
+    'size_a': (1.0, 1.0),  # proportion of set size of A
+    'size_b': (1.0, 1.0),
     # training
     'optimizer': 'sgd',
-    'lr': 0.5,  # 0.01 for adagrad, 0.5 for sgd
+    'lr': 0.4,  # 0.01 for adagrad, 0.5 for sgd
     'batch_size': 128,
 }

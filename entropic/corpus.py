@@ -21,6 +21,8 @@ class Corpus:
                  sample_a: Tuple[str, str],
                  incongruent_a: Tuple[float, float],
                  incongruent_b: Tuple[float, float],
+                 size_a: Tuple[float, float],
+                 size_b: Tuple[float, float],
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
@@ -38,6 +40,8 @@ class Corpus:
         self.sample_a = sample_a
         self.incongruent_a = incongruent_a
         self.incongruent_b = incongruent_b
+        self.size_a = size_a
+        self.size_b = size_b
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
@@ -86,9 +90,6 @@ class Corpus:
             non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
         self.x1 = [xi for xi in self.x if xi not in non_sentinels]  # during delay
         self.x2 = self.x                                            # after delay
-        print('num x1', len(self.x1))
-        print('num x2', len(self.x2))
-
 
         if seed is not None:
             random.seed(seed)
@@ -98,30 +99,48 @@ class Corpus:
 
         doc_size1 = self.delay
         doc_size2 = self.doc_size - self.delay
+        nw1 = doc_size1 // self.num_words_in_window
+        nw2 = doc_size2 // self.num_words_in_window
 
-        # TODO test incongruent probability
         ia1, ia2 = self.incongruent_a
         ib1, ib2 = self.incongruent_b
+        iai1 = iter(np.linspace(ia1, np.mean([ia1, ia2]), nw1))
+        iai2 = iter(np.linspace(np.mean([ia1, ia2]), ia2, nw2))
+        ibi1 = iter(np.linspace(ib1, np.mean([ib1, ib2]), nw1))
+        ibi2 = iter(np.linspace(np.mean([ib1, ib2]), ib2, nw2))
 
-        doc1 = self.make_doc(self.x1, doc_size1, self.starvation[0], self.sample_a[0], self.sample_b[0], ia1, ib1)
-        doc2 = self.make_doc(self.x2, doc_size2, self.starvation[1], self.sample_a[1], self.sample_b[1], ia2, ib2)
+        sa1, sa2 = self.size_a
+        sb1, sb2 = self.size_b
+        sai1 = iter(np.linspace(sa1, np.mean([sa1, sa2]), nw1))
+        sai2 = iter(np.linspace(np.mean([sa1, sa2]), sa2, nw2))
+        sbi1 = iter(np.linspace(sb1, np.mean([sb1, sb2]), nw1))
+        sbi2 = iter(np.linspace(np.mean([sb1, sb2]), sb2, nw2))
+
+        doc1 = self.make_doc(self.x1, nw1, self.starvation[0], self.sample_a[0], self.sample_b[0], iai1, ibi1, sai1, sbi1)
+        doc2 = self.make_doc(self.x2, nw2, self.starvation[1], self.sample_a[1], self.sample_b[1], iai2, ibi2, sai2, sbi2)
         return doc1 + doc2
 
     def make_doc(self,
                  x: List[str],
-                 doc_size: int,
+                 num_windows: int,
                  starvation: float,
                  sample_a: str,
                  sample_b: str,
-                 incongruent_a: float,
-                 incongruent_b: float,
+                 incongruent_a: iter,
+                 incongruent_b: iter,
+                 size_a: iter,
+                 size_b: iter,
                  ) -> str:
 
         res = ''
-        for n in range(doc_size // self.num_words_in_window):
+        for n in range(num_windows):
 
             # sample xi
             xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
+
+            # TODO test set size of a
+            sa = next(size_a)
+            sb = next(size_b)
 
             # sample ai
             if sample_a == 'item':
@@ -129,15 +148,9 @@ class Corpus:
             elif sample_a == 'sub':
                 ai = random.choice(self.xi2a[xi])
             elif sample_a == 'super':
-                ai = random.choice(self.a)
+                ai = random.choice(self.a[:int(sa * self.num_a)])
             else:
                 raise AttributeError('Invalid arg to "sample_a".')
-
-            # TODO make a condition in which Ai is incongruent due to different sense, "BRIGHT person thinks"
-            #  essentially, pick an Ai that is incongruent or not in the correct semantic category
-            #  that would be part 3 of paper 3
-            if random.random() < incongruent_a:
-                ai = random.choice([ai for ai in self.a if ai not in self.xi2a[xi]])
 
             # sample bi
             if sample_b == 'item':
@@ -145,9 +158,19 @@ class Corpus:
             elif sample_b == 'sub':
                 bi = random.choice(self.xi2b[xi])
             elif sample_b == 'super':
-                bi = random.choice(self.b)
+                bi = random.choice(self.b[:int(sb * self.num_b)])
             else:
                 raise AttributeError('Invalid arg to "sample_b".')
+
+            # incongruent ai
+            ipa = next(incongruent_a)
+            if random.random() < ipa:
+                ai = random.choice([ai for ai in self.a if ai not in self.xi2a[xi]])
+
+            # incongruent bi
+            ipb = next(incongruent_b)
+            if random.random() < ipb:
+                bi = random.choice([bi for bi in self.b if bi not in self.xi2b[xi]])
 
             # sample yi
             if random.random() < starvation:

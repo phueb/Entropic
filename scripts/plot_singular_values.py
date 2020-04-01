@@ -41,6 +41,10 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     num_sentinels=params.num_sentinels,
                     sample_b=params.sample_b,
                     sample_a=params.sample_a,
+                    incongruent_a=params.incongruent_a,
+                    incongruent_b=params.incongruent_b,
+                    size_a=params.size_a,
+                    size_b=params.size_b,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
@@ -48,7 +52,6 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                        slide_size=params.batch_size,
                        batch_size=params.batch_size,
                        context_size=corpus.num_words_in_window - 1)
-
     # check
     assert len([p for p in corpus.x if p in prep.store.w2id]) == corpus.num_x
 

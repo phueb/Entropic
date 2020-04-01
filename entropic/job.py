@@ -32,6 +32,8 @@ class Params(object):
     sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
     incongruent_a = attr.ib(validator=attr.validators.instance_of(tuple))
     incongruent_b = attr.ib(validator=attr.validators.instance_of(tuple))
+    size_a = attr.ib(validator=attr.validators.instance_of(tuple))
+    size_b = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -68,6 +70,8 @@ def main(param2val):
                     sample_a=params.sample_a,
                     incongruent_a=params.incongruent_a,
                     incongruent_b=params.incongruent_b,
+                    size_a=params.size_a,
+                    size_b=params.size_b,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,
@@ -131,7 +135,7 @@ def main(param2val):
             for slot, words in zip(corpus.slots,
                                    [corpus.a, corpus.x, corpus.b, corpus.y]):
 
-                if slot == 'y':
+                if slot in ['b', 'y']:
                     continue  # speed up eval
 
                 slot_id = corpus.slots.index(slot)

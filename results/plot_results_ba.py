@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 import pandas as pd
 from scipy import stats
 
@@ -9,42 +11,69 @@ from ludwig.results import gen_param_paths
 
 
 LABEL_PARAMS = []  # must be a list
-ADDITIONAL_TITLE = ''
-SLOTS = ['x']
-CONTEXT_SIZE = 2
+SLOTS = ['a']
+CONTEXT_SIZE = 1
 LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 
-STUDY = '3a'  # '1a'
-SIMPLIFY = True
+STUDY = '0a2'  # '1a'
+SIMPLIFY_STUDY2 = True
 
+
+if STUDY == '0a1':
+    param2requests = {'sample_a': [('item', 'item')],
+                      'num_sentinels': [8],
+                      'incongruent_a': [(0.4, 0.0), (0.0, 0.4)],
+                      }
+elif STUDY == '0a2':
+    param2requests = {'sample_a': [('super', 'super')],
+                      'num_sentinels': [8],
+                      'size_a': [(1.1, 0.1), (0.1, 1.1), (1.1, 1.1)],
+                      }
 
 if STUDY == '1a':
-    del param2requests
     param2requests = {'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+                      'num_sentinels': [4],
                       }
 elif STUDY == '1b':
-    del param2requests
     param2requests = {'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
+                      'num_sentinels': [4],
                       }
+
 elif STUDY == '2a':
-    del param2requests
     param2requests = {'sample_a': [('super', 'item'), ('super', 'super'), ('item', 'item'), ('item', 'super')],
+                      'num_sentinels': [4],
                       }
 elif STUDY == '2b':
-    del param2requests
     param2requests = {'sample_b': [('super', 'item'), ('super', 'super'),  ('item', 'item'), ('item', 'super')],
+                      'num_sentinels': [4],
                       }
 
-elif STUDY == '3a':
-    del param2requests
+elif STUDY == '3a1':
     param2requests = {'sample_a': [('super', 'item'), ('item', 'item')],
-                      'incongruent_a': [(0.0, 0.1)],
+                      'incongruent_a': [(0.0, 0.1), (0.0, 0.0)],
+                      'num_sentinels': [4],
+                      }
+elif STUDY == '3a2':
+    param2requests = {'sample_a': [('super', 'item'), ('item', 'item')],
+                      'incongruent_a': [(0.1, 0.1), (0.0, 0.0)],
+                      'num_sentinels': [4],
+                      }
+elif STUDY == '3a3':
+    param2requests = {'sample_a': [('super', 'item'), ('item', 'super')],
+                      'incongruent_a': [(0.1, 0.1), (0.0, 0.0)],
+                      'num_sentinels': [4],
+                      }
+elif STUDY == '3a4':
+    param2requests = {'sample_a': [('item', 'item')],
+                      'incongruent_a': [(0.1, 0.0), (0.0, 0.1), (0.1, 0.1), (0.0, 0.0)],
+                      'num_sentinels': [4],
                       }
 
-if SIMPLIFY and '2' in str(STUDY):  # show only most important results
+
+if SIMPLIFY_STUDY2 and str(STUDY).startswith('2'):  # show only most important results
     try:
         param2requests['sample_a'].remove(('super', 'item'))
         param2requests['sample_a'].remove(('item', 'item'))
@@ -70,6 +99,7 @@ for slot in SLOTS:
     for param_p, label in sorted(gen_param_paths(config.Dirs.root.name,
                                                  param2requests,
                                                  param2default,
+                                                 label_n=True,
                                                  label_params=LABEL_PARAMS)):
         # param_df
         dfs = []
@@ -87,6 +117,7 @@ for slot in SLOTS:
             label = next(labels)
 
         label = label.replace('sample_', '')
+        label = label.replace(f'num_sentinels={param2requests["num_sentinels"][0]}\n', '')
 
         color = f'C{color_id}'  # make colors consistent with label, not best ba
         color_id += 1
@@ -111,6 +142,6 @@ for slot in SLOTS:
     fig = plot_summary(summary_data,
                        y_label='Categorization [Balanced accuracy]',
                        legend=LEGEND,
-                       title=f'study={STUDY}\nslot={slot}\ncontext-size={CONTEXT_SIZE}\n{ADDITIONAL_TITLE}',
+                       title=f'study={STUDY}\nslot={slot}\ncontext-size={CONTEXT_SIZE}\n',
                        )
     fig.show()
