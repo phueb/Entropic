@@ -390,6 +390,7 @@ def plot_summary(summary_data,
                  h_line: Optional[int] = None,
                  legend: bool = True,
                  ax_fontsize: int = 10,
+                 leg_fontsize: int = 8,
                  ):
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=163)
@@ -414,9 +415,9 @@ def plot_summary(summary_data,
         ax.axhline(y=h_line, linestyle=':', color='grey', zorder=1)
 
     if legend:
-        plt.legend(bbox_to_anchor=(1.0, 1.0),
+        plt.legend(bbox_to_anchor=(1.0, 1.1),
                    borderaxespad=1.0,
-                   fontsize=9,
+                   fontsize=leg_fontsize,
                    frameon=False,
                    loc='upper left',
                    ncol=1)

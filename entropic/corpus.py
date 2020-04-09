@@ -138,7 +138,7 @@ class Corpus:
             # sample xi
             xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
 
-            # TODO test set size of a
+            # change set size of a and b
             sa = next(size_a)
             sb = next(size_b)
 

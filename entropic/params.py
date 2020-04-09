@@ -20,12 +20,12 @@ param2requests = {
     #             [('super', 'item'), ('item', 'super')],
 
 
-    'sample_a': [('item', 'super'), ('super', 'item'), ('item', 'item')],
-    'incongruent_a': [(0.1, 0.1)],
-    # 'size_a': [(1.1, 0.1), (0.1, 1.1), (1.1, 1.1)],
+    'sample_a': [('item', 'item')],
+    'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                      (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
-
-    'num_sentinels': [8]
+    # 'incongruent_b': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+    #                   (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
 }
 
@@ -43,7 +43,7 @@ param2default = {
     'num_types': 128,
     'num_fragments': 4,
     'starvation': (0.0, 0.0),  # (prob before delay, prob after delay)
-    'num_sentinels': 4,  # number of examples of each x-word category seen before delay
+    'num_sentinels': 8,  # number of examples of each x-word category seen before delay
     'sample_a': ('super', 'super'),
     'sample_b': ('super', 'super'),
     'incongruent_a': (0.0, 0.0),  # probability that Ai is category incongruent
@@ -53,5 +53,5 @@ param2default = {
     # training
     'optimizer': 'sgd',
     'lr': 0.4,  # 0.01 for adagrad, 0.5 for sgd
-    'batch_size': 128,
+    'batch_size': 64,
 }

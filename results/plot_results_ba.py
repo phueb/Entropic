@@ -11,81 +11,55 @@ from ludwig.results import gen_param_paths
 
 
 LABEL_PARAMS = []  # must be a list
-SLOTS = ['a']
-CONTEXT_SIZE = 1
 LEGEND = True
 LABELS = []
 TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
+REVERSE_ORDER = True
 
-STUDY = '0a2'  # '1a'
-SIMPLIFY_STUDY2 = True
+STUDY = '2b3'
 
 
-if STUDY == '0a1':
+if STUDY == '1a1':
     param2requests = {'sample_a': [('item', 'item')],
-                      'num_sentinels': [8],
-                      'incongruent_a': [(0.4, 0.0), (0.0, 0.4)],
+                      'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                                        (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
                       }
-elif STUDY == '0a2':
-    param2requests = {'sample_a': [('super', 'super')],
-                      'num_sentinels': [8],
-                      'size_a': [(1.1, 0.1), (0.1, 1.1), (1.1, 1.1)],
-                      }
+    conditions = [('x', 2)]
 
-if STUDY == '1a':
-    param2requests = {'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
-                      'num_sentinels': [4],
+elif STUDY == '1b1':
+    param2requests = {'sample_b': [('item', 'item')],
+                      'incongruent_b': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                                        (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
                       }
-elif STUDY == '1b':
-    param2requests = {'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')],
-                      'num_sentinels': [4],
-                      }
+    conditions = [('x', 2)]
 
-elif STUDY == '2a':
-    param2requests = {'sample_a': [('super', 'item'), ('super', 'super'), ('item', 'item'), ('item', 'super')],
-                      'num_sentinels': [4],
-                      }
-elif STUDY == '2b':
-    param2requests = {'sample_b': [('super', 'item'), ('super', 'super'),  ('item', 'item'), ('item', 'super')],
-                      'num_sentinels': [4],
-                      }
 
-elif STUDY == '3a1':
-    param2requests = {'sample_a': [('super', 'item'), ('item', 'item')],
-                      'incongruent_a': [(0.0, 0.1), (0.0, 0.0)],
-                      'num_sentinels': [4],
-                      }
-elif STUDY == '3a2':
-    param2requests = {'sample_a': [('super', 'item'), ('item', 'item')],
-                      'incongruent_a': [(0.1, 0.1), (0.0, 0.0)],
-                      'num_sentinels': [4],
-                      }
-elif STUDY == '3a3':
-    param2requests = {'sample_a': [('super', 'item'), ('item', 'super')],
-                      'incongruent_a': [(0.1, 0.1), (0.0, 0.0)],
-                      'num_sentinels': [4],
-                      }
-elif STUDY == '3a4':
+elif STUDY == '2a1':
     param2requests = {'sample_a': [('item', 'item')],
-                      'incongruent_a': [(0.1, 0.0), (0.0, 0.1), (0.1, 0.1), (0.0, 0.0)],
-                      'num_sentinels': [4],
+                      'incongruent_a': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
                       }
+    conditions = [('x', 2)]
+elif STUDY == '2a2':
+    param2requests = {'sample_a': [('item', 'item')],
+                      'incongruent_a': [(0.0, 0.5), (1.0, 0.5)],
+                      }
+    conditions = [('x', 2)]
+elif STUDY == '2b1':
+    param2requests = {'sample_b': [('item', 'item')],
+                      'incongruent_b': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
+                      }
+    conditions = [('x', 2)]
+elif STUDY == '2b2':
+    param2requests = {'sample_b': [('item', 'item')],
+                      'incongruent_b': [(0.0, 0.5), (1.0, 0.5)],
+                      }
+    conditions = [('x', 2)]
 
+else:
+    conditions = [('x', 2)]
 
-if SIMPLIFY_STUDY2 and str(STUDY).startswith('2'):  # show only most important results
-    try:
-        param2requests['sample_a'].remove(('super', 'item'))
-        param2requests['sample_a'].remove(('item', 'item'))
-    except (KeyError, ValueError) as e:
-        print(e)
-    try:
-        param2requests['sample_b'].remove(('super', 'item'))
-        param2requests['sample_b'].remove(('item', 'item'))
-    except (KeyError, ValueError) as e:
-        print(e)
-
-for slot in SLOTS:
+for slot, context_size in conditions:
 
     labels = iter(LABELS)
 
@@ -100,10 +74,11 @@ for slot in SLOTS:
                                                  param2requests,
                                                  param2default,
                                                  label_n=True,
-                                                 label_params=LABEL_PARAMS)):
-        # param_df
+                                                 label_params=LABEL_PARAMS),
+                                 key=lambda i: i[1], reverse=REVERSE_ORDER):
+        # load data-frame
         dfs = []
-        for df_p in param_p.glob(f'*num*/ba_{slot}_context-size={CONTEXT_SIZE}.csv'):
+        for df_p in param_p.glob(f'*num*/ba_{slot}_context-size={context_size}.csv'):
             print('Reading {}'.format(df_p.name))
             df = pd.read_csv(df_p, index_col=0)
             df.index.name = 'step'
@@ -116,9 +91,15 @@ for slot in SLOTS:
         if LABELS:
             label = next(labels)
 
-        label = label.replace('sample_', '')
-        label = label.replace(f'num_sentinels={param2requests["num_sentinels"][0]}\n', '')
+        # shorten labels
+        if STUDY.startswith('1a'):
+            label = label.replace(f'sample_a={param2requests["sample_a"][0]}\n', '')
+        if STUDY.startswith('1b'):
+            label = label.replace(f'sample_b={param2requests["sample_b"][0]}\n', '')
+        else:
+            label = label.replace('sample_', '')
 
+        # color
         color = f'C{color_id}'  # make colors consistent with label, not best ba
         color_id += 1
 
@@ -142,6 +123,6 @@ for slot in SLOTS:
     fig = plot_summary(summary_data,
                        y_label='Categorization [Balanced accuracy]',
                        legend=LEGEND,
-                       title=f'study={STUDY}\nslot={slot}\ncontext-size={CONTEXT_SIZE}\n',
+                       title=f'study={STUDY}\nslot={slot}\ncontext-size={context_size}\n',
                        )
     fig.show()

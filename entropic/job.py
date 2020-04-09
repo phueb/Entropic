@@ -135,7 +135,7 @@ def main(param2val):
             for slot, words in zip(corpus.slots,
                                    [corpus.a, corpus.x, corpus.b, corpus.y]):
 
-                if slot in ['b', 'y']:
+                if slot in ['y']:
                     continue  # speed up eval
 
                 slot_id = corpus.slots.index(slot)

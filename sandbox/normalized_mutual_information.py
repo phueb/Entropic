@@ -19,9 +19,9 @@ NORM_FACTOR = 'XY'
 
 
 del param2requests
-param2requests = {'sample_a': [('super', 'super')],
+param2requests = {'sample_a': [('item', 'item')],
                   'num_sentinels': [8],
-                  'size_a': [(0.1, 1.1)],
+                  'incongruent_a': [(0.4, 0.2), (0.0, 0.2)],
                   }
 
 
