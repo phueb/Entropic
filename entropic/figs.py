@@ -387,7 +387,7 @@ def plot_summary(summary_data,
                  title: str = '',
                  y_lims: Optional[Tuple[float, float]] = (0.5, 1.05),
                  v_line: Optional[int] = None,
-                 h_line: Optional[int] = None,
+                 h_line: Optional[int] = 1.0,
                  legend: bool = True,
                  ax_fontsize: int = 10,
                  leg_fontsize: int = 8,
@@ -403,16 +403,14 @@ def plot_summary(summary_data,
     if y_lims is not None:
         ax.set_ylim(y_lims)
 
-    # colors = iter(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C8', 'C9', 'C10', 'C11'])
-    for x, y, me, label, color, n in summary_data:
-        # color = next(colors)
-        ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
-        ax.plot(x, y, label=label, color=color, lw=2)
-        # ax.scatter(x, y, color=color)
     if v_line is not None:
         ax.axvline(x=v_line, linestyle=':', color='grey', zorder=1)
     if h_line is not None:
         ax.axhline(y=h_line, linestyle=':', color='grey', zorder=1)
+
+    for x, y, me, label, color, n in summary_data:
+        ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
+        ax.plot(x, y, label=label, color=color, lw=2)
 
     if legend:
         plt.legend(bbox_to_anchor=(1.0, 1.1),

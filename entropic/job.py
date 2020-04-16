@@ -34,6 +34,8 @@ class Params(object):
     incongruent_b = attr.ib(validator=attr.validators.instance_of(tuple))
     size_a = attr.ib(validator=attr.validators.instance_of(tuple))
     size_b = attr.ib(validator=attr.validators.instance_of(tuple))
+    drop_a = attr.ib(validator=attr.validators.instance_of(tuple))
+    drop_b = attr.ib(validator=attr.validators.instance_of(tuple))
     # training
     optimizer = attr.ib(validator=attr.validators.instance_of(str))
     batch_size = attr.ib(validator=attr.validators.instance_of(int))
@@ -72,6 +74,8 @@ def main(param2val):
                     incongruent_b=params.incongruent_b,
                     size_a=params.size_a,
                     size_b=params.size_b,
+                    drop_a=params.drop_a,
+                    drop_b=params.drop_b,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,

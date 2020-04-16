@@ -14,24 +14,22 @@ the probability that Yi is a semantically uninformative symbol (kind of like a p
 """
 
 param2requests = {
-    # 'sample_a': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
-    #             [('super', 'item'), ('item', 'super')],
-    # 'sample_b': [('super', 'super'), ('sub', 'sub'), ('item', 'item')] +
-    #             [('super', 'item'), ('item', 'super')],
-
-
-    'sample_a': [('item', 'item')],
-    'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-                      (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
     # 'incongruent_b': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
     #                   (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
+    'sample_b': [('item', 'item')],
+    'incongruent_b': [(0.0, 0.0)],
+    'drop_b': [(1.0, 0.5), (0.5, 0.5), (0.0, 0.5)],
+
+    'lr': [0.5]  # TODO
+
+    # TODO why is blue line longer when it drops MORE items than other lines? it should be no more than 1400 batches
 }
 
 param2debug = {
-    'size_a': (1.1, 1.0),
-    'num_sentinels': 8,
+    'doc_size': 1_000,
+    'delay': 500,
 }
 
 param2default = {
@@ -50,6 +48,8 @@ param2default = {
     'incongruent_b': (0.0, 0.0),
     'size_a': (1.0, 1.0),  # proportion of set size of A
     'size_b': (1.0, 1.0),
+    'drop_a': (0.0, 0.0),
+    'drop_b': (0.0, 0.0),
     # training
     'optimizer': 'sgd',
     'lr': 0.4,  # 0.01 for adagrad, 0.5 for sgd

@@ -77,6 +77,8 @@ for param2val in gen_all_param2vals(param2requests, param2default):
                     incongruent_b=params.incongruent_b,
                     size_a=params.size_a,
                     size_b=params.size_b,
+                    drop_a=params.drop_a,
+                    drop_b=params.drop_b,
                     )
     prep = SlidingPrep([corpus.doc],
                        reverse=False,

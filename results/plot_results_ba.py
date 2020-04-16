@@ -17,13 +17,15 @@ TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
-STUDY = '2b3'
+STUDY = None
 
 
 if STUDY == '1a1':
     param2requests = {'sample_a': [('item', 'item')],
-                      'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-                                        (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
+                      # 'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                      #                   (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
+                      'incongruent_a': [(0.0, 0.0), (0.2, 0.2), (0.4, 0.4), (0.5, 0.5),
+                                        (0.6, 0.6), (0.8, 0.8), (1.0, 1.0)],
                       }
     conditions = [('x', 2)]
 
@@ -42,7 +44,7 @@ elif STUDY == '2a1':
     conditions = [('x', 2)]
 elif STUDY == '2a2':
     param2requests = {'sample_a': [('item', 'item')],
-                      'incongruent_a': [(0.0, 0.5), (1.0, 0.5)],
+                      'incongruent_a': [(0.0, 0.5), (1.0, 0.5), (0.5, 0.5)],
                       }
     conditions = [('x', 2)]
 elif STUDY == '2b1':
@@ -92,9 +94,9 @@ for slot, context_size in conditions:
             label = next(labels)
 
         # shorten labels
-        if STUDY.startswith('1a'):
+        if str(STUDY).startswith('1a'):
             label = label.replace(f'sample_a={param2requests["sample_a"][0]}\n', '')
-        if STUDY.startswith('1b'):
+        if str(STUDY).startswith('1b'):
             label = label.replace(f'sample_b={param2requests["sample_b"][0]}\n', '')
         else:
             label = label.replace('sample_', '')
@@ -102,6 +104,7 @@ for slot, context_size in conditions:
         # color
         color = f'C{color_id}'  # make colors consistent with label, not best ba
         color_id += 1
+        print('color id', color_id)
 
         # summarize data
         num_reps = param_df.shape[1]

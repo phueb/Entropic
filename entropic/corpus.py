@@ -23,6 +23,8 @@ class Corpus:
                  incongruent_b: Tuple[float, float],
                  size_a: Tuple[float, float],
                  size_b: Tuple[float, float],
+                 drop_a: Tuple[float, float],
+                 drop_b: Tuple[float, float],
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
@@ -42,6 +44,8 @@ class Corpus:
         self.incongruent_b = incongruent_b
         self.size_a = size_a
         self.size_b = size_b
+        self.drop_a = drop_a
+        self.drop_b = drop_b
         self.alpha = alpha
         self.delay = delay
         self.num_sentinels = num_sentinels
@@ -116,8 +120,15 @@ class Corpus:
         sbi1 = iter(np.linspace(sb1, np.mean([sb1, sb2]), nw1))
         sbi2 = iter(np.linspace(np.mean([sb1, sb2]), sb2, nw2))
 
-        doc1 = self.make_doc(self.x1, nw1, self.starvation[0], self.sample_a[0], self.sample_b[0], iai1, ibi1, sai1, sbi1)
-        doc2 = self.make_doc(self.x2, nw2, self.starvation[1], self.sample_a[1], self.sample_b[1], iai2, ibi2, sai2, sbi2)
+        da1, da2 = self.drop_a
+        db1, db2 = self.drop_b
+        dai1 = iter(np.linspace(da1, np.mean([da1, da2]), nw1))
+        dai2 = iter(np.linspace(np.mean([da1, da2]), da2, nw2))
+        dbi1 = iter(np.linspace(db1, np.mean([db1, db2]), nw1))
+        dbi2 = iter(np.linspace(np.mean([db1, db2]), db2, nw2))
+
+        doc1 = self.make_doc(self.x1, nw1, self.starvation[0], self.sample_a[0], self.sample_b[0], iai1, ibi1, sai1, sbi1, dai1, dbi1)
+        doc2 = self.make_doc(self.x2, nw2, self.starvation[1], self.sample_a[1], self.sample_b[1], iai2, ibi2, sai2, sbi2, dai2, dbi2)
         return doc1 + doc2
 
     def make_doc(self,
@@ -130,6 +141,8 @@ class Corpus:
                  incongruent_b: iter,
                  size_a: iter,
                  size_b: iter,
+                 a_drop: iter,
+                 b_drop: iter,
                  ) -> str:
 
         res = ''
@@ -138,9 +151,15 @@ class Corpus:
             # sample xi
             xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
 
-            # change set size of a and b
+            # read next in iterators
             sa = next(size_a)
             sb = next(size_b)
+
+            ipa = next(incongruent_a)
+            ipb = next(incongruent_b)
+
+            ad = next(a_drop)
+            bd = next(b_drop)
 
             # sample ai
             if sample_a == 'item':
@@ -163,12 +182,10 @@ class Corpus:
                 raise AttributeError('Invalid arg to "sample_b".')
 
             # incongruent ai
-            ipa = next(incongruent_a)
             if random.random() < ipa:
                 ai = random.choice([ai for ai in self.a if ai not in self.xi2a[xi]])
 
             # incongruent bi
-            ipb = next(incongruent_b)
             if random.random() < ipb:
                 bi = random.choice([bi for bi in self.b if bi not in self.xi2b[xi]])
 
@@ -179,7 +196,14 @@ class Corpus:
                 yi = random.choice(self.xi2y[xi])
 
             # collect
-            res += f'{ai} {xi} {bi} {yi} '  # whitespace after each
+            if random.random() < ad and random.random() < bd:
+                res += f'{xi} {yi} '
+            elif random.random() < ad:
+                res += f'{xi} {bi} {yi} '
+            elif random.random() < bd:
+                res += f'{ai} {xi} {yi} '
+            else:
+                res += f'{ai} {xi} {bi} {yi} '  # whitespace after each
 
         return res
 
