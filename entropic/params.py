@@ -18,13 +18,15 @@ param2requests = {
     # 'incongruent_b': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
     #                   (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
-    'sample_b': [('item', 'item')],
-    'incongruent_b': [(0.0, 0.0)],
-    'drop_b': [(1.0, 0.5), (0.5, 0.5), (0.0, 0.5)],
+    'sample_a': [('item', 'item')],
+    # 'incongruent_a': [(0.0, 0.0)],
+    'drop_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+               (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9)],
 
-    'lr': [0.5]  # TODO
+    # 'lr': [0.4],  # 0.5 is needed for 3b1
 
-    # TODO why is blue line longer when it drops MORE items than other lines? it should be no more than 1400 batches
+    'hidden_size': [16, 32, 64],  # TODO an attempt to make failures more dramatic
+
 }
 
 param2debug = {

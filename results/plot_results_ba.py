@@ -1,4 +1,15 @@
-from typing import Dict, Optional
+"""
+Note:
+    balanced accuracy is flat when evaluating slot=b and context-size=3 and sample_b=super,
+    because items in slot B do not correlate with items in slot Y (sampling strategy is
+    "super"). The context does not have category information because for each Bi word,
+     all category contexts are equally represented, thus averaging out category information.
+     If instead, context information for each Yi item was averaged together, and Yi item information discarded,
+     balanced accuracy should not be flat. This is not done because the research question is about category information
+     in A, X, and B, and not in Y.
+
+
+"""
 
 import pandas as pd
 from scipy import stats
@@ -17,7 +28,7 @@ TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
-STUDY = None
+STUDY = '3b1'
 
 
 if STUDY == '1a1':
@@ -58,8 +69,23 @@ elif STUDY == '2b2':
                       }
     conditions = [('x', 2)]
 
-else:
+elif STUDY == '3a1':
+    param2requests = {'sample_a': [('item', 'item')],
+                      'incongruent_a': [(0.0, 0.0)],
+                      'drop_a': [(0.0, 0.5), (0.5, 0.5), (1.0, 0.5)],
+                      'lr': [0.4],
+                      }
     conditions = [('x', 2)]
+elif STUDY == '3b1':
+    param2requests = {'sample_b': [('item', 'item')],
+                      'incongruent_b': [(0.0, 0.0)],
+                      'drop_b': [(0.0, 0.5), (0.5, 0.5), (1.0, 0.5)],
+                      'lr': [0.5],  # TODO s this really needed?
+                      }
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
+
+else:
+    conditions = [('a', 1), ('x', 2), ('b', 3)]
 
 for slot, context_size in conditions:
 

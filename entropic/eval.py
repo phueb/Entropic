@@ -67,7 +67,7 @@ def make_p_cat(prep: Union[PartitionedPrep, SlidingPrep],
     """
     make the true next-word probability distribution for some x-word
     """
-    x_windows = get_windows(prep, x)  # windows with x in slot -2
+    x_windows = get_windows(prep, x, col_id=-2)  # windows with x in slot -2
     cx, ry, cx_ry = get_outcomes(prep, x_windows)
     w2f = Counter(ry)
     res = np.asarray([w2f[w] for w in types])
@@ -93,7 +93,7 @@ def get_outcomes(prep: Union[PartitionedPrep, SlidingPrep],
 
 def get_windows(prep: Union[PartitionedPrep, SlidingPrep],
                 words: List[str],
-                col_id: int = -3,  # windows with probe in position -3
+                col_id: int,
                 ) -> np.ndarray:
     row_ids = np.isin(prep.reordered_windows[:, col_id], [prep.store.w2id[w] for w in words])
     res = prep.reordered_windows[row_ids]
