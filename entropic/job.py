@@ -10,7 +10,7 @@ from itertools import product
 
 from preppy import SlidingPrep
 
-from entropic import config
+from entropic import configs
 from entropic.eval import calc_ba, make_p_cat
 from entropic.corpus import Corpus
 from entropic.rnn import RNN
@@ -123,7 +123,7 @@ def main(param2val):
         xe = criterion(logits, targets)
 
         # EVAL
-        if step % config.Eval.eval_interval == 0:
+        if step % configs.Eval.eval_interval == 0:
 
             # get output representations
             x_v = np.array([[prep.store.w2id[ai]] for ai in corpus.a])
@@ -166,7 +166,7 @@ def main(param2val):
 
             # collect dp between output-layer X sub-category representations
             eval_steps.append(step)
-            if config.Eval.calc_dp:
+            if configs.Eval.calc_dp:
                 for cat_id1, cat_id2 in product(range(params.num_fragments), range(params.num_fragments)):
                     p_cat1 = make_p_cat(prep, x=corpus.cat_id2x[cat_id1], types=corpus.types)
                     q_cat2 = q_x[cat_id2xw_ids[cat_id2]].mean(0)
@@ -188,7 +188,7 @@ def main(param2val):
                 name2col.setdefault(f'e_cat{cat_id}', []).append(e)
 
             # save output probabilities to file (for making animations)
-            if save_path.exists() and config.Eval.save_output_probabilities:  # does not exist when "ludwig -l"
+            if save_path.exists() and configs.Eval.save_output_probabilities:  # does not exist when "ludwig -l"
                 np.save(save_path / f'output_probabilities_v_{step:0>9}.npy', q_v)
                 np.save(save_path / f'output_probabilities_w_{step:0>9}.npy', q_w)
                 np.save(save_path / f'output_probabilities_x_{step:0>9}.npy', q_x)
@@ -196,7 +196,7 @@ def main(param2val):
 
             # save embeddings for x-word to file (for making animations)
             out_path = save_path / f'embeddings_{step:0>9}.npy'
-            if save_path.exists() and config.Eval.save_embeddings:  # does not exist when "ludwig -l"
+            if save_path.exists() and configs.Eval.save_embeddings:  # does not exist when "ludwig -l"
                 for slot, words in zip(corpus.slots,
                                        [corpus.a, corpus.b, corpus.x, corpus.y]):
                     word_ids = [prep.store.w2id[w] for w in words]

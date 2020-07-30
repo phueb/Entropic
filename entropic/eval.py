@@ -7,7 +7,7 @@ import warnings
 
 from preppy import PartitionedPrep, SlidingPrep
 
-from entropic import config
+from entropic import configs
 
 
 def calc_ba(sim_mat, gold_mat):
@@ -38,10 +38,10 @@ def calc_ba(sim_mat, gold_mat):
 
     # use bayes optimization to find best_thr
     gp_params = {"alpha": 1e-5, "n_restarts_optimizer": 2}  # without this, warnings about predicted variance < 0
-    bo = BayesianOptimization(calc_probes_ba, {'thr': (0.0, 1.0)}, verbose=config.Eval.verbose)
-    bo.init_points.extend(config.Eval.eval_thresholds)
-    bo.maximize(init_points=config.Eval.num_opt_init_steps, n_iter=config.Eval.num_opt_steps,
-                acq="poi", xi=config.Eval.xi, **gp_params)  # smaller xi: exploitation
+    bo = BayesianOptimization(calc_probes_ba, {'thr': (0.0, 1.0)}, verbose=configs.Eval.verbose)
+    bo.init_points.extend(configs.Eval.eval_thresholds)
+    bo.maximize(init_points=configs.Eval.num_opt_init_steps, n_iter=configs.Eval.num_opt_steps,
+                acq="poi", xi=configs.Eval.xi, **gp_params)  # smaller xi: exploitation
     best_thr = bo.res['max']['max_params']['thr']
     # use best_thr
     results = calc_probes_ba(best_thr)

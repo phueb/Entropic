@@ -10,7 +10,7 @@ from matplotlib import patheffects
 from itertools import cycle
 from pathlib import Path
 
-from entropic import config
+from entropic import configs
 
 
 def make_heatmap_fig(mat,
@@ -90,7 +90,7 @@ def make_svd_across_time_fig(representations: np.ndarray,
         transformations.append(svd_model.transform(ei)[:, [component1, component2]])
 
     # fig
-    res, ax = plt.subplots(figsize=config.Fig.fig_size, dpi=config.Fig.dpi)
+    res, ax = plt.subplots(figsize=configs.Fig.fig_size, dpi=configs.Fig.dpi)
     ax.set_title(f'Singular dimensions {component1} and {component2}\nEvolution across training\n' + label)
     ax.axis('off')
     ax.axhline(y=0, linestyle='--', c='grey', linewidth=1.0)
@@ -101,14 +101,14 @@ def make_svd_across_time_fig(representations: np.ndarray,
 
         # lines
         x, y = zip(*[t[n] for t in transformations])
-        ax.plot(x, y, c=palette[n], lw=config.Fig.line_width)
+        ax.plot(x, y, c=palette[n], lw=configs.Fig.line_width)
 
         # annotate
         for tick in range(0, len(transformations) + 1, label_tick_interval):
             x_pos, y_pos = transformations[tick][n, :]
             txt = ax.text(x_pos, y_pos, f'{tick * steps_in_tick}', fontsize=8, color=palette[n])
             txt.set_path_effects([
-                patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+                patheffects.Stroke(linewidth=configs.Fig.line_width, foreground="w"), patheffects.Normal()])
 
     return res
 
@@ -159,14 +159,14 @@ def make_svd_across_time_3d_fig(representations: np.ndarray,
 
         # lines
         x, y, z = zip(*[t[n] for t in transformations])
-        ax.plot(x, y, z, c=palette[n], lw=config.Fig.line_width)
+        ax.plot(x, y, z, c=palette[n], lw=configs.Fig.line_width)
 
         # annotate
         for tick in range(0, len(transformations), label_tick_interval):
             x_pos, y_pos, z_pos = transformations[tick][n, :]
             txt = ax.text(x_pos, y_pos, z_pos, f'{tick * steps_in_tick}', fontsize=6, color=palette[n])
             txt.set_path_effects([
-                patheffects.Stroke(linewidth=config.Fig.line_width, foreground="w"), patheffects.Normal()])
+                patheffects.Stroke(linewidth=configs.Fig.line_width, foreground="w"), patheffects.Normal()])
 
     return res
 
@@ -240,7 +240,7 @@ def make_svd_across_time_3d_animation(representations: np.ndarray,
         for cat_id in range(num_cats):
             color = palette[cat_id]
             x, y, z = zip(*[transformation[cat_id] for transformation in transformations[:tick]])
-            ax.plot(x, y, z, c=color, lw=config.Fig.line_width)  # x, y, z each have only 1 element
+            ax.plot(x, y, z, c=color, lw=configs.Fig.line_width)  # x, y, z each have only 1 element
 
         # plot average location of all but last category
         if plot_avg_location_first_three_cats:
@@ -394,7 +394,7 @@ def plot_summary(summary_data,
                  ):
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=163)
-    plt.title(title, fontsize=config.Fig.title_label_fs)
+    plt.title(title, fontsize=configs.Fig.title_label_fs)
     ax.set_xlabel('Training Time [step]', fontsize=ax_fontsize)
 
     ax.set_ylabel(y_label + '\n+/- margin of error', fontsize=ax_fontsize)
@@ -409,11 +409,14 @@ def plot_summary(summary_data,
         ax.axhline(y=h_line, linestyle=':', color='grey', zorder=1)
 
     for x, y, me, label, color, n in summary_data:
-        ax.fill_between(x, y + me, y - me, alpha=0.25, color=color)
+
+        print(color)
+
+        ax.fill_between(x, np.clip(y + me, 0, 1.0), y - me, alpha=0.1, color=color)
         ax.plot(x, y, label=label, color=color, lw=2)
 
     if legend:
-        plt.legend(bbox_to_anchor=(1.0, 1.1),
+        plt.legend(bbox_to_anchor=(1.0, 1.2),
                    borderaxespad=1.0,
                    fontsize=leg_fontsize,
                    frameon=False,
@@ -423,7 +426,10 @@ def plot_summary(summary_data,
     return fig
 
 
-def correct_artifacts(y: pd.Series, tolerance: float = 1.0, strong_correction=False):
+def correct_artifacts(y: pd.Series,
+                      tolerance: float = 1.0,
+                      strong_correction=False,
+                      verbose: bool = False):
     """
     correct y when y drops more than tolerance.
     this is necessary because computation of balanced accuracy occasionally results in unwanted negative spikes
@@ -433,9 +439,11 @@ def correct_artifacts(y: pd.Series, tolerance: float = 1.0, strong_correction=Fa
         val1, val2, val3 = res[[i, i+1, i+2]]
         if (val1 - tolerance) > val2 < (val3 - tolerance):
             res[i+1] = np.mean([val1, val3])
-            print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
+            if verbose:
+                print('Adjusting {} to {}'.format(val2, np.mean([val1, val3])))
         # in case dip is at end - but also distorts ba at other time points
         elif (val2 - tolerance) > val3 and strong_correction:
             res[i+2] = val2
-            print('Adjusting with strong correction')
+            if verbose:
+                print('Adjusting with strong correction')
     return res.tolist()

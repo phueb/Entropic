@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from typing import Optional
 
-from entropic import config
+from entropic import configs
 
 
 class RNN(torch.nn.Module):
@@ -10,7 +10,7 @@ class RNN(torch.nn.Module):
                  flavor: str,
                  input_size: int,
                  hidden_size: int,
-                 max_w: Optional[float] = config.Model.max_w,
+                 max_w: Optional[float] = configs.Model.max_w,
                  ):
 
         super().__init__()

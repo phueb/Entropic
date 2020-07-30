@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 import shutil
 
-from entropic import config
+from entropic import configs
 from entropic.params import param2default, param2requests
 from entropic.figs import make_predictions_animation
 
@@ -26,7 +26,7 @@ def to_step(file_name):
 
 
 summary_data = []
-for param_path, label in gen_param_paths(config.Dirs.root.name,
+for param_path, label in gen_param_paths(configs.Dirs.root.name,
                                          param2requests,
                                          param2default,
                                          label_n=False,
@@ -73,7 +73,7 @@ for param_path, label in gen_param_paths(config.Dirs.root.name,
 
         # make path where to save images
         label_flat = label.replace('\n', '-')
-        images_path = config.Dirs.images / f'{label_flat}_{job_id:0>3}_{SLOT}'
+        images_path = configs.Dirs.images / f'{label_flat}_{job_id:0>3}_{SLOT}'
         if not images_path.exists():
             images_path.mkdir()
         else:

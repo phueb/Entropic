@@ -3,7 +3,7 @@ from scipy import stats
 import numpy as np
 
 from entropic.figs import plot_summary
-from entropic import config
+from entropic import configs
 from entropic.params import param2default, param2requests
 
 from ludwig.results import gen_param_paths
@@ -18,7 +18,7 @@ labels = iter(LABELS)
 
 # collect data
 summary_data = []
-for param_p, label in gen_param_paths(config.Dirs.root.name,
+for param_p, label in gen_param_paths(configs.Dirs.root.name,
                                       param2requests,
                                       param2default,
                                       label_params=LABEL_PARAMS):

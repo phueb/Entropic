@@ -15,17 +15,9 @@ the probability that Yi is a semantically uninformative symbol (kind of like a p
 
 param2requests = {
 
-    # 'incongruent_b': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-    #                   (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
-
     'sample_a': [('item', 'item')],
-    # 'incongruent_a': [(0.0, 0.0)],
-    'drop_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-               (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9)],
-
-    # 'lr': [0.4],  # 0.5 is needed for 3b1
-
-    'hidden_size': [16, 32, 64],  # TODO an attempt to make failures more dramatic
+    'incongruent_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                      (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
 
 }
 
@@ -36,7 +28,7 @@ param2debug = {
 
 param2default = {
     # rnn
-    'hidden_size': 64,  # 8, 32 are too low
+    'hidden_size': 64,
     # toy corpus
     'doc_size': 100_000,
     'delay': 50_000,

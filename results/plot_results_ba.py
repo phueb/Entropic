@@ -15,7 +15,7 @@ import pandas as pd
 from scipy import stats
 
 from entropic.figs import plot_summary, correct_artifacts
-from entropic import config
+from entropic import configs
 from entropic.params import param2default, param2requests
 
 from ludwig.results import gen_param_paths
@@ -28,7 +28,7 @@ TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
-STUDY = '3b1'
+STUDY = None   # '3b1'
 
 
 if STUDY == '1a1':
@@ -72,20 +72,18 @@ elif STUDY == '2b2':
 elif STUDY == '3a1':
     param2requests = {'sample_a': [('item', 'item')],
                       'incongruent_a': [(0.0, 0.0)],
-                      'drop_a': [(0.0, 0.5), (0.5, 0.5), (1.0, 0.5)],
-                      'lr': [0.4],
+                      'drop_a': [(0.0, 0.0), (0.1, 0.1), (0.1, 0.0), (0.0, 0.1)],
                       }
-    conditions = [('x', 2)]
+    conditions = [('a', 1), ('x', 1)]
 elif STUDY == '3b1':
     param2requests = {'sample_b': [('item', 'item')],
                       'incongruent_b': [(0.0, 0.0)],
-                      'drop_b': [(0.0, 0.5), (0.5, 0.5), (1.0, 0.5)],
-                      'lr': [0.5],  # TODO s this really needed?
+                      'drop_b': [(0.0, 0.0), (0.75, 0.75), (0.75, 0.0), (0.0, 0.75)],
                       }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('x', 1), ('b', 1), ('b', 2)]
 
 else:
-    conditions = [('a', 1), ('x', 2), ('b', 3)]
+    conditions = [('x', 1), ('b', 1), ('b', 2)]
 
 for slot, context_size in conditions:
 
@@ -98,7 +96,7 @@ for slot, context_size in conditions:
     # collect data
     summary_data = []
     color_id = 0
-    for param_p, label in sorted(gen_param_paths(config.Dirs.root.name,
+    for param_p, label in sorted(gen_param_paths(configs.Dirs.root.name,
                                                  param2requests,
                                                  param2default,
                                                  label_n=True,
@@ -129,8 +127,10 @@ for slot, context_size in conditions:
 
         # color
         color = f'C{color_id}'  # make colors consistent with label, not best ba
-        color_id += 1
-        print('color id', color_id)
+        if color_id < 10:  # only 10 colors in default color cycle
+            color_id += 1
+        else:
+            color = '0'
 
         # summarize data
         num_reps = param_df.shape[1]
