@@ -23,15 +23,11 @@ class Params(object):
     hidden_size = attr.ib(validator=attr.validators.instance_of(int))
     # toy corpus
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
-    delay = attr.ib(validator=attr.validators.instance_of(int))
-    num_sentinels = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
     num_fragments = attr.ib(validator=attr.validators.instance_of(int))
     starvation = attr.ib(validator=attr.validators.instance_of(tuple))
-    sample_b = attr.ib(validator=attr.validators.instance_of(tuple))
-    sample_a = attr.ib(validator=attr.validators.instance_of(tuple))
-    incongruent_a = attr.ib(validator=attr.validators.instance_of(tuple))
-    incongruent_b = attr.ib(validator=attr.validators.instance_of(tuple))
+    redundant_a = attr.ib(validator=attr.validators.instance_of(tuple))
+    redundant_b = attr.ib(validator=attr.validators.instance_of(tuple))
     size_a = attr.ib(validator=attr.validators.instance_of(tuple))
     size_b = attr.ib(validator=attr.validators.instance_of(tuple))
     drop_a = attr.ib(validator=attr.validators.instance_of(tuple))
@@ -63,21 +59,17 @@ def main(param2val):
 
     # create toy input
     corpus = Corpus(doc_size=params.doc_size,
-                    delay=params.delay,
                     num_types=params.num_types,
                     num_fragments=params.num_fragments,
                     starvation=params.starvation,
-                    num_sentinels=params.num_sentinels,
-                    sample_b=params.sample_b,
-                    sample_a=params.sample_a,
-                    incongruent_a=params.incongruent_a,
-                    incongruent_b=params.incongruent_b,
+                    redundant_a=params.redundant_a,
+                    redundant_b=params.redundant_b,
                     size_a=params.size_a,
                     size_b=params.size_b,
                     drop_a=params.drop_a,
                     drop_b=params.drop_b,
                     )
-    prep = SlidingPrep([corpus.doc],
+    prep = SlidingPrep([corpus.sequences],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.batch_size,
@@ -111,10 +103,9 @@ def main(param2val):
     # train loop
     for step, batch in enumerate(prep.generate_batches()):
 
-        # prepare x, y
-        x, y = batch[:, :-1], batch[:, -1]
-        inputs = torch.cuda.LongTensor(x)
-        targets = torch.cuda.LongTensor(y)
+        # prepare input, output
+        inputs = torch.cuda.LongTensor(batch[:, :-1])
+        targets = torch.cuda.LongTensor(batch[:, -1])
 
         # feed forward
         rnn.train()

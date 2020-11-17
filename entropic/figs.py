@@ -178,7 +178,6 @@ def make_svd_across_time_3d_animation(representations: np.ndarray,
                                       label: str,
                                       steps_in_tick: int,
                                       delay_tick: int,
-                                      num_sentinels: int,
                                       images_path: Path,
                                       plot_avg_location_first_three_cats: bool = False,
                                       ) -> None:

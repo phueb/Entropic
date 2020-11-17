@@ -8,19 +8,23 @@ from typing import Tuple, Optional, List
 class Corpus:
     """
     methods for making a document, a string of artificial words following the structure (A, X, B, Y).
+
+    X elements always predict a subset of Y elements, in every sequence.
+    redundancy argument influences how likely an X element predicts an A or B element.
+
+    there are 3 redundancy reduction strategies:
+    1) lowering the probability of redundancy directly
+    2) reducing the size of category A or B
+    3) dropping slots A or B in some sequences
     """
 
     def __init__(self,
                  doc_size: int,
-                 delay: int,
                  num_types: int,
                  num_fragments: int,
                  starvation: Tuple[float, float],
-                 num_sentinels: int,
-                 sample_b: Tuple[str, str],
-                 sample_a: Tuple[str, str],
-                 incongruent_a: Tuple[float, float],
-                 incongruent_b: Tuple[float, float],
+                 redundant_a: Tuple[float, float],
+                 redundant_b: Tuple[float, float],
                  size_a: Tuple[float, float],
                  size_b: Tuple[float, float],
                  drop_a: Tuple[float, float],
@@ -29,29 +33,22 @@ class Corpus:
                  seed: Optional[int] = None,
                  ) -> None:
 
-        assert 0.0 <= incongruent_a[0] <= 1.0
-        assert 0.0 <= incongruent_a[1] <= 1.0
-        assert 0.0 <= incongruent_b[0] <= 1.0
-        assert 0.0 <= incongruent_b[1] <= 1.0
+        assert 0.0 <= redundant_a[0] <= 1.0
+        assert 0.0 <= redundant_a[1] <= 1.0
+        assert 0.0 <= redundant_b[0] <= 1.0
+        assert 0.0 <= redundant_b[1] <= 1.0
 
         self.doc_size = doc_size
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.starvation = starvation
-        self.sample_b = sample_b
-        self.sample_a = sample_a
-        self.incongruent_a = incongruent_a
-        self.incongruent_b = incongruent_b
+        self.redundant_a = redundant_a
+        self.redundant_b = redundant_b
         self.size_a = size_a
         self.size_b = size_b
         self.drop_a = drop_a
         self.drop_b = drop_b
         self.alpha = alpha
-        self.delay = delay
-        self.num_sentinels = num_sentinels
-
-        self.incongruent_a = incongruent_a
-        self.incongruent_b = incongruent_b
 
         self.num_words_in_window = 4
         self.slots = ['a', 'x', 'b', 'y']
@@ -74,44 +71,31 @@ class Corpus:
         self.cat_id2x = {frag_id: [xi for xi, cat_id in self.xi2cat_id.items() if cat_id == frag_id]
                          for frag_id in range(self.num_fragments)}
 
-        # map subsets of xis to mutually exclusive subsets/fragments
-        a_fragments = [self.a[offset::num_fragments] for offset in range(num_fragments)]
-        b_fragments = [self.b[offset::num_fragments] for offset in range(num_fragments)]
+        # map xi to category-relevant yi
         y_fragments = [self.y[offset::num_fragments] for offset in range(num_fragments)]
-        self.xi2a = {xi: a_fragments[self.xi2cat_id[xi]] for xi in self.x}
-        self.xi2b = {xi: b_fragments[self.xi2cat_id[xi]] for xi in self.x}
         self.xi2y = {xi: y_fragments[self.xi2cat_id[xi]] for xi in self.x}
 
+        # make each xi redundant with one ai, bi
         self.xi2ai = {xi: ai for xi, ai in zip(self.x, self.a)}
         self.xi2bi = {xi: bi for xi, bi in zip(self.x, self.b)}
-
-        # check
-        x_fragment_size = self.num_x // num_fragments
-        assert 0 < self.num_sentinels <= x_fragment_size, f'Check that 0 < "num_sentinels"  <= {x_fragment_size}'
-
-        non_sentinels = []
-        for cat_id in range(self.num_fragments):
-            non_sentinels += self.cat_id2x[cat_id][num_sentinels:]
-        self.x1 = [xi for xi in self.x if xi not in non_sentinels]  # during delay
-        self.x2 = self.x                                            # after delay
 
         if seed is not None:
             random.seed(seed)
 
     @cached_property
-    def doc(self) -> str:
+    def sequences(self) -> str:
 
-        doc_size1 = self.delay
-        doc_size2 = self.doc_size - self.delay
+        doc_size1 = self.doc_size
+        doc_size2 = self.doc_size
         nw1 = doc_size1 // self.num_words_in_window
         nw2 = doc_size2 // self.num_words_in_window
 
-        ia1, ia2 = self.incongruent_a
-        ib1, ib2 = self.incongruent_b
-        iai1 = iter(np.linspace(ia1, np.mean([ia1, ia2]), nw1))
-        iai2 = iter(np.linspace(np.mean([ia1, ia2]), ia2, nw2))
-        ibi1 = iter(np.linspace(ib1, np.mean([ib1, ib2]), nw1))
-        ibi2 = iter(np.linspace(np.mean([ib1, ib2]), ib2, nw2))
+        ra1, ra2 = self.redundant_a
+        rb1, rb2 = self.redundant_b
+        iai1 = iter(np.linspace(ra1, np.mean([ra1, ra2]), nw1))
+        iai2 = iter(np.linspace(np.mean([ra1, ra2]), ra2, nw2))
+        ibi1 = iter(np.linspace(rb1, np.mean([rb1, rb2]), nw1))
+        ibi2 = iter(np.linspace(np.mean([rb1, rb2]), rb2, nw2))
 
         sa1, sa2 = self.size_a
         sb1, sb2 = self.size_b
@@ -127,18 +111,15 @@ class Corpus:
         dbi1 = iter(np.linspace(db1, np.mean([db1, db2]), nw1))
         dbi2 = iter(np.linspace(np.mean([db1, db2]), db2, nw2))
 
-        doc1 = self.make_doc(self.x1, nw1, self.starvation[0], self.sample_a[0], self.sample_b[0], iai1, ibi1, sai1, sbi1, dai1, dbi1)
-        doc2 = self.make_doc(self.x2, nw2, self.starvation[1], self.sample_a[1], self.sample_b[1], iai2, ibi2, sai2, sbi2, dai2, dbi2)
+        doc1 = self.make_doc(nw1, self.starvation[0], iai1, ibi1, sai1, sbi1, dai1, dbi1)
+        doc2 = self.make_doc(nw2, self.starvation[1], iai2, ibi2, sai2, sbi2, dai2, dbi2)
         return doc1 + doc2
 
     def make_doc(self,
-                 x: List[str],
                  num_windows: int,
                  starvation: float,
-                 sample_a: str,
-                 sample_b: str,
-                 incongruent_a: iter,
-                 incongruent_b: iter,
+                 redundant_a: iter,
+                 redundant_b: iter,
                  size_a: iter,
                  size_b: iter,
                  a_drop: iter,
@@ -149,45 +130,25 @@ class Corpus:
         for n in range(num_windows):
 
             # sample xi
-            xi = random.choice(x)  # do not sample from itertools.cycle because of predictable structure
+            xi = random.choice(self.x)  # do not sample from itertools.cycle because of predictable structure
 
             # read next in iterators
+            rpa = next(redundant_a)
+            rpb = next(redundant_b)
             sa = next(size_a)
             sb = next(size_b)
+            da = next(a_drop)
+            db = next(b_drop)
 
-            ipa = next(incongruent_a)
-            ipb = next(incongruent_b)
+            # sample ai, bi from all possible ai, bi
+            ai = random.choice(self.a[:int(sa * self.num_a)])
+            bi = random.choice(self.b[:int(sb * self.num_b)])
 
-            ad = next(a_drop)
-            bd = next(b_drop)
-
-            # sample ai
-            if sample_a == 'item':
+            # chose redundant ai, bi
+            if random.random() < rpa:
                 ai = self.xi2ai[xi]
-            elif sample_a == 'sub':
-                ai = random.choice(self.xi2a[xi])
-            elif sample_a == 'super':
-                ai = random.choice(self.a[:int(sa * self.num_a)])
-            else:
-                raise AttributeError('Invalid arg to "sample_a".')
-
-            # sample bi
-            if sample_b == 'item':
+            if random.random() < rpb:
                 bi = self.xi2bi[xi]
-            elif sample_b == 'sub':
-                bi = random.choice(self.xi2b[xi])
-            elif sample_b == 'super':
-                bi = random.choice(self.b[:int(sb * self.num_b)])
-            else:
-                raise AttributeError('Invalid arg to "sample_b".')
-
-            # incongruent ai
-            if random.random() < ipa:
-                ai = random.choice([ai for ai in self.a if ai not in self.xi2a[xi]])
-
-            # incongruent bi
-            if random.random() < ipb:
-                bi = random.choice([bi for bi in self.b if bi not in self.xi2b[xi]])
 
             # sample yi
             if random.random() < starvation:
@@ -196,11 +157,11 @@ class Corpus:
                 yi = random.choice(self.xi2y[xi])
 
             # collect
-            if random.random() < ad and random.random() < bd:
+            if random.random() < da and random.random() < db:
                 res += f'{xi} {yi} '
-            elif random.random() < ad:
+            elif random.random() < da:
                 res += f'{xi} {bi} {yi} '
-            elif random.random() < bd:
+            elif random.random() < db:
                 res += f'{ai} {xi} {yi} '
             else:
                 res += f'{ai} {xi} {bi} {yi} '  # whitespace after each

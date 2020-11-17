@@ -17,7 +17,6 @@ PLOT_INDIVIDUAL_ANIMATION = True
 PLOT_AVERAGE = False
 REPRESENTATIONS_NAME = 'output_probabilities'  # "embeddings' or "output_probabilities"
 
-# param2requests['num_sentinels'] = []
 
 
 """
@@ -52,7 +51,6 @@ for param_path, label in gen_param_paths(configs.Dirs.root.name,
     num_fragments = param2val['num_fragments']
     num_types = param2val['num_types']
     hidden_size = param2val['hidden_size']
-    num_sentinels = param2val['num_sentinels']
 
     if REPRESENTATIONS_NAME == 'output_probabilities':
         representation_size = num_types
@@ -103,7 +101,7 @@ for param_path, label in gen_param_paths(configs.Dirs.root.name,
                 images_path.mkdir()
 
             # get tick at which delay occurs
-            delay_tick = int(num_ticks * (param2val['delay'] / param2val['doc_size']))
+            delay_tick = 0  # todo no longer used
 
             make_svd_across_time_3d_animation(big[job_id],
                                               component1=0,
@@ -112,7 +110,6 @@ for param_path, label in gen_param_paths(configs.Dirs.root.name,
                                               label=label,
                                               steps_in_tick=steps_in_tick,
                                               delay_tick=delay_tick,  # tick at which delay occurs
-                                              num_sentinels=num_sentinels,
                                               images_path=images_path,
                                               )
 

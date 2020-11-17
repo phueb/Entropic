@@ -18,7 +18,6 @@ from ludwig.results import gen_param_paths
 SLOT = 'b'
 LABEL_PARAMS = []  # any additional params to put into label
 
-# param2requests['num_sentinels'] = [64]
 
 
 def to_step(file_name):
@@ -48,7 +47,6 @@ for param_path, label in gen_param_paths(configs.Dirs.root.name,
     num_fragments = param2val['num_fragments']
     num_types = param2val['num_types']
     hidden_size = param2val['hidden_size']
-    num_sentinels = param2val['num_sentinels']
 
     # init array to hold category representations averaged across jobs
     big = np.zeros((num_jobs, num_ticks, num_fragments, num_types))
@@ -81,7 +79,7 @@ for param_path, label in gen_param_paths(configs.Dirs.root.name,
             images_path.mkdir()
 
         # get tick at which delay occurs
-        delay_tick = int(num_ticks * (param2val['delay'] / param2val['doc_size']))
+        delay_tick = 0  # todo no longer used
 
         make_predictions_animation(big[job_id],
                                    label=label,

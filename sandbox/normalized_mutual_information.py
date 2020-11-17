@@ -19,9 +19,8 @@ NORM_FACTOR = 'XY'
 
 
 del param2requests
-param2requests = {'sample_a': [('item', 'item')],
-                  'num_sentinels': [8],
-                  'incongruent_a': [(0.4, 0.2), (0.0, 0.2)],
+param2requests = {
+                  'redundant_a': [(0.4, 0.2), (0.0, 0.2)],
                   }
 
 
@@ -66,21 +65,17 @@ for param2val in gen_all_param2vals(param2requests, param2default):
     print()
 
     corpus = Corpus(doc_size=params.doc_size,
-                    delay=params.delay,
                     num_types=params.num_types,
                     num_fragments=params.num_fragments,
                     starvation=params.starvation,
-                    num_sentinels=params.num_sentinels,
-                    sample_b=params.sample_b,
-                    sample_a=params.sample_a,
-                    incongruent_a=params.incongruent_a,
-                    incongruent_b=params.incongruent_b,
+                    redundant_a=params.redundant_a,
+                    redundant_b=params.redundant_b,
                     size_a=params.size_a,
                     size_b=params.size_b,
                     drop_a=params.drop_a,
                     drop_b=params.drop_b,
                     )
-    prep = SlidingPrep([corpus.doc],
+    prep = SlidingPrep([corpus.sequences],
                        reverse=False,
                        num_types=None,  # None ensures that no OOV symbol is inserted and all types are represented
                        slide_size=params.batch_size,
