@@ -21,6 +21,7 @@ from entropic.eval import softmax, get_windows
 class Params(object):
     # rnn
     hidden_size = attr.ib(validator=attr.validators.instance_of(int))
+    flavor = attr.ib(validator=attr.validators.instance_of(str))
     # toy corpus
     doc_size = attr.ib(validator=attr.validators.instance_of(int))
     num_types = attr.ib(validator=attr.validators.instance_of(int))
@@ -87,7 +88,7 @@ def main(param2val):
     cat_id2xw_ids = {cat_id: [corpus.x.index(xw) for xw in corpus.cat_id2x[cat_id]]
                      for cat_id in range(params.num_fragments)}
 
-    rnn = RNN('srn', input_size=params.num_types, hidden_size=params.hidden_size)
+    rnn = RNN(params.flavor, input_size=params.num_types, hidden_size=params.hidden_size)
 
     criterion = torch.nn.CrossEntropyLoss()
     if params.optimizer == 'adagrad':

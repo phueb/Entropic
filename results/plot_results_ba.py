@@ -28,66 +28,61 @@ TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
-STUDY = None
-
-param2requests = {
-    'redundant_a': [(0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-                    (0.6, 0.6), (0.9,0.9)],
-}
+STUDY = '1ra'
 
 
 if STUDY == '1ra':
     param2requests = {
-        'redundant_a': [(0.0, 0.0), (0.2, 0.2), (0.4, 0.4), (0.5, 0.5),
-                        (0.6, 0.6), (0.8, 0.8), (1.0, 1.0)],
+        'redundant_a': [(0.0, 0.0), (0.5, 0.5),  (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 elif STUDY == '1rb':
     param2requests = {
         'redundant_b': [(0.0, 0.0), (0.2, 0.2), (0.4, 0.4), (0.5, 0.5),
                         (0.6, 0.6), (0.8, 0.8), (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 
 elif STUDY == '2ra':
     param2requests = {
         'redundant_a': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 elif STUDY == '2rb':
     param2requests = {
         'redundant_b': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 
 elif STUDY == '2sa':
     param2requests = {
         'size_a': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 elif STUDY == '2sb':
     param2requests = {
         'size_b': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 elif STUDY == '2da':
     param2requests = {
         'redundant_a': [(0.0, 0.0)],
         'drop_a': [(0.0, 0.0), (0.1, 0.1), (0.1, 0.0), (0.0, 0.1)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 elif STUDY == '2db':
     param2requests = {
         'redundant_b': [(0.0, 0.0)],
         'drop_b': [(0.0, 0.0), (0.1, 0.1), (0.1, 0.0), (0.0, 0.1)],
     }
-    conditions = [('x', 1)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 else:
     conditions = [('a', 1), ('x', 1), ('b', 1)]
+
 
 for slot, context_size in conditions:
 

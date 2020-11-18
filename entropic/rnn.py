@@ -27,7 +27,6 @@ class RNN(torch.nn.Module):
         self.encode = cell(input_size=hidden_size,  # this does not have to be hidden_size
                            hidden_size=hidden_size,
                            batch_first=True,
-                           nonlinearity='tanh',
                            bias=True,
                            num_layers=1,
                            dropout=0)

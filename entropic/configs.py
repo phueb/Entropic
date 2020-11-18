@@ -13,7 +13,7 @@ class Eval:
     xi = 0.01  # 0.01 is better than 0.05
     verbose = False
     eval_thresholds = [[0.999], [0.99], [0.9], [0.2], [0.01], [0.001]]
-    eval_interval = 20
+    eval_interval = 50
     calc_dp = False
     save_output_probabilities = False
     save_embeddings = False

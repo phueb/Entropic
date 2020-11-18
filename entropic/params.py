@@ -13,9 +13,8 @@ the probability that Yi is a semantically uninformative symbol (kind of like a p
 """
 
 param2requests = {
-
-    'redundant_a': [(0.0, 0.0), (0.1, 0.1), (0.2, 0.2), (0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
-                      (0.6, 0.6), (0.7, 0.7), (0.8, 0.8), (0.9, 0.9), (1.0, 1.0)],
+    'flavor': ['srn', 'lstm'],  # todo
+    'redundant_a': [(0.0, 0.0), (0.5, 0.5), (1.0, 1.0)],
 
 }
 
@@ -26,8 +25,9 @@ param2debug = {
 param2default = {
     # rnn
     'hidden_size': 64,
+    'flavor': 'srn',
     # toy corpus
-    'doc_size': 100_000,
+    'doc_size': 50_000,
     'num_types': 128,
     'num_fragments': 4,
     'starvation': (0.0, 0.0),  # (prob during doc 1, prob during doc2)
