@@ -10,7 +10,7 @@ from ludwig.results import gen_all_param2vals
 
 from entropic.corpus import Corpus
 from entropic.job import Params
-from entropic.params import param2requests, param2default
+from entropic.params import param2default
 
 
 NUM_TICKS = 32
@@ -18,9 +18,8 @@ DISTANCE = -1  # can be negative or positive
 NORM_FACTOR = 'XY'
 
 
-del param2requests
 param2requests = {
-                  'redundant_a': [(0.4, 0.2), (0.0, 0.2)],
+                  'redundant_a': [(0.5, 0.0)],
                   }
 
 
@@ -36,14 +35,14 @@ def collect_data(windows_mat, reverse: bool):
         # print(f'{num_windows:>12,}/{x_ticks[-1]:>12,}')
 
         # probe windows
-        probe_position = 1
-        row_ids = np.isin(ws[:, probe_position], [prep.store.w2id[w] for w in probes])
+        x_loc = 1
+        row_ids = np.isin(ws[:, x_loc], [prep.store.w2id[w] for w in probes])
         probe_windows = ws[row_ids]
 
         # mutual info
-        # assert DISTANCE <= probe_position - 1
-        x = probe_windows[:, probe_position + DISTANCE]  # left or right context
-        y = probe_windows[:, probe_position]  # probe
+        # assert DISTANCE <= x_loc - 1
+        x = probe_windows[:, x_loc + DISTANCE]  # left or right context
+        y = probe_windows[:, x_loc]  # probe
         mi = drv.information_mutual_normalised(x, y, norm_factor=NORM_FACTOR)
 
         # print([prep.store.types[i] for i in probe_windows[0]])

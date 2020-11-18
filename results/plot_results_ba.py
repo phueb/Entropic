@@ -30,6 +30,11 @@ REVERSE_ORDER = True
 
 STUDY = None
 
+param2requests = {
+    'redundant_a': [(0.3, 0.3), (0.4, 0.4), (0.5, 0.5),
+                    (0.6, 0.6), (0.9,0.9)],
+}
+
 
 if STUDY == '1ra':
     param2requests = {
@@ -82,7 +87,7 @@ elif STUDY == '2db':
     conditions = [('x', 1)]
 
 else:
-    conditions = [('x', 1), ('b', 1), ('b', 2)]
+    conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 for slot, context_size in conditions:
 
@@ -115,14 +120,6 @@ for slot, context_size in conditions:
         # custom labels
         if LABELS:
             label = next(labels)
-
-        # shorten labels
-        if str(STUDY).startswith('1a'):
-            label = label.replace(f'sample_a={param2requests["sample_a"][0]}\n', '')
-        if str(STUDY).startswith('1b'):
-            label = label.replace(f'sample_b={param2requests["sample_b"][0]}\n', '')
-        else:
-            label = label.replace('sample_', '')
 
         # color
         color = f'C{color_id}'  # make colors consistent with label, not best ba
