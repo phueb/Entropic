@@ -19,7 +19,7 @@ NORM_FACTOR = 'XY'
 
 
 param2requests = {
-                  'redundant_a': [(0.5, 0.0)],
+                  'redundant_a': [([1.0, 0.0], [1.0, 1.0])],
                   }
 
 
@@ -32,9 +32,8 @@ def collect_data(windows_mat, reverse: bool):
     for num_windows in x_ticks:
 
         ws = windows_mat[:num_windows]
-        # print(f'{num_windows:>12,}/{x_ticks[-1]:>12,}')
 
-        # probe windows
+        # x-word windows
         x_loc = 1
         row_ids = np.isin(ws[:, x_loc], [prep.store.w2id[w] for w in probes])
         probe_windows = ws[row_ids]
@@ -44,13 +43,6 @@ def collect_data(windows_mat, reverse: bool):
         x = probe_windows[:, x_loc + DISTANCE]  # left or right context
         y = probe_windows[:, x_loc]  # probe
         mi = drv.information_mutual_normalised(x, y, norm_factor=NORM_FACTOR)
-
-        # print([prep.store.types[i] for i in probe_windows[0]])
-        # print([prep.store.types[i] for i in probe_windows[1]])
-        # print([prep.store.types[i] for i in probe_windows[2]])
-        # print([prep.store.types[i] for i in x])
-        # print([prep.store.types[i] for i in y])
-        # raise SystemExit
 
         res.append(mi)
 
@@ -103,7 +95,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
     plt.title(f'distance={DISTANCE}\nnorm={NORM_FACTOR}',
               fontsize=fontsize)
     ax.set_ylabel('Cumulative Normalized Mutual Info', fontsize=fontsize)
-    ax.set_xlabel('Location in AO-CHILDES [num tokens]', fontsize=fontsize)
+    ax.set_xlabel('Location in Corpus [num tokens]', fontsize=fontsize)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_ylim(bottom=0)

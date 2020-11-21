@@ -5,6 +5,7 @@ class Dirs:
     root = Path(__file__).parent.parent
     src = root / 'entropic'
     images = root / 'images'
+    summaries = root / 'summaries'
 
 
 class Eval:

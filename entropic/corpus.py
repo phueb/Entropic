@@ -22,21 +22,42 @@ class Corpus:
                  doc_size: int,
                  num_types: int,
                  num_fragments: int,
-                 starvation: Tuple[float, float],
-                 redundant_a: Tuple[float, float],
-                 redundant_b: Tuple[float, float],
-                 size_a: Tuple[float, float],
-                 size_b: Tuple[float, float],
-                 drop_a: Tuple[float, float],
-                 drop_b: Tuple[float, float],
+                 starvation: Tuple[Tuple[float], Tuple[float]],
+                 redundant_a: Tuple[Tuple[float], Tuple[float]],
+                 redundant_b: Tuple[Tuple[float], Tuple[float]],
+                 size_a: Tuple[Tuple[float], Tuple[float]],
+                 size_b: Tuple[Tuple[float], Tuple[float]],
+                 drop_a: Tuple[Tuple[float], Tuple[float]],
+                 drop_b: Tuple[Tuple[float], Tuple[float]],
                  alpha: float = 2.0,
                  seed: Optional[int] = None,
                  ) -> None:
+        """
 
-        assert 0.0 <= redundant_a[0] <= 1.0
-        assert 0.0 <= redundant_a[1] <= 1.0
-        assert 0.0 <= redundant_b[0] <= 1.0
-        assert 0.0 <= redundant_b[1] <= 1.0
+        :param doc_size:
+        :param num_types:
+        :param num_fragments:
+        :param starvation:  probability of replacing y-word with category-irrelevant word (e.g. period)
+        :param redundant_a:
+        :param redundant_b:
+        :param size_a: proportion of set size of a-words available for sampling
+        :param size_b: proportion of set size of b-words available for sampling
+        :param drop_a:
+        :param drop_b:
+        :param alpha:
+        :param seed:
+        """
+
+        for i in range(2):
+            for j in range(2):
+                assert 0.0 <= starvation[i][j] <= 1.0
+                assert 0.0 <= redundant_a[i][j] <= 1.0
+                assert 0.0 <= redundant_b[i][j] <= 1.0
+                assert 0.0 <= size_a[i][j] <= 1.0
+                assert 0.0 <= size_b[i][j] <= 1.0
+                assert 0.0 <= drop_a[i][j] <= 1.0
+                assert 0.0 <= drop_b[i][j] <= 1.0
+
 
         self.doc_size = doc_size
         self.num_types = num_types
@@ -85,39 +106,29 @@ class Corpus:
     @cached_property
     def sequences(self) -> str:
 
-        doc_size1 = self.doc_size
-        doc_size2 = self.doc_size
-        nw1 = doc_size1 // self.num_words_in_window
-        nw2 = doc_size2 // self.num_words_in_window
+        nw = self.doc_size // self.num_words_in_window
 
-        ra1, ra2 = self.redundant_a
-        rb1, rb2 = self.redundant_b
-        iai1 = iter(np.linspace(ra1, np.mean([ra1, ra2]), nw1))
-        iai2 = iter(np.linspace(np.mean([ra1, ra2]), ra2, nw2))
-        ibi1 = iter(np.linspace(rb1, np.mean([rb1, rb2]), nw1))
-        ibi2 = iter(np.linspace(np.mean([rb1, rb2]), rb2, nw2))
+        docs = ''
+        for doc_id in range(2):
 
-        sa1, sa2 = self.size_a
-        sb1, sb2 = self.size_b
-        sai1 = iter(np.linspace(sa1, np.mean([sa1, sa2]), nw1))
-        sai2 = iter(np.linspace(np.mean([sa1, sa2]), sa2, nw2))
-        sbi1 = iter(np.linspace(sb1, np.mean([sb1, sb2]), nw1))
-        sbi2 = iter(np.linspace(np.mean([sb1, sb2]), sb2, nw2))
+            starvation_i = iter(np.linspace(*self.starvation[doc_id], nw))
 
-        da1, da2 = self.drop_a
-        db1, db2 = self.drop_b
-        dai1 = iter(np.linspace(da1, np.mean([da1, da2]), nw1))
-        dai2 = iter(np.linspace(np.mean([da1, da2]), da2, nw2))
-        dbi1 = iter(np.linspace(db1, np.mean([db1, db2]), nw1))
-        dbi2 = iter(np.linspace(np.mean([db1, db2]), db2, nw2))
+            rai = iter(np.linspace(*self.redundant_a[doc_id], nw))
+            rbi = iter(np.linspace(*self.redundant_b[doc_id], nw))
 
-        doc1 = self.make_doc(nw1, self.starvation[0], iai1, ibi1, sai1, sbi1, dai1, dbi1)
-        doc2 = self.make_doc(nw2, self.starvation[1], iai2, ibi2, sai2, sbi2, dai2, dbi2)
-        return doc1 + doc2
+            sai = iter(np.linspace(*self.size_a[doc_id], nw))
+            sbi = iter(np.linspace(*self.size_b[doc_id], nw))
+
+            dai = iter(np.linspace(*self.drop_a[doc_id], nw))
+            dbi = iter(np.linspace(*self.drop_b[doc_id], nw))
+
+            docs += self.make_doc(nw, starvation_i, rai, rbi, sai, sbi, dai, dbi)
+
+        return docs
 
     def make_doc(self,
                  num_windows: int,
-                 starvation: float,
+                 starvation: iter,
                  redundant_a: iter,
                  redundant_b: iter,
                  size_a: iter,
@@ -133,6 +144,7 @@ class Corpus:
             xi = random.choice(self.x)  # do not sample from itertools.cycle because of predictable structure
 
             # read next in iterators
+            starve = next(starvation)
             rpa = next(redundant_a)
             rpb = next(redundant_b)
             sa = next(size_a)
@@ -151,7 +163,7 @@ class Corpus:
                 bi = self.xi2bi[xi]
 
             # sample yi
-            if random.random() < starvation:
+            if random.random() < starve:
                 yi = random.choice(self.random_periods)
             else:
                 yi = random.choice(self.xi2y[xi])

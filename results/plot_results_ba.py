@@ -13,6 +13,7 @@ Note:
 
 import pandas as pd
 from scipy import stats
+import shutil
 
 from entropic.figs import plot_summary, correct_artifacts
 from entropic import configs
@@ -28,32 +29,38 @@ TOLERANCE = 0.04
 SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
+LSTM = False
 STUDY = '1ra'
 
 
 if STUDY == '1ra':
     param2requests = {
-        'redundant_a': [(0.0, 0.0), (0.5, 0.5),  (1.0, 1.0)],
+        'redundant_a': [((0.0, 0.0), (0.0, 0.0)),
+                        ((0.5, 0.5), (0.5, 0.5)),
+                        ((1.0, 1.0), (1.0, 1.0))],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('a', 1), ('x', 1)]
 elif STUDY == '1rb':
     param2requests = {
-        'redundant_b': [(0.0, 0.0), (0.2, 0.2), (0.4, 0.4), (0.5, 0.5),
-                        (0.6, 0.6), (0.8, 0.8), (1.0, 1.0)],
+        'redundant_b': [((0.0, 0.0), (0.0, 0.0)),
+                        ((0.5, 0.5), (0.5, 0.5)),
+                        ((1.0, 1.0), (1.0, 1.0))],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('x', 1), ('b', 1)]
 
 
 elif STUDY == '2ra':
     param2requests = {
-        'redundant_a': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
+        'redundant_a': [((0.8, 1.0), (1.0, 1.0)),
+                        ((0.9, 1.0), (1.0, 1.0)),
+                        ((1.0, 1.0), (1.0, 1.0))],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('a', 1), ('x', 1)]
 elif STUDY == '2rb':
     param2requests = {
-        'redundant_b': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
+        'redundant_b': [(0.8, 1.0), (0.9, 1.0), (1.0, 1.0)],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('x', 1), ('b', 1)]
 
 
 elif STUDY == '2sa':
@@ -84,13 +91,16 @@ else:
     conditions = [('a', 1), ('x', 1), ('b', 1)]
 
 
+if LSTM:  # need to change both flavor, and lr
+    param2requests['flavor'] = ['lstm']
+    param2requests['lr'] = [1.0]
+
+if configs.Dirs.summaries.exists():
+    shutil.rmtree(configs.Dirs.summaries)
+
 for slot, context_size in conditions:
 
     labels = iter(LABELS)
-
-    print(param2default)
-    print()
-    print(param2requests)
 
     # collect data
     summary_data = []
@@ -110,7 +120,7 @@ for slot, context_size in conditions:
             # remove dips
             df = df.apply(correct_artifacts, result_type='expand', tolerance=TOLERANCE)
             dfs.append(df)
-        param_df = frame = pd.concat(dfs, axis=1)
+        param_df: pd.DataFrame = pd.concat(dfs, axis=1)
 
         # custom labels
         if LABELS:
@@ -132,6 +142,17 @@ for slot, context_size in conditions:
                              color,
                              num_reps))
 
+        # export to csv - latex does not like spaces in file name
+        fn = label.replace("\n", "-").replace(' ', '') + f'-slot={slot}-cs={context_size}'
+        path = configs.Dirs.summaries / f'{fn}.txt'  # txt format makes file content visible on overleaf.org
+        if not path.parent.exists():
+            path.parent.mkdir()
+        exported_df = pd.DataFrame(data={'mean': param_df.mean(axis=1).values,
+                                         'std': param_df.std(axis=1).values},
+                                   index=param_df.index.values)
+        exported_df.index.name = 'step'
+        exported_df.round(3).to_csv(path, sep=' ')
+
     if not summary_data:
         raise SystemExit('No data found')
 
@@ -146,3 +167,4 @@ for slot, context_size in conditions:
                        title=f'study={STUDY}\nslot={slot}\ncontext-size={context_size}\n',
                        )
     fig.show()
+
