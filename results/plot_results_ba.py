@@ -30,17 +30,17 @@ SORT_BY_PERFORMANCE = True
 REVERSE_ORDER = True
 
 LSTM = False
-STUDY = '1ra'
+STUDY = '22a'
 
 
-if STUDY == '1ra':
+if STUDY == '11a':
     param2requests = {
         'redundant_a': [((0.0, 0.0), (0.0, 0.0)),
                         ((0.5, 0.5), (0.5, 0.5)),
                         ((1.0, 1.0), (1.0, 1.0))],
     }
     conditions = [('a', 1), ('x', 1)]
-elif STUDY == '1rb':
+elif STUDY == '11b':
     param2requests = {
         'redundant_b': [((0.0, 0.0), (0.0, 0.0)),
                         ((0.5, 0.5), (0.5, 0.5)),
@@ -49,43 +49,38 @@ elif STUDY == '1rb':
     conditions = [('x', 1), ('b', 1)]
 
 
-elif STUDY == '2ra':
+elif STUDY == '21a':
     param2requests = {
-        'redundant_a': [((0.8, 1.0), (1.0, 1.0)),
-                        ((0.9, 1.0), (1.0, 1.0)),
-                        ((1.0, 1.0), (1.0, 1.0))],
+        'redundant_a': [
+            ((0.0, 0.0), (1.0, 1.0)),
+            ((0.5, 0.5), (1.0, 1.0)),
+            # ((0.9, 0.9), (1.0, 1.0)),
+            ((1.0, 1.0), (1.0, 1.0))],
     }
     conditions = [('a', 1), ('x', 1)]
-elif STUDY == '2rb':
+elif STUDY == '21b':
     param2requests = {
-        'redundant_b': [(0.8, 1.0), (0.9, 1.0), (1.0, 1.0)],
+        'redundant_b': [
+            ((0.0, 0.0), (1.0, 1.0)),
+            ((0.5, 0.5), (1.0, 1.0)),
+            ((1.0, 1.0), (1.0, 1.0))],
     }
     conditions = [('x', 1), ('b', 1)]
 
-
-elif STUDY == '2sa':
+elif STUDY == '22a':
     param2requests = {
-        'size_a': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
+        'redundant_a': [
+            ((0.0, 0.0), (1.0, 1.0)),
+            ((1.0, 1.0), (0.0, 0.0))],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
-elif STUDY == '2sb':
+    conditions = [('a', 1), ('x', 1)]
+elif STUDY == '22b':
     param2requests = {
-        'size_b': [(1.0, 0.0), (0.0, 1.0), (0.0, 0.0), (1.0, 1.0)],
+        'redundant_b': [
+            ((0.0, 0.0), (1.0, 1.0)),
+            ((1.0, 1.0), (0.0, 0.0))],
     }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
-
-elif STUDY == '2da':
-    param2requests = {
-        'redundant_a': [(0.0, 0.0)],
-        'drop_a': [(0.0, 0.0), (0.1, 0.1), (0.1, 0.0), (0.0, 0.1)],
-    }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
-elif STUDY == '2db':
-    param2requests = {
-        'redundant_b': [(0.0, 0.0)],
-        'drop_b': [(0.0, 0.0), (0.1, 0.1), (0.1, 0.0), (0.0, 0.1)],
-    }
-    conditions = [('a', 1), ('x', 1), ('b', 1)]
+    conditions = [('x', 1), ('b', 1)]
 
 else:
     conditions = [('a', 1), ('x', 1), ('b', 1)]
@@ -161,9 +156,11 @@ for slot, context_size in conditions:
         summary_data = sorted(summary_data, key=lambda data: sum(data[1]), reverse=True)
 
     # plot
+    v_line = summary_data[0][0][-1] / 2
     fig = plot_summary(summary_data,
                        y_label='Categorization [Balanced accuracy]',
                        legend=LEGEND,
+                       v_line=v_line,
                        title=f'study={STUDY}\nslot={slot}\ncontext-size={context_size}\n',
                        )
     fig.show()

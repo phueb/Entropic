@@ -33,7 +33,7 @@ for param2val in gen_all_param2vals(param2requests, param2default):
     print(params, flush=True)
 
     # create toy input
-    corpus = Corpus(doc_size=params.doc_size,
+    corpus = Corpus(doc_size=params.num_sequences_per_doc,
                     num_types=params.num_types,
                     num_fragments=params.num_fragments,
                     starvation=params.starvation,

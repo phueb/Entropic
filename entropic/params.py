@@ -1,16 +1,19 @@
 """
+Notes about parameters:
 
 'redundant_a': ((0.0, 0.1), (0.6, 1.0)) means:
 redundancy is gradually ramped from 0.0 to 0.1 in document 1, and then from 0.6 to 1.0 in document 2.
 
+
+doc_size=50_000 is not enough to get 1.0 accuracy when redundant_a=((0.5, 1.0), (1.0, 1.0)).
 """
 
 param2requests = {
     # 'flavor': ['lstm'],
     # 'lr': [1.0],
-    'redundant_a': [((0.8, 1.0), (1.0, 1.0)),
-                        ((0.9, 1.0), (1.0, 1.0)),
-                        ((1.0, 1.0), (1.0, 1.0))],
+    'redundant_a': [
+            ((0.0, 0.0), (1.0, 1.0)),
+            ((1.0, 1.0), (0.0, 0.0))],
 
 }
 
@@ -23,7 +26,7 @@ param2default = {
     'hidden_size': 64,
     'flavor': 'srn',
     # toy corpus
-    'doc_size': 50_000,
+    'doc_size': 100_000,
     'num_types': 128,
     'num_fragments': 4,
     'starvation': ((0.0, 0.0), (0.0, 0.0)),

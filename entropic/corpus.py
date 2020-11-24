@@ -59,7 +59,7 @@ class Corpus:
                 assert 0.0 <= drop_b[i][j] <= 1.0
 
 
-        self.doc_size = doc_size
+        self.num_sequences_per_doc = doc_size
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.starvation = starvation
@@ -106,7 +106,7 @@ class Corpus:
     @cached_property
     def sequences(self) -> str:
 
-        nw = self.doc_size // self.num_words_in_window
+        nw = self.num_sequences_per_doc // self.num_words_in_window
 
         docs = ''
         for doc_id in range(2):
