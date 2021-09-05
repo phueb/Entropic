@@ -58,8 +58,7 @@ class Corpus:
                 assert 0.0 <= drop_a[i][j] <= 1.0
                 assert 0.0 <= drop_b[i][j] <= 1.0
 
-
-        self.num_sequences_per_doc = doc_size
+        self.num_words_per_doc = doc_size
         self.num_types = num_types
         self.num_fragments = num_fragments
         self.starvation = starvation
@@ -106,23 +105,23 @@ class Corpus:
     @cached_property
     def sequences(self) -> str:
 
-        nw = self.num_sequences_per_doc // self.num_words_in_window
+        num_windows_per_doc = self.num_words_per_doc // self.num_words_in_window
 
         docs = ''
         for doc_id in range(2):
 
-            starvation_i = iter(np.linspace(*self.starvation[doc_id], nw))
+            starvation_i = iter(np.linspace(*self.starvation[doc_id], num_windows_per_doc))
 
-            rai = iter(np.linspace(*self.redundant_a[doc_id], nw))
-            rbi = iter(np.linspace(*self.redundant_b[doc_id], nw))
+            rai = iter(np.linspace(*self.redundant_a[doc_id], num_windows_per_doc))
+            rbi = iter(np.linspace(*self.redundant_b[doc_id], num_windows_per_doc))
 
-            sai = iter(np.linspace(*self.size_a[doc_id], nw))
-            sbi = iter(np.linspace(*self.size_b[doc_id], nw))
+            sai = iter(np.linspace(*self.size_a[doc_id], num_windows_per_doc))
+            sbi = iter(np.linspace(*self.size_b[doc_id], num_windows_per_doc))
 
-            dai = iter(np.linspace(*self.drop_a[doc_id], nw))
-            dbi = iter(np.linspace(*self.drop_b[doc_id], nw))
+            dai = iter(np.linspace(*self.drop_a[doc_id], num_windows_per_doc))
+            dbi = iter(np.linspace(*self.drop_b[doc_id], num_windows_per_doc))
 
-            docs += self.make_doc(nw, starvation_i, rai, rbi, sai, sbi, dai, dbi)
+            docs += self.make_doc(num_windows_per_doc, starvation_i, rai, rbi, sai, sbi, dai, dbi)
 
         return docs
 
