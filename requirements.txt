@@ -1,7 +1,7 @@
 seaborn
 pyitlib
 attrs
-PyYAML
+PyYAML==5.4.1
 matplotlib
 pandas==0.23.4
 pyprind
@@ -11,5 +11,5 @@ bayesian-optimization==0.6
 tables
 numpy==1.18.0
 torch==1.4.0
-https://github.com/phueb/Preppy/archive/v2.0.0.tar.gz
-https://github.com/phueb/Ludwig/archive/v2.1.2.tar.gz
+https://github.com/phueb/Preppy/archive/v3.1.1.tar.gz
+https://github.com/phueb/Ludwig/archive/v4.0.8.tar.gz

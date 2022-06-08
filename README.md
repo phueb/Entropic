@@ -3,7 +3,7 @@
 </div>
 
 
-Research code for understanding lexical category learning in the RNN.
+Research code used for experiments reported in the conference paper [Scaffolded input promotes atomic organization in the recurrent neural network language model](https://aclanthology.org/2021.conll-1.32/).
 
 ## Background
 
